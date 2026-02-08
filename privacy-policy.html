@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chính Sách Quyền Riêng Tư - Genztech</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        html,
+        body {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            cursor: none !important;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        .policy-content h2 {
+            color: #fff;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .policy-content p {
+            color: #9ca3af;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .policy-content ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            color: #9ca3af;
+            margin-bottom: 1rem;
+        }
+
+        .policy-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .policy-content a {
+            color: #1877F2;
+            text-decoration: none;
+        }
+
+        .policy-content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+
+    <!-- Multi-Layer Starfield Canvas -->
+    <!-- Using inline z-index to ensure correct stacking -->
+    <canvas id="starfield-far" class="fixed inset-0 pointer-events-none" style="z-index: 0;"></canvas>
+    <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none" style="z-index: 1;"></canvas>
+    <canvas id="starfield-near" class="fixed inset-0 pointer-events-none" style="z-index: 2;"></canvas>
+    <canvas id="constellation-lines" class="fixed inset-0 pointer-events-none" style="z-index: 3;"></canvas>
+    <canvas id="data-particles" class="fixed inset-0 pointer-events-none" style="z-index: 4;"></canvas>
+
+    <!-- Cosmic Fog / Nebula Gradient Overlay -->
+    <div class="fixed inset-0 pointer-events-none opacity-30" style="z-index: 5;">
+        <div class="cosmic-fog"></div>
+    </div>
+
+    <!-- Noise Texture Overlay -->
+    <div class="fixed inset-0 pointer-events-none noise-overlay opacity-10" style="z-index: 6;"></div>
+
+    <!-- Global SVG Gradients -->
+    <svg width="0" height="0" class="absolute">
+        <defs>
+            <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#00C6FF;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#0072FF;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#9D50BB;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#6E48AA;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#4FACFE;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#00F2FE;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Ambient Rings -->
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <div class="ambient-ring"></div>
+        <div class="ambient-ring" style="animation-delay: 1s;"></div>
+        <div class="ambient-ring" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div id="custom-cursor"
+        class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+        <img src="images/logo.png" alt="Genztech Cursor"
+            class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-space-black/70 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 text-2xl font-bold tracking-tight glow-text">
+                <img src="images/logo.png" alt="GZ Icon" class="h-8 w-auto rounded-full">
+                GENZTECH <span class="hidden md:inline">PLATFORM</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="index.html"
+                    class="cta-button px-6 py-2.5 border border-white/20 rounded-full text-sm font-semibold hover:bg-white/10 transition-all">
+                    Quay lại Trang chủ
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <!-- Using inline style to guarantee spacing without build step -->
+    <main class="relative z-10 px-6 pb-20" style="padding-top: 180px;">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card-premium p-8 md:p-12 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+                <h1
+                    class="text-3xl md:text-5xl font-black mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                    CHÍNH SÁCH QUYỀN RIÊNG TƯ
+                    <br>
+                    <span class="text-xl md:text-2xl font-normal text-gray-400">(PRIVACY POLICY)</span>
+                </h1>
+
+                <div class="policy-content">
+                    <p>Chính sách quyền riêng tư này mô tả cách <strong>Genztech</strong> (“chúng tôi”) thu thập, sử
+                        dụng, lưu trữ và bảo vệ thông tin cá nhân của người dùng khi sử dụng website và các dịch vụ liên
+                        quan, bao gồm việc đăng nhập và tích hợp với Facebook theo quy định của Meta Platforms, Inc.</p>
+
+                    <p>Việc bạn sử dụng website/app đồng nghĩa với việc bạn đồng ý với nội dung của chính sách này.</p>
+
+                    <h2>1. Phạm vi áp dụng</h2>
+                    <p>Chính sách này áp dụng cho:</p>
+                    <ul>
+                        <li>Website: https://genztechcorp.com</li>
+                        <li>Ứng dụng và các dịch vụ có tích hợp Facebook Login hoặc Facebook API</li>
+                        <li>Người dùng truy cập và sử dụng các chức năng liên quan đến Facebook</li>
+                    </ul>
+
+                    <h2>2. Thông tin chúng tôi thu thập</h2>
+                    <p>Khi bạn sử dụng website/app hoặc đăng nhập bằng Facebook, chúng tôi có thể thu thập các thông tin
+                        sau (tùy theo quyền bạn cho phép):</p>
+                    <ul>
+                        <li>Tên hiển thị (Full Name)</li>
+                        <li>Facebook User ID</li>
+                        <li>Ảnh đại diện</li>
+                        <li>Địa chỉ email</li>
+                        <li>Ngôn ngữ, quốc gia (nếu có)</li>
+                        <li>Thông tin kỹ thuật: địa chỉ IP, trình duyệt, thiết bị, thời gian truy cập</li>
+                    </ul>
+
+                    <p>👉 <strong>Chúng tôi KHÔNG thu thập:</strong></p>
+                    <ul>
+                        <li>Mật khẩu Facebook</li>
+                        <li>Tin nhắn riêng tư</li>
+                        <li>Danh sách bạn bè (nếu không được Meta cho phép)</li>
+                        <li>Dữ liệu ngoài mục đích chức năng đã mô tả</li>
+                    </ul>
+
+                    <h2>3. Mục đích sử dụng thông tin</h2>
+                    <p>Thông tin người dùng được thu thập nhằm các mục đích sau:</p>
+                    <ul>
+                        <li>Xác thực và quản lý đăng nhập người dùng</li>
+                        <li>Cung cấp các tính năng chính của website/app</li>
+                        <li>Cá nhân hóa trải nghiệm người dùng</li>
+                        <li>Hỗ trợ kỹ thuật và xử lý lỗi</li>
+                        <li>Tuân thủ các yêu cầu pháp lý và chính sách của Facebook</li>
+                    </ul>
+                    <p>Chúng tôi không sử dụng dữ liệu cho mục đích quảng cáo trái phép, mua bán dữ liệu hoặc các hành
+                        vi vi phạm chính sách của Facebook.</p>
+
+                    <h2>4. Cơ sở pháp lý cho việc xử lý dữ liệu</h2>
+                    <p>Việc thu thập và xử lý dữ liệu dựa trên:</p>
+                    <ul>
+                        <li>Sự đồng ý của người dùng khi đăng nhập và sử dụng dịch vụ</li>
+                        <li>Nhu cầu thực hiện chức năng của website/app</li>
+                        <li>Nghĩa vụ tuân thủ pháp luật và chính sách nền tảng Facebook</li>
+                    </ul>
+
+                    <h2>5. Lưu trữ và bảo mật dữ liệu</h2>
+                    <ul>
+                        <li>Dữ liệu được lưu trữ trên hệ thống máy chủ an toàn</li>
+                        <li>Áp dụng các biện pháp kỹ thuật hợp lý để bảo vệ dữ liệu khỏi truy cập trái phép</li>
+                        <li>Facebook Access Token không được lưu trữ quá thời gian cho phép</li>
+                        <li>Chỉ nhân sự được ủy quyền mới có quyền truy cập dữ liệu</li>
+                    </ul>
+
+                    <h2>6. Chia sẻ thông tin với bên thứ ba</h2>
+                    <p>Chúng tôi KHÔNG chia sẻ, bán hoặc trao đổi dữ liệu người dùng cho bất kỳ bên thứ ba nào, ngoại
+                        trừ:</p>
+                    <ul>
+                        <li>Khi có yêu cầu hợp pháp từ cơ quan nhà nước</li>
+                        <li>Khi được người dùng đồng ý rõ ràng</li>
+                        <li>Khi cần thiết để tuân thủ chính sách của Facebook</li>
+                    </ul>
+
+                    <h2>7. Thời gian lưu trữ dữ liệu</h2>
+                    <p>Dữ liệu người dùng chỉ được lưu trữ:</p>
+                    <ul>
+                        <li>Trong thời gian cần thiết để cung cấp dịch vụ</li>
+                        <li>Hoặc cho đến khi người dùng yêu cầu xóa dữ liệu</li>
+                        <li>Hoặc theo yêu cầu pháp lý bắt buộc</li>
+                    </ul>
+                    <p>Sau thời gian trên, dữ liệu sẽ được xóa hoặc ẩn danh hóa.</p>
+
+                    <h2>8. Quyền của người dùng</h2>
+                    <p>Người dùng có các quyền sau:</p>
+                    <ul>
+                        <li>Yêu cầu xem thông tin cá nhân đang được lưu trữ</li>
+                        <li>Yêu cầu chỉnh sửa thông tin không chính xác</li>
+                        <li>Yêu cầu xóa toàn bộ dữ liệu cá nhân</li>
+                        <li>Ngừng sử dụng dịch vụ bất kỳ lúc nào</li>
+                    </ul>
+
+                    <h2>9. Xóa dữ liệu người dùng (Data Deletion)</h2>
+                    <p>Người dùng có thể yêu cầu xóa dữ liệu bằng một trong các cách sau:</p>
+                    <ul>
+                        <li>Gửi email đến: <a href="mailto:lienhe@genztechcorp.com">lienhe@genztechcorp.com</a></li>
+                        <li>Truy cập trang: <a href="data-deletion.html">Hướng dẫn xóa dữ liệu</a></li>
+                    </ul>
+                    <p>Sau khi nhận yêu cầu, chúng tôi sẽ:</p>
+                    <ul>
+                        <li>Xác minh danh tính người yêu cầu</li>
+                        <li>Xóa toàn bộ dữ liệu liên quan trong vòng 7–30 ngày</li>
+                        <li>Gửi thông báo xác nhận hoàn tất</li>
+                    </ul>
+
+                    <h2>10. Tuân thủ chính sách Facebook</h2>
+                    <p>Website/App này tuân thủ đầy đủ:</p>
+                    <ul>
+                        <li>Facebook Platform Policies</li>
+                        <li>Facebook App Developer Policies</li>
+                        <li>Facebook Data Protection Terms</li>
+                    </ul>
+                    <p>Chi tiết chính sách chính thức của Facebook tại: <a
+                            href="https://developers.facebook.com/policy/"
+                            target="_blank">https://developers.facebook.com/policy/</a></p>
+
+                    <h2>11. Thay đổi chính sách</h2>
+                    <p>Chúng tôi có quyền cập nhật hoặc điều chỉnh chính sách này khi cần thiết.</p>
+                    <p>Mọi thay đổi sẽ được công bố công khai trên trang này và có hiệu lực ngay khi đăng tải.</p>
+
+                    <h2>12. Thông tin liên hệ</h2>
+                    <p>Nếu bạn có bất kỳ câu hỏi hoặc yêu cầu nào liên quan đến chính sách quyền riêng tư, vui lòng liên
+                        hệ:</p>
+                    <ul>
+                        <li>Email: <a href="mailto:lienhe@genztechcorp.com">lienhe@genztechcorp.com</a></li>
+                        <li>Website: <a href="https://genztechcorp.com">https://genztechcorp.com</a></li>
+                    </ul>
+
+                    <div class="mt-8 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+                        <h3 class="text-green-400 font-bold mb-2">✅ CAM KẾT</h3>
+                        <p class="text-gray-300">Chúng tôi cam kết bảo vệ quyền riêng tư của người dùng và tuân thủ
+                            nghiêm ngặt các quy định của Facebook cũng như pháp luật hiện hành.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="h-32"></div>
+
+    <footer class="py-10 text-center text-gray-500 text-sm relative z-10">
+        <div class="flex justify-center gap-6 mb-4">
+            <a href="privacy-policy.html" class="hover:text-blue-400 transition-colors">Chính sách quyền riêng tư</a>
+            <span class="text-gray-700">|</span>
+            <a href="data-deletion.html" class="hover:text-blue-400 transition-colors">Hướng dẫn xóa dữ liệu</a>
+        </div>
+        <p>&copy; 2026 Genztech. All rights reserved.</p>
+    </footer>
+
+    <script src="js/background-effects.js"></script>
+    <script>
+        // Simple custom cursor script for this page
+        const cursor = document.getElementById('custom-cursor');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor.style.opacity = '1';
+        });
+
+        document.addEventListener('mouseleave', () => {
+            cursor.style.opacity = '0';
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng Dẫn Xóa Dữ Liệu - Genztech</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        html,
+        body {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            cursor: none !important;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        .policy-content h2 {
+            color: #fff;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .policy-content h3 {
+            color: #60a5fa;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .policy-content p {
+            color: #9ca3af;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .policy-content ul,
+        .policy-content ol {
+            padding-left: 1.5rem;
+            color: #9ca3af;
+            margin-bottom: 1rem;
+        }
+
+        .policy-content ol {
+            list-style-type: decimal;
+        }
+
+        .policy-content ul {
+            list-style-type: disc;
+        }
+
+        .policy-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .policy-content a {
+            color: #1877F2;
+            text-decoration: none;
+        }
+
+        .policy-content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+
+    <!-- Multi-Layer Starfield Canvas -->
+    <!-- Using inline z-index to ensure correct stacking -->
+    <canvas id="starfield-far" class="fixed inset-0 pointer-events-none" style="z-index: 0;"></canvas>
+    <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none" style="z-index: 1;"></canvas>
+    <canvas id="starfield-near" class="fixed inset-0 pointer-events-none" style="z-index: 2;"></canvas>
+    <canvas id="constellation-lines" class="fixed inset-0 pointer-events-none" style="z-index: 3;"></canvas>
+    <canvas id="data-particles" class="fixed inset-0 pointer-events-none" style="z-index: 4;"></canvas>
+
+    <!-- Cosmic Fog / Nebula Gradient Overlay -->
+    <div class="fixed inset-0 pointer-events-none opacity-30" style="z-index: 5;">
+        <div class="cosmic-fog"></div>
+    </div>
+
+    <!-- Noise Texture Overlay -->
+    <div class="fixed inset-0 pointer-events-none noise-overlay opacity-10" style="z-index: 6;"></div>
+
+    <!-- Global SVG Gradients -->
+    <svg width="0" height="0" class="absolute">
+        <defs>
+            <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#00C6FF;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#0072FF;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#9D50BB;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#6E48AA;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#4FACFE;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#00F2FE;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Ambient Rings -->
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <div class="ambient-ring"></div>
+        <div class="ambient-ring" style="animation-delay: 1s;"></div>
+        <div class="ambient-ring" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div id="custom-cursor"
+        class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+        <img src="images/logo.png" alt="Genztech Cursor"
+            class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-space-black/70 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 text-2xl font-bold tracking-tight glow-text">
+                <img src="images/logo.png" alt="GZ Icon" class="h-8 w-auto rounded-full">
+                GENZTECH <span class="hidden md:inline">PLATFORM</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="index.html"
+                    class="cta-button px-6 py-2.5 border border-white/20 rounded-full text-sm font-semibold hover:bg-white/10 transition-all">
+                    Quay lại Trang chủ
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <!-- Using inline style to guarantee spacing without build step -->
+    <main class="relative z-10 px-6 pb-20" style="padding-top: 180px;">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card-premium p-8 md:p-12 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+                <h1
+                    class="text-3xl md:text-5xl font-black mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                    HƯỚNG DẪN XÓA DỮ LIỆU
+                    <br>
+                    <span class="text-xl md:text-2xl font-normal text-gray-400">(DATA DELETION INSTRUCTIONS)</span>
+                </h1>
+
+                <div class="policy-content">
+                    <p>Theo chính sách của Facebook, chúng tôi phải cung cấp URL hướng dẫn xóa dữ liệu người dùng (Data
+                        Deletion Callback URL). Nếu bạn muốn xóa dữ liệu liên quan đến tài khoản Facebook của mình khỏi
+                        ứng dụng <strong>Genztech Platform</strong>, bạn có thể làm theo các bước dưới đây:</p>
+
+                    <h2>1. Truy cập Cài đặt Facebook</h2>
+                    <p>Truy cập vào tài khoản Facebook của bạn và đi tới mục <strong>Cài đặt & Quyền riêng tư (Settings
+                            & Privacy)</strong> > <strong>Cài đặt (Settings)</strong>.</p>
+
+                    <h2>2. Tìm Ứng dụng và Trang web</h2>
+                    <p>Tìm mục <strong>Ứng dụng và trang web (Apps and Websites)</strong>. Tại đây, bạn sẽ thấy danh
+                        sách các ứng dụng mà bạn đã đăng nhập bằng Facebook.</p>
+
+                    <h2>3. Tìm kiếm Genztech Platform</h2>
+                    <p>Trong thanh tìm kiếm hoặc danh sách ứng dụng, tìm ứng dụng có tên <strong>Genztech
+                            Platform</strong>.</p>
+
+                    <h2>4. Xóa ứng dụng</h2>
+                    <p>Nhấn vào nút <strong>Gỡ (Remove)</strong> bên cạnh tên ứng dụng.</p>
+
+                    <h2>5. Hoàn tất</h2>
+                    <p>Sau khi nhấn Gỡ, dữ liệu liên quan đến tài khoản của bạn trên Genztech Platform sẽ được yêu cầu
+                        xóa khỏi hệ thống của chúng tôi.</p>
+
+                    <div class="mt-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                        <h3 class="text-blue-400 font-bold mb-2">ℹ️ Yêu cầu hỗ trợ trực tiếp?</h3>
+                        <p class="text-gray-300">Nếu bạn gặp khó khăn trong việc xóa dữ liệu hoặc muốn xác nhận việc xóa
+                            hoàn tất, vui lòng gửi email cho chúng tôi tại: <a
+                                href="mailto:lienhe@genztechcorp.com">lienhe@genztechcorp.com</a></p>
+                    </div>
+
+                    <div class="mt-8 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+                        <h3 class="text-green-400 font-bold mb-2">✅ CAM KẾT</h3>
+                        <p class="text-gray-300">Chúng tôi cam kết thực hiện việc xóa dữ liệu người dùng một cách minh
+                            bạch và tuân thủ đúng quy định bảo mật của Facebook.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="h-32"></div>
+
+    <div class="h-32"></div>
+
+    <footer class="py-10 text-center text-gray-500 text-sm relative z-10">
+        <div class="flex justify-center gap-6 mb-4">
+            <a href="privacy-policy.html" class="hover:text-blue-400 transition-colors">Chính sách quyền riêng tư</a>
+            <span class="text-gray-700">|</span>
+            <a href="data-deletion.html" class="hover:text-blue-400 transition-colors">Hướng dẫn xóa dữ liệu</a>
+        </div>
+        <p>&copy; 2026 Genztech. All rights reserved.</p>
+    </footer>
+
+    <script src="js/background-effects.js"></script>
+    <script>
+        // Simple custom cursor script for this page
+        const cursor = document.getElementById('custom-cursor');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor.style.opacity = '1';
+        });
+
+        document.addEventListener('mouseleave', () => {
+            cursor.style.opacity = '0';
+        });
+    </script>
+</body>
+
+</html>

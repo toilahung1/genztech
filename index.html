@@ -1,0 +1,2359 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genztech - Tự Động Hóa Quảng Cáo Facebook</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Genztech - Tự Động Hóa Quảng Cáo Facebook" />
+  <meta property="og:description" content="Nền tảng tự động hóa quảng cáo Facebook hàng đầu với công nghệ AI." />
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <meta name="facebook-domain-verification" content="so8tfqvm6pf9m4ibfgkh4nzflzn2uw" />
+  <style>
+    html,
+    body {
+      scrollbar-width: none !important;
+      /* Firefox */
+      -ms-overflow-style: none !important;
+      /* IE and Edge */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none !important;
+      /* Chrome, Safari, Opera */
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style>
+</head>
+
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+
+  <!-- Multi-Layer Starfield Canvas -->
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <canvas id="constellation-lines" class="fixed inset-0 pointer-events-none z-3"></canvas>
+  <canvas id="data-particles" class="fixed inset-0 pointer-events-none z-4"></canvas>
+
+  <!-- Cosmic Fog / Nebula Gradient Overlay -->
+  <div class="fixed inset-0 pointer-events-none z-5 opacity-30">
+    <div class="cosmic-fog"></div>
+  </div>
+
+  <!-- Noise Texture Overlay -->
+  <div class="fixed inset-0 pointer-events-none z-6 noise-overlay opacity-10"></div>
+
+  <!-- Global SVG Gradients -->
+  <svg width="0" height="0" class="absolute">
+    <defs>
+      <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#00C6FF;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#0072FF;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#9D50BB;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#6E48AA;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#4FACFE;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#00F2FE;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Custom Cursor -->
+  <div id="custom-cursor"
+    class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="Genztech Cursor"
+      class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-space-black/70 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3 text-2xl font-bold tracking-tight glow-text">
+        <img src="images/logo.png" alt="GZ Icon" class="h-8 w-auto rounded-full">
+        GENZTECH <span class="hidden md:inline">PLATFORM</span>
+      </a>
+      <div class="hidden md:flex items-center gap-12 text-sm font-medium text-gray-400">
+        <a href="#facebook-automation" class="hover:text-facebook-blue transition-colors nav-link">Tự Động Hóa</a>
+        <a href="#features" class="hover:text-facebook-blue transition-colors nav-link">Hiệu Suất</a>
+        <a href="privacy-policy.html" class="hover:text-facebook-blue transition-colors nav-link">Chính sách</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="handleFBLogin()"
+          class="hidden md:block cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
+          <span class="relative z-10">Kết nối Facebook</span>
+        </button>
+        <a href="#contact"
+          class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
+          <span class="relative z-10">Liên Hệ Ngay</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <div class="absolute inset-0 hero-gradient"></div>
+
+    <div class="relative z-10 max-w-6xl mx-auto px-6 text-center">
+      <!-- Hero Text -->
+      <h1 class="hero-headline font-black leading-[0.85] tracking-tighter mb-6" style="font-size: 8vw;">
+        <span class="hero-word block glitch-text" data-text="GENZTECH AUTO FACEBOOK">GENZTECH AUTO FACEBOOK</span>
+      </h1>
+
+      <!-- Hero Subtitle -->
+      <p class="text-2xl md:text-4xl font-light tracking-wide mb-8 text-gray-300 hero-subtitle">
+        <span class="inline-block word-reveal">Quảng</span>
+        <span class="inline-block word-reveal" style="animation-delay: 0.1s;">Cáo</span>
+        <span class="inline-block word-reveal text-facebook-blue" style="animation-delay: 0.2s;">Thông</span>
+        <span class="inline-block word-reveal text-facebook-blue" style="animation-delay: 0.3s;">Minh</span>
+      </p>
+
+      <!-- Enhanced Description -->
+      <div class="max-w-3xl mx-auto mb-10 hero-description-block">
+        <p class="text-lg md:text-xl text-gray-400 mb-4 hero-description leading-relaxed">
+          Tối ưu hóa chiến dịch Facebook Ads của bạn với AI và tự động hóa thông minh
+        </p>
+        <p class="text-base md:text-lg text-gray-500 leading-relaxed hero-description-secondary">
+          Nền tảng tự động hóa hàng đầu giúp bạn quản lý quảng cáo 24/7, tăng ROAS lên đến 47%
+          và tiết kiệm 63% thời gian. Không cần kiến thức kỹ thuật, triển khai trong 5 phút.
+        </p>
+      </div>
+
+      <!-- Feature Highlights Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-10 hero-features">
+        <!-- Feature Highlight 1 -->
+        <div
+          class="feature-highlight glass-card-premium p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl transform-gpu transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 mb-3 mx-auto rounded-lg bg-facebook-blue/20 flex items-center justify-center">
+            <svg class="w-6 h-6 drop-shadow-[0_0_8px_rgba(24,119,242,0.8)]" fill="none" stroke="url(#grad-blue)"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+              </path>
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-white mb-1">Tự Động 24/7</p>
+          <p class="text-xs text-gray-500">Không cần giám sát</p>
+        </div>
+
+        <!-- Feature Highlight 2 -->
+        <div
+          class="feature-highlight glass-card-premium p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl transform-gpu transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 mb-3 mx-auto rounded-lg bg-cyan/20 flex items-center justify-center">
+            <svg class="w-6 h-6 drop-shadow-[0_0_8px_rgba(0,242,254,0.8)]" fill="none" stroke="url(#grad-cyan)"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 11-18 0 5 5 0 0118 0z">
+              </path>
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-white mb-1">AI Thông Minh</p>
+          <p class="text-xs text-gray-500">Tối ưu tự động</p>
+        </div>
+
+        <!-- Feature Highlight 3 -->
+        <div
+          class="feature-highlight glass-card-premium p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl transform-gpu transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 mb-3 mx-auto rounded-lg bg-violet/20 flex items-center justify-center">
+            <svg class="w-6 h-6 drop-shadow-[0_0_8px_rgba(157,80,187,0.8)]" fill="none" stroke="url(#grad-purple)"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
+              </path>
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-white mb-1">Tăng ROAS</p>
+          <p class="text-xs text-gray-500">Lên đến 47%</p>
+        </div>
+
+        <!-- Feature Highlight 4 -->
+        <div
+          class="feature-highlight glass-card-premium p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl transform-gpu transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 mb-3 mx-auto rounded-lg bg-facebook-blue/20 flex items-center justify-center">
+            <svg class="w-6 h-6 drop-shadow-[0_0_8px_rgba(24,119,242,0.8)]" fill="none" stroke="url(#grad-blue)"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-white mb-1">Tiết Kiệm</p>
+          <p class="text-xs text-gray-500">63% thời gian</p>
+        </div>
+      </div>
+
+      <!-- Stats Badges -->
+      <div class="flex flex-wrap items-center justify-center gap-6 mb-10 hero-stats">
+        <!-- Users Badge -->
+        <div
+          class="stat-badge glass-card-premium px-6 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-facebook-blue to-cyan flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+              </path>
+            </svg>
+          </div>
+          <div class="text-left">
+            <p class="text-xs text-gray-500">Được cấp phép bởi</p>
+            <p class="text-sm font-bold text-white">App Review Team</p>
+          </div>
+        </div>
+
+        <!-- Rating Badge -->
+        <div
+          class="stat-badge glass-card-premium px-6 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-3">
+          <div class="flex items-center gap-1">
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+              </path>
+            </svg>
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+              </path>
+            </svg>
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+              </path>
+            </svg>
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+              </path>
+            </svg>
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+              </path>
+            </svg>
+          </div>
+          <div class="text-left">
+            <p class="text-sm font-bold text-white">4.9/5</p>
+            <p class="text-xs text-gray-500">Đánh giá</p>
+          </div>
+        </div>
+
+        <!-- Uptime Badge -->
+        <div
+          class="stat-badge glass-card-premium px-6 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="text-left">
+            <p class="text-sm font-bold text-white">99.9%</p>
+            <p class="text-xs text-gray-500">Uptime</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ambient Rings -->
+      <div
+        class="ambient-ring-container absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <div class="ambient-ring"></div>
+        <div class="ambient-ring" style="animation-delay: 1s;"></div>
+        <div class="ambient-ring" style="animation-delay: 2s;"></div>
+      </div>
+
+      <!-- CTA -->
+      <button
+        class="magnetic-cta relative px-12 py-5 bg-facebook-blue rounded-full text-lg font-bold hover:shadow-glow-strong transition-all overflow-hidden animate-shake-slow">
+        <span class="relative z-10">XEM DEMO NGAY</span>
+        <div class="button-shimmer"></div>
+      </button>
+
+      <!-- Trust Indicators -->
+      <div class="flex flex-wrap items-center justify-center gap-8 mt-8 opacity-60 trust-logos">
+        <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Tin tưởng bởi các thương hiệu hàng
+          đầu</span>
+      </div>
+    </div>
+
+
+  </section>
+
+  <!-- Features Showcase -->
+  <section id="features" class="relative py-32 px-6 overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-20">
+        <h2 class="text-5xl md:text-6xl font-black mb-6 glitch-text" data-text="TÍNH NĂNG">TÍNH NĂNG</h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+          Giải pháp tự động hóa toàn diện cho quảng cáo Facebook
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="feature-card group relative">
+          <div class="feature-card-glow"></div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full">
+            <div class="feature-icon-wrapper mb-6">
+              <div class="feature-icon-bg"></div>
+              <svg class="w-12 h-12 text-facebook-blue relative z-10" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 11-18 0 5 5 0 0118 0z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">AI Tối Ưu</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Thuật toán AI phân tích và tối ưu hóa chiến dịch tự động, tăng hiệu suất đến 47%
+            </p>
+            <div class="feature-line"></div>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card group relative">
+          <div class="feature-card-glow"></div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full">
+            <div class="feature-icon-wrapper mb-6">
+              <div class="feature-icon-bg"></div>
+              <svg class="w-12 h-12 text-cyan relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">24/7 Tự Động</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Hoạt động liên tục không cần giám sát, tiết kiệm 63% thời gian quản lý
+            </p>
+            <div class="feature-line"></div>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card group relative">
+          <div class="feature-card-glow"></div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full">
+            <div class="feature-icon-wrapper mb-6">
+              <div class="feature-icon-bg"></div>
+              <svg class="w-12 h-12 text-violet relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Phân Tích Thời Gian Thực</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Dashboard trực quan với dữ liệu real-time và insights chi tiết
+            </p>
+            <div class="feature-line"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating decorative elements -->
+      <div class="floating-orb floating-orb-1"></div>
+      <div class="floating-orb floating-orb-2"></div>
+    </div>
+  </section>
+
+  <!-- Performance Metrics -->
+  <section id="performance" class="relative py-32 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <!-- Metric 1 -->
+        <div class="stat-card-premium group relative">
+          <div class="stat-glow"></div>
+          <div
+            class="glass-card-premium p-8 md:p-12 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="text-[19vw] md:text-[11rem] font-black mb-6 gradient-text-animated whitespace-nowrap">
+              +<span class="stat-number" data-target="25">25</span>%
+            </div>
+            <p class="text-xs md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-350 font-bold">ROAS
+              TĂNG</p>
+            <div class="metric-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Metric 2 -->
+        <div class="stat-card-premium group relative">
+          <div class="stat-glow"></div>
+          <div
+            class="glass-card-premium p-8 md:p-12 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="text-[19vw] md:text-[11rem] font-black mb-6 text-cyan whitespace-nowrap">
+              −<span class="stat-number" data-target="63">63</span>%
+            </div>
+            <p class="text-xs md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 font-bold">THỜI
+              GIAN</p>
+            <div class="metric-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Metric 3 -->
+        <div class="stat-card-premium group relative">
+          <div class="stat-glow"></div>
+          <div
+            class="glass-card-premium p-8 md:p-12 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="text-[19vw] md:text-[11rem] font-black mb-6 gradient-text-animated whitespace-nowrap">
+              <span class="stat-number" data-target="24">24</span>/7
+            </div>
+            <p class="text-xs md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 font-bold">HOẠT
+              ĐỘNG</p>
+            <div class="metric-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section id="benefits" class="relative py-32 px-6 overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <canvas id="benefits-grid" class="w-full h-full"></canvas>
+    </div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="text-center mb-20">
+        <h2 class="text-5xl md:text-6xl font-black mb-6 glitch-text" data-text="LỢI ÍCH">LỢI ÍCH</h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+          Những lý do hàng đầu để chọn AutoScale
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <!-- Benefit 1 -->
+        <div class="benefit-card group">
+          <div
+            class="glass-card-premium p-10 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden">
+            <div class="flex items-start gap-6">
+              <div class="benefit-icon-wrapper flex-shrink-0">
+                <svg class="w-8 h-8 text-facebook-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+                  </path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold mb-3">Nhanh Chóng</h3>
+                <p class="text-gray-400 leading-relaxed">
+                  Triển khai trong 5 phút. Không cần kiến thức kỹ thuật. Bắt đầu tối ưu hóa ngay lập tức với giao diện
+                  thân thiện.
+                </p>
+              </div>
+            </div>
+            <div class="benefit-glow"></div>
+          </div>
+        </div>
+
+        <!-- Benefit 2 -->
+        <div class="benefit-card group">
+          <div
+            class="glass-card-premium p-10 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden">
+            <div class="flex items-start gap-6">
+              <div class="benefit-icon-wrapper flex-shrink-0">
+                <svg class="w-8 h-8 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                  </path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold mb-3">An Toàn</h3>
+                <p class="text-gray-400 leading-relaxed">
+                  Mã hóa dữ liệu cấp ngân hàng. Tuân thủ GDPR. Không lưu trữ thông tin thẻ thanh toán của bạn.
+                </p>
+              </div>
+            </div>
+            <div class="benefit-glow"></div>
+          </div>
+        </div>
+
+        <!-- Benefit 3 -->
+        <div class="benefit-card group">
+          <div
+            class="glass-card-premium p-10 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden">
+            <div class="flex items-start gap-6">
+              <div class="benefit-icon-wrapper flex-shrink-0">
+                <svg class="w-8 h-8 text-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                  </path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold mb-3">Đáng Tin Cậy</h3>
+                <p class="text-gray-400 leading-relaxed">
+                  99.9% uptime. Hỗ trợ 24/7. Hơn 10,000 doanh nghiệp tin tưởng và sử dụng mỗi ngày.
+                </p>
+              </div>
+            </div>
+            <div class="benefit-glow"></div>
+          </div>
+        </div>
+
+        <!-- Benefit 4 -->
+        <div class="benefit-card group">
+          <div
+            class="glass-card-premium p-10 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden">
+            <div class="flex items-start gap-6">
+              <div class="benefit-icon-wrapper flex-shrink-0">
+                <svg class="w-8 h-8 text-facebook-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2m0-8l6 6 4-4m6 6l-6-6-4 4m6 0a9 9 0 11-18 0 9 9 0 0118 0z">
+                  </path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold mb-3">Tiết Kiệm Chi Phí</h3>
+                <p class="text-gray-400 leading-relaxed">
+                  Giảm CPA trung bình 35%. Tăng ROAS lên đến 47%. ROI dương ngay từ tháng đầu tiên.
+                </p>
+              </div>
+            </div>
+            <div class="benefit-glow"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating testimonial decorations -->
+      <div class="testimonial-decoration testimonial-decoration-1"></div>
+      <div class="testimonial-decoration testimonial-decoration-2"></div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="relative py-32 px-6 overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-20">
+        <h2 class="text-5xl md:text-6xl font-black mb-6 glitch-text" data-text="ĐÁNH GIÁ">ĐÁNH GIÁ</h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+          Khách hàng nói gì về chúng tôi
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Testimonial 1 -->
+        <div class="testimonial-card">
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full">
+            <div class="flex items-center gap-1 mb-4">
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-gray-300 mb-6 italic">
+              "ROAS của tôi tăng 52% chỉ sau 3 tuần. AutoScale thật sự thay đổi cách tôi chạy quảng cáo."
+            </p>
+            <div class="flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-full bg-gradient-to-br from-facebook-blue to-cyan flex items-center justify-center text-xl font-bold">
+                N
+              </div>
+              <div>
+                <p class="font-bold">Nguyễn Minh</p>
+                <p class="text-sm text-gray-400">CEO, TechStore</p>
+              </div>
+            </div>
+            <div class="testimonial-quote">"</div>
+          </div>
+        </div>
+
+        <!-- Testimonial 2 -->
+        <div class="testimonial-card">
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full">
+            <div class="flex items-center gap-1 mb-4">
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-gray-300 mb-6 italic">
+              "Tiết kiệm được 70% thời gian quản lý chiến dịch. Giờ tôi có thể tập trung vào chiến lược."
+            </p>
+            <div class="flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan to-violet flex items-center justify-center text-xl font-bold">
+                T
+              </div>
+              <div>
+                <p class="font-bold">Trần Hải</p>
+                <p class="text-sm text-gray-400">Marketing Lead, Fashion Hub</p>
+              </div>
+            </div>
+            <div class="testimonial-quote">"</div>
+          </div>
+        </div>
+
+        <!-- Testimonial 3 -->
+        <div class="testimonial-card">
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full">
+            <div class="flex items-center gap-1 mb-4">
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-gray-300 mb-6 italic">
+              "ROI tăng gấp đôi ngay tháng đầu. Công cụ tuyệt vời cho doanh nghiệp vừa và nhỏ."
+            </p>
+            <div class="flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-full bg-gradient-to-br from-violet to-facebook-blue flex items-center justify-center text-xl font-bold">
+                L
+              </div>
+              <div>
+                <p class="font-bold">Lê Thu</p>
+                <p class="text-sm text-gray-400">Founder, Beauty Line</p>
+              </div>
+            </div>
+            <div class="testimonial-quote">"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating testimonial decorations -->
+      <div class="testimonial-decoration testimonial-decoration-1"></div>
+      <div class="testimonial-decoration testimonial-decoration-2"></div>
+    </div>
+  </section>
+
+  <!-- Automation Flow -->
+  <section class="relative py-32 px-6 overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-20">
+        <h2 class="text-5xl md:text-6xl font-black mb-6 glitch-text" data-text="QUY TRÌNH">QUY TRÌNH</h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+          Bốn bước đơn giản để tự động hóa hoàn toàn
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <!-- Step 1 -->
+        <div class="flow-card group relative">
+          <div class="card-glow"></div>
+          <div class="step-number">01</div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full flex flex-col items-center text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-20 h-20 mb-6 rounded-full bg-facebook-blue/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-10 h-10 text-facebook-blue relative z-10" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">Kết Nối</h3>
+            <p class="text-sm text-gray-400">Liên kết tài khoản Facebook Ads trong 30 giây</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flow-card group relative">
+          <div class="card-glow"></div>
+          <div class="step-number">02</div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full flex flex-col items-center text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-20 h-20 mb-6 rounded-full bg-cyan/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-10 h-10 text-cyan relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">Khởi Chạy</h3>
+            <p class="text-sm text-gray-400">AI phân tích và tạo chiến lược tối ưu tự động</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flow-card group relative">
+          <div class="card-glow"></div>
+          <div class="step-number">03</div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full flex flex-col items-center text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-20 h-20 mb-6 rounded-full bg-violet/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-10 h-10 text-violet relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">Mở Rộng</h3>
+            <p class="text-sm text-gray-400">Tự động scale chiến dịch hiệu quả nhất</p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="flow-card group relative">
+          <div class="card-glow"></div>
+          <div class="step-number">04</div>
+          <div
+            class="glass-card-premium p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full flex flex-col items-center text-center transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-20 h-20 mb-6 rounded-full bg-facebook-blue/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-10 h-10 text-facebook-blue relative z-10" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">Tối Ưu</h3>
+            <p class="text-sm text-gray-400">Điều chỉnh liên tục để đạt ROI tối đa</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connection lines between steps -->
+      <div
+        class="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-facebook-blue to-transparent opacity-30 -translate-y-1/2 pointer-events-none">
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- GenZtech Platform Features -->
+  <section id="facebook-automation"
+    class="relative pt-20 pb-40 px-6 overflow-hidden bg-gradient-to-b from-space-black via-space-black/90 to-space-black">
+    <div class="absolute inset-0 opacity-20">
+      <canvas id="genztech-grid" class="w-full h-full"></canvas>
+    </div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="text-center mb-16">
+        <div class="inline-block mb-6 px-6 py-2 rounded-full bg-facebook-blue/10 border border-facebook-blue/20">
+          <span class="text-facebook-blue text-sm font-bold tracking-widest uppercase">GenZtech Platform</span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-black mb-6 glitch-text" data-text="TỰ ĐỘNG HÓA FACEBOOK">TỰ ĐỘNG HÓA
+          FACEBOOK</h2>
+        <p class="text-lg md:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+          Genztech là nền tảng tự động hoá Facebook giúp bạn <span class="text-facebook-blue font-bold">kiểm tra vi phạm
+            nội dung</span>,
+          <span class="text-cyan font-bold">cảnh báo tài khoản die</span>,
+          <span class="text-violet font-bold">auto đăng bài</span> và
+          <span class="text-facebook-blue font-bold">quản lý chi tiêu quảng cáo</span> theo thời gian thực —
+          tất cả trong một hệ thống thông minh, không cần thao tác thủ công.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <!-- Feature 1: Content Violation Check -->
+        <div class="genztech-card group relative">
+          <div class="genztech-card-glow"></div>
+          <div
+            class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-14 h-14 mb-4 rounded-xl bg-facebook-blue/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-7 h-7 text-facebook-blue relative z-10" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-white">Kiểm Tra Vi Phạm</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Tự động quét và phát hiện nội dung vi phạm chính sách Facebook trước khi đăng
+            </p>
+          </div>
+        </div>
+
+        <!-- Feature 2: Account Warning -->
+        <div class="genztech-card group relative">
+          <div class="genztech-card-glow"></div>
+          <div
+            class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-14 h-14 mb-4 rounded-xl bg-cyan/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-7 h-7 text-cyan relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6 2a2 2 0 002-2h2a2 2 0 002 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-white">Cảnh Báo Tài Khoản</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Theo dõi và cảnh báo sớm khi tài khoản có nguy cơ bị khóa hoặc hạn chế
+            </p>
+          </div>
+        </div>
+
+        <!-- Feature 3: Auto Post -->
+        <div class="genztech-card group relative">
+          <div class="genztech-card-glow"></div>
+          <div
+            class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-14 h-14 mb-4 rounded-xl bg-violet/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-7 h-7 text-violet relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-white">Auto Đăng Bài</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Lên lịch và tự động đăng nội dung theo thời gian tối ưu nhất
+            </p>
+          </div>
+        </div>
+
+        <!-- Feature 4: Ad Spend Management -->
+        <div class="genztech-card group relative">
+          <div class="genztech-card-glow"></div>
+          <div
+            class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden h-full transform-gpu transition-all duration-500 hover:scale-105">
+            <div class="w-14 h-14 mb-4 rounded-xl bg-facebook-blue/20 flex items-center justify-center relative">
+              <div class="icon-pulse"></div>
+              <svg class="w-7 h-7 text-facebook-blue relative z-10" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-white">Quản lý Chi Tiêu</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Theo dõi chi tiêu quảng cáo thời gian thực và tối ưu hóa ngân sách
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact"
+    class="relative py-32 px-6 overflow-hidden bg-gradient-to-b from-space-black via-space-black/95 to-space-black">
+    <div class="absolute inset-0 opacity-10">
+      <canvas id="contact-grid" class="w-full h-full"></canvas>
+    </div>
+
+    <div class="max-w-4xl mx-auto relative z-10">
+      <div class="text-center mb-16">
+        <div class="inline-block mb-6 px-6 py-2 rounded-full bg-facebook-blue/10 border border-facebook-blue/20">
+          <span class="text-facebook-blue text-sm font-bold tracking-widest uppercase">Liên hệ với chúng tôi</span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-black mb-6 glitch-text" data-text="LIÊN HỆ">LIÊN HỆ</h2>
+        <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          Hãy để lại thông tin và chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất
+        </p>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="contact-form-wrapper">
+        <div
+          class="glass-card-premium p-10 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl relative overflow-hidden">
+          <!-- Decorative elements -->
+          <div class="absolute top-0 right-0 w-40 h-40 bg-facebook-blue/10 rounded-full blur-3xl"></div>
+          <div class="absolute bottom-0 left-0 w-40 h-40 bg-cyan/10 rounded-full blur-3xl"></div>
+
+          <form id="mainContactForm" class="space-y-6 relative z-10">
+            <!-- Content/Message Input -->
+            <div class="form-group">
+              <label for="message" class="block text-sm font-semibold text-gray-300 mb-2">
+                Nội dung <span class="text-facebook-blue">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute top-4 left-4 pointer-events-none">
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                    </path>
+                  </svg>
+                </div>
+                <textarea id="message" name="message" rows="5" required placeholder="Nhập nội dung tin nhắn của bạn..."
+                  class="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-facebook-blue focus:border-transparent transition-all resize-none"></textarea>
+              </div>
+            </div>
+
+            <!-- Email Input -->
+            <div class="form-group">
+              <label for="contact-email" class="block text-sm font-semibold text-gray-300 mb-2">
+                Email <span class="text-facebook-blue">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                    </path>
+                  </svg>
+                </div>
+                <input type="email" id="contact-email" name="email" required placeholder="Nhập địa chỉ email của bạn"
+                  class="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-facebook-blue focus:border-transparent transition-all">
+              </div>
+            </div>
+
+            <!-- Phone Input -->
+            <div class="form-group">
+              <label for="contact-phone" class="block text-sm font-semibold text-gray-300 mb-2">
+                Số điện thoại <span class="text-facebook-blue">*</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                  </svg>
+                </div>
+                <input type="tel" id="contact-phone" name="phone" required placeholder="Nhập số điện thoại của bạn"
+                  class="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-facebook-blue focus:border-transparent transition-all">
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit"
+              class="w-full px-8 py-5 bg-facebook-blue rounded-xl text-lg font-bold hover:shadow-glow-strong transition-all overflow-hidden relative group">
+              <span class="relative z-10 flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+                GỬI THÔNG TIN
+              </span>
+              <div class="button-shimmer"></div>
+            </button>
+
+            <!-- Form Footer -->
+            <p class="text-center text-sm text-gray-500 mt-6">
+              Chúng tôi cam kết bảo mật thông tin của bạn và sẽ phản hồi trong vòng 24 giờ
+            </p>
+          </form>
+
+          <!-- Success Message (Hidden by default) -->
+          <div id="successMessage" class="hidden">
+            <div class="text-center py-12">
+              <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold mb-3 text-white">Gửi thành công!</h3>
+              <p class="text-gray-400 mb-6">Cảm ơn bạn! Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.</p>
+              <button id="resetFormBtn"
+                class="px-8 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-semibold transition-all">
+                Gửi tin nhắn khác
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <!-- Email Card -->
+        <div
+          class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl text-center hover:scale-105 transition-all duration-300">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-facebook-blue/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-facebook-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+              </path>
+            </svg>
+          </div>
+          <h4 class="font-bold text-white mb-2">Email</h4>
+          <p class="text-sm text-gray-400">lienhe@genztechcorp.com</p>
+        </div>
+
+        <!-- Phone Card -->
+        <div
+          class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl text-center hover:scale-105 transition-all duration-300">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-cyan/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+              </path>
+            </svg>
+          </div>
+          <h4 class="font-bold text-white mb-2">Hotline</h4>
+          <p class="text-sm text-gray-400">+84346727045</p>
+        </div>
+
+        <!-- Address Card -->
+        <div
+          class="glass-card-premium p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl text-center hover:scale-105 transition-all duration-300">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-violet/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <h4 class="font-bold text-white mb-2">Địa chỉ</h4>
+          <p class="text-sm text-gray-400">Hà Nội, Việt Nam</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JavaScript Animation Optimization and Mobile Support -->
+  <script>
+    // ==================== DEVICE DETECTION ====================
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // ==================== MULTI-LAYER STARFIELD WITH MOBILE OPTIMIZATION ====================
+    const canvasFar = document.getElementById('starfield-far');
+    const canvasMid = document.getElementById('starfield-mid');
+    const canvasNear = document.getElementById('starfield-near');
+    const ctxFar = canvasFar.getContext('2d');
+    const ctxMid = canvasMid.getContext('2d');
+    const ctxNear = canvasNear.getContext('2d');
+
+    function resizeCanvases() {
+      [canvasFar, canvasMid, canvasNear].forEach(canvas => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+    }
+    resizeCanvases();
+    window.addEventListener('resize', resizeCanvases);
+
+    // Reduce particle count on mobile for better performance
+    const starCountMultiplier = isMobile ? 0.5 : 1;
+
+    // Far layer stars - tiny static
+    const starsFar = [];
+    for (let i = 0; i < Math.floor(200 * starCountMultiplier); i++) {
+      starsFar.push({
+        x: Math.random() * canvasFar.width,
+        y: Math.random() * canvasFar.height,
+        radius: Math.random() * 0.8 + 0.2,
+        opacity: Math.random() * 0.3 + 0.2
+      });
+    }
+
+    // Mid layer stars - slow drift
+    const starsMid = [];
+    for (let i = 0; i < Math.floor(100 * starCountMultiplier); i++) {
+      starsMid.push({
+        x: Math.random() * canvasMid.width,
+        y: Math.random() * canvasMid.height,
+        radius: Math.random() * 1.2 + 0.5,
+        vx: (Math.random() - 0.5) * (isMobile ? 0.1 : 0.2),
+        vy: (Math.random() - 0.5) * (isMobile ? 0.1 : 0.2),
+        opacity: Math.random() * 0.5 + 0.3
+      });
+    }
+
+    // Near layer stars - glowing particles
+    const starsNear = [];
+    for (let i = 0; i < Math.floor(50 * starCountMultiplier); i++) {
+      starsNear.push({
+        x: Math.random() * canvasNear.width,
+        y: Math.random() * canvasNear.height,
+        radius: Math.random() * 1.8 + 0.8,
+        vx: (Math.random() - 0.5) * (isMobile ? 0.2 : 0.4),
+        vy: (Math.random() - 0.5) * (isMobile ? 0.2 : 0.4),
+        opacity: Math.random() * 0.7 + 0.3,
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    // Shooting Stars (Comets)
+    const shootingStars = [];
+    const shootingStarInterval = 800; // More frequent spawns
+    let lastShootingStarTime = 0;
+
+    class ShootingStar {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvasFar.width;
+        this.y = Math.random() * canvasFar.height * 0.5; // Start in top half
+        this.length = Math.random() * 200 + 100; // Longer tail
+        this.speed = Math.random() * 2 + 1; // Much slower speed (prevent dizziness)
+        this.size = Math.random() * 2 + 1.5; // Bigger size
+        // Shoot diagonally down-right or down-left
+        this.dirX = 1;
+        this.dirY = 1;
+        if (Math.random() < 0.5) {
+          this.x = -100; // Start further left to avoid pop-in
+          this.dirX = 1;
+        } else {
+          this.x = canvasFar.width + 100; // Start further right
+          this.dirX = -1;
+        }
+
+        this.vx = this.dirX * this.speed;
+        this.vy = this.dirY * this.speed * 0.5; // Flatter angle
+
+        this.opacity = 0;
+        this.life = 0;
+        this.maxLife = 200; // Live longer
+        this.active = true;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life++;
+
+        // Fade in then out
+        if (this.life < 20) {
+          this.opacity = this.life / 20;
+        } else if (this.life > this.maxLife - 40) {
+          this.opacity = (this.maxLife - this.life) / 40;
+        } else {
+          this.opacity = 1;
+        }
+
+        if (this.life >= this.maxLife ||
+          this.x < -300 || this.x > canvasFar.width + 300 ||
+          this.y > canvasFar.height + 300) {
+          this.active = false;
+        }
+      }
+
+      draw(ctx) {
+        if (!this.active) return;
+
+        const tailX = this.x - this.vx * (this.length / this.speed);
+        const tailY = this.y - this.vy * (this.length / this.speed);
+
+        const gradient = ctx.createLinearGradient(this.x, this.y, tailX, tailY);
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${this.opacity})`);
+        gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = this.size;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(tailX, tailY);
+        ctx.stroke();
+
+        // Glowing head
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Blueish tint glow
+        ctx.fillStyle = `rgba(100, 200, 255, ${this.opacity * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function animateStarfield() {
+      // Far layer (static)
+      ctxFar.clearRect(0, 0, canvasFar.width, canvasFar.height);
+      starsFar.forEach(star => {
+        ctxFar.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+        ctxFar.beginPath();
+        ctxFar.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctxFar.fill();
+      });
+
+      // Spawn Shooting Stars
+      const now = Date.now();
+      if (now - lastShootingStarTime > (Math.random() * 1000 + 500)) {
+        if (shootingStars.length < 8) { // Max 8 at a time
+          shootingStars.push(new ShootingStar());
+          lastShootingStarTime = now;
+        }
+      }
+
+      // Update and Draw Shooting Stars (on Far layer for depth, or Mid)
+      // Let's use Mid layer ctxMid to be behind Near stars but visible
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const ss = shootingStars[i];
+        ss.update();
+        ss.draw(ctxMid);
+        if (!ss.active) {
+          shootingStars.splice(i, 1);
+        }
+      }
+
+      // Mid layer (drifting)
+      // ctxMid.clearRect(0, 0, canvasMid.width, canvasMid.height); // ALREADY CLEARED ABOVE IF I MOVE IT
+      // Wait, I need to clear ctxMid inside this loop or before?
+      // Re-organizing loop:
+      // 1. Clear Far, Draw Far
+      // 2. Clear Mid, Draw Shooting Stars, Draw Mid Stars
+
+      ctxMid.clearRect(0, 0, canvasMid.width, canvasMid.height);
+
+      // Draw Shooting Stars (behind mid stars or mixed?)
+      shootingStars.forEach(ss => ss.draw(ctxMid));
+
+      starsMid.forEach(star => {
+        star.x += star.vx;
+        star.y += star.vy;
+        if (star.x < 0) star.x = canvasMid.width;
+        if (star.x > canvasMid.width) star.x = 0;
+        if (star.y < 0) star.y = canvasMid.height;
+        if (star.y > canvasMid.height) star.y = 0;
+
+        ctxMid.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+        ctxMid.beginPath();
+        ctxMid.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctxMid.fill();
+      });
+
+      // Near layer (glowing) - Simplified on mobile
+      ctxNear.clearRect(0, 0, canvasNear.width, canvasNear.height);
+      starsNear.forEach(star => {
+        star.x += star.vx;
+        star.y += star.vy;
+        star.pulse += (isMobile ? 0.01 : 0.02);
+
+        if (star.x < 0) star.x = canvasNear.width;
+        if (star.x > canvasNear.width) star.x = 0;
+        if (star.y < 0) star.y = canvasNear.height;
+        if (star.y > canvasNear.height) star.y = 0;
+
+        const pulseOpacity = star.opacity * (0.7 + Math.sin(star.pulse) * 0.3);
+
+        if (isMobile) {
+          // Simple dot on mobile
+          ctxNear.fillStyle = `rgba(24, 119, 242, ${pulseOpacity})`;
+          ctxNear.beginPath();
+          ctxNear.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+          ctxNear.fill();
+        } else {
+          // Glow effect on desktop
+          const gradient = ctxNear.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.radius * 3);
+          gradient.addColorStop(0, `rgba(24, 119, 242, ${pulseOpacity})`);
+          gradient.addColorStop(0.5, `rgba(0, 212, 255, ${pulseOpacity * 0.5})`);
+          gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
+
+          ctxNear.fillStyle = gradient;
+          ctxNear.beginPath();
+          ctxNear.arc(star.x, star.y, star.radius * 3, 0, Math.PI * 2);
+          ctxNear.fill();
+        }
+      });
+
+      requestAnimationFrame(animateStarfield);
+    }
+    animateStarfield();
+
+    // ==================== CONSTELLATION LINES WITH MOBILE OPTIMIZATION ====================
+    const canvasConstellation = document.getElementById('constellation-lines');
+    const ctxConstellation = canvasConstellation.getContext('2d');
+    canvasConstellation.width = window.innerWidth;
+    canvasConstellation.height = window.innerHeight;
+
+    let constellationPoints = [];
+    let scrollVelocity = 0;
+    let lastScrollY = 0;
+
+    function initConstellationPoints() {
+      constellationPoints = [];
+      const pointCount = isMobile ? 8 : 15;
+      for (let i = 0; i < pointCount; i++) {
+        constellationPoints.push({
+          x: Math.random() * canvasConstellation.width,
+          y: Math.random() * canvasConstellation.height,
+          connections: []
+        });
+      }
+
+      // Create connections
+      constellationPoints.forEach((point, i) => {
+        const numConnections = Math.floor(Math.random() * 2) + 1;
+        for (let j = 0; j < numConnections; j++) {
+          const targetIndex = Math.floor(Math.random() * constellationPoints.length);
+          if (targetIndex !== i && !point.connections.includes(targetIndex)) {
+            point.connections.push(targetIndex);
+          }
+        }
+      });
+    }
+    initConstellationPoints();
+
+    let constellationOpacity = 0;
+    function animateConstellation() {
+      if (isMobile) {
+        // Disable constellation animation on mobile
+        return;
+      }
+
+      ctxConstellation.clearRect(0, 0, canvasConstellation.width, canvasConstellation.height);
+
+      // Update opacity based on scroll velocity
+      if (Math.abs(scrollVelocity) > 5) {
+        constellationOpacity = Math.min(constellationOpacity + 0.02, 0.3);
+      } else {
+        constellationOpacity = Math.max(constellationOpacity - 0.01, 0);
+      }
+
+      if (constellationOpacity > 0) {
+        constellationPoints.forEach((point, i) => {
+          point.connections.forEach(targetIndex => {
+            const target = constellationPoints[targetIndex];
+            const gradient = ctxConstellation.createLinearGradient(point.x, point.y, target.x, target.y);
+            gradient.addColorStop(0, `rgba(24, 119, 242, ${constellationOpacity})`);
+            gradient.addColorStop(0.5, `rgba(0, 212, 255, ${constellationOpacity * 0.7})`);
+            gradient.addColorStop(1, `rgba(138, 43, 226, ${constellationOpacity * 0.5})`);
+
+            ctxConstellation.strokeStyle = gradient;
+            ctxConstellation.lineWidth = 1;
+            ctxConstellation.beginPath();
+            ctxConstellation.moveTo(point.x, point.y);
+            ctxConstellation.lineTo(target.x, target.y);
+            ctxConstellation.stroke();
+          });
+        });
+      }
+
+      requestAnimationFrame(animateConstellation);
+    }
+    if (!isMobile) {
+      animateConstellation();
+    }
+
+    // Track scroll velocity
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      scrollVelocity = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+    });
+
+    // ==================== DATA PARTICLES WITH MOBILE OPTIMIZATION ====================
+    const canvasData = document.getElementById('data-particles');
+    const ctxData = canvasData.getContext('2d');
+    canvasData.width = window.innerWidth;
+    canvasData.height = window.innerHeight;
+
+    const dataParticles = [];
+    const particleCount = isMobile ? 15 : 30;
+    for (let i = 0; i < particleCount; i++) {
+      dataParticles.push({
+        x: Math.random() * canvasData.width,
+        y: Math.random() * canvasData.height,
+        radius: Math.random() * 2 + 1,
+        path: {
+          centerX: Math.random() * canvasData.width,
+          centerY: Math.random() * canvasData.height,
+          radiusX: Math.random() * (isMobile ? 50 : 100) + (isMobile ? 25 : 50),
+          radiusY: Math.random() * (isMobile ? 50 : 100) + (isMobile ? 25 : 50),
+          angle: Math.random() * Math.PI * 2,
+          speed: Math.random() * (isMobile ? 0.005 : 0.01) + (isMobile ? 0.003 : 0.005)
+        },
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.02 + 0.01
+      });
+    }
+
+    function animateDataParticles() {
+      ctxData.clearRect(0, 0, canvasData.width, canvasData.height);
+
+      dataParticles.forEach(particle => {
+        // Move along curved path
+        particle.path.angle += particle.path.speed;
+        particle.x = particle.path.centerX + Math.cos(particle.path.angle) * particle.path.radiusX;
+        particle.y = particle.path.centerY + Math.sin(particle.path.angle) * particle.path.radiusY;
+
+        // Pulse effect
+        particle.pulse += particle.pulseSpeed;
+        const pulseScale = 1 + Math.sin(particle.pulse) * 0.5;
+
+        if (isMobile) {
+          // Simple particle on mobile
+          ctxData.fillStyle = `rgba(24, 119, 242, ${0.6 * pulseScale})`;
+          ctxData.beginPath();
+          ctxData.arc(particle.x, particle.y, particle.radius * pulseScale, 0, Math.PI * 2);
+          ctxData.fill();
+        } else {
+          // Glow effect on desktop
+          const gradient = ctxData.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, particle.radius * pulseScale * 3
+          );
+          gradient.addColorStop(0, `rgba(24, 119, 242, ${0.8 * pulseScale})`);
+          gradient.addColorStop(0.5, `rgba(0, 212, 255, ${0.4 * pulseScale})`);
+          gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
+
+          ctxData.fillStyle = gradient;
+          ctxData.beginPath();
+          ctxData.arc(particle.x, particle.y, particle.radius * pulseScale * 3, 0, Math.PI * 2);
+          ctxData.fill();
+        }
+      });
+
+      requestAnimationFrame(animateDataParticles);
+    }
+    animateDataParticles();
+
+
+
+    // ==================== BENEFITS GRID CANVAS ====================
+    const benefitsCanvas = document.getElementById('benefits-grid');
+    if (benefitsCanvas) {
+      const ctxBenefits = benefitsCanvas.getContext('2d');
+
+      function resizeBenefitsCanvas() {
+        benefitsCanvas.width = benefitsCanvas.offsetWidth;
+        benefitsCanvas.height = benefitsCanvas.offsetHeight;
+      }
+      resizeBenefitsCanvas();
+      window.addEventListener('resize', resizeBenefitsCanvas);
+
+      function animateBenefitsGrid() {
+        ctxBenefits.clearRect(0, 0, benefitsCanvas.width, benefitsCanvas.height);
+
+        const time = Date.now() * 0.001;
+        const spacing = isMobile ? 50 : 40;
+
+        for (let x = 0; x < benefitsCanvas.width; x += spacing) {
+          for (let y = 0; y < benefitsCanvas.height; y += spacing) {
+            const opacity = Math.sin(x * 0.01 + time) * Math.cos(y * 0.01 + time) * 0.3 + 0.2;
+            ctxBenefits.fillStyle = `rgba(24, 119, 242, ${opacity})`;
+            ctxBenefits.fillRect(x, y, 2, 2);
+          }
+        }
+
+        requestAnimationFrame(animateBenefitsGrid);
+      }
+      animateBenefitsGrid();
+    }
+
+    // ==================== GENZTECH GRID CANVAS ====================
+    const genztechCanvas = document.getElementById('genztech-grid');
+    if (genztechCanvas) {
+      const ctxGenztech = genztechCanvas.getContext('2d');
+
+      function resizeGenztechCanvas() {
+        genztechCanvas.width = genztechCanvas.offsetWidth;
+        genztechCanvas.height = genztechCanvas.offsetHeight;
+      }
+      resizeGenztechCanvas();
+      window.addEventListener('resize', resizeGenztechCanvas);
+
+      function animateGenztechGrid() {
+        ctxGenztech.clearRect(0, 0, genztechCanvas.width, genztechCanvas.height);
+
+        const time = Date.now() * 0.0005;
+        const spacing = isMobile ? 60 : 50;
+
+        for (let x = 0; x < genztechCanvas.width; x += spacing) {
+          for (let y = 0; y < genztechCanvas.height; y += spacing) {
+            const opacity = Math.sin(x * 0.02 + time) * Math.cos(y * 0.02 + time) * 0.4 + 0.3;
+            const size = Math.sin(x * 0.01 + y * 0.01 + time) * 2 + 3;
+
+            const gradient = ctxGenztech.createRadialGradient(x, y, 0, x, y, size * 2);
+            gradient.addColorStop(0, `rgba(24, 119, 242, ${opacity})`);
+            gradient.addColorStop(1, 'rgba(24, 119, 242, 0)');
+
+            ctxGenztech.fillStyle = gradient;
+            ctxGenztech.beginPath();
+            ctxGenztech.arc(x, y, size * 2, 0, Math.PI * 2);
+            ctxGenztech.fill();
+          }
+        }
+
+        requestAnimationFrame(animateGenztechGrid);
+      }
+      animateGenztechGrid();
+    }
+
+    // ==================== CONTACT GRID CANVAS ====================
+    const contactCanvas = document.getElementById('contact-grid');
+    if (contactCanvas) {
+      const ctxContact = contactCanvas.getContext('2d');
+
+      function resizeContactCanvas() {
+        contactCanvas.width = contactCanvas.offsetWidth;
+        contactCanvas.height = contactCanvas.offsetHeight;
+      }
+      resizeContactCanvas();
+      window.addEventListener('resize', resizeContactCanvas);
+
+      function animateContactGrid() {
+        ctxContact.clearRect(0, 0, contactCanvas.width, contactCanvas.height);
+
+        const time = Date.now() * 0.0008;
+        const spacing = isMobile ? 55 : 45;
+
+        for (let x = 0; x < contactCanvas.width; x += spacing) {
+          for (let y = 0; y < contactCanvas.height; y += spacing) {
+            const opacity = Math.sin(x * 0.015 + time) * Math.cos(y * 0.015 + time) * 0.35 + 0.25;
+            const size = Math.sin(x * 0.012 + y * 0.012 + time) * 2.5 + 3.5;
+
+            const gradient = ctxContact.createRadialGradient(x, y, 0, x, y, size * 2);
+            gradient.addColorStop(0, `rgba(24, 119, 242, ${opacity})`);
+            gradient.addColorStop(1, 'rgba(24, 119, 242, 0)');
+
+            ctxContact.fillStyle = gradient;
+            ctxContact.beginPath();
+            ctxContact.arc(x, y, size * 2, 0, Math.PI * 2);
+            ctxContact.fill();
+          }
+        }
+
+        requestAnimationFrame(animateContactGrid);
+      }
+      animateContactGrid();
+    }
+
+    // ==================== GENZTECH LOGO CUSTOM CURSOR ====================
+    const cursor = document.getElementById('custom-cursor');
+
+    // Force enable custom cursor for debugging
+    if (cursor) {
+      console.log('Initializing custom cursor...');
+
+      // Initial setup - Vanilla JS
+      cursor.style.transform = 'translate(-50%, -50%)';
+      cursor.style.opacity = '0';
+
+      // Cursor state
+      let mouseX = 0, mouseY = 0;
+      let cursorX = 0, cursorY = 0;
+      let isMouseMoving = false;
+      let isHovering = false;
+      let isClicking = false;
+      let animationFrameId = null;
+
+      // Hide default cursor IMMEDIATELY
+      document.body.style.cursor = 'none';
+
+      // Mouse event handlers
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        if (!isMouseMoving) {
+          isMouseMoving = true;
+          // Show cursor on first move
+          cursor.style.opacity = '1';
+        }
+      });
+
+      document.addEventListener('mouseleave', () => {
+        isMouseMoving = false;
+        cursor.style.opacity = '0';
+        document.body.style.cursor = 'auto';
+      });
+
+      document.addEventListener('mouseenter', () => {
+        // cursor.style.opacity = '1'; // Let mousemove handle it
+        // document.body.style.cursor = 'none';
+      });
+
+      document.addEventListener('mousedown', () => {
+        isClicking = true;
+        if (typeof gsap !== 'undefined') {
+          gsap.to(cursor, { scale: 0.85, duration: 0.15, ease: 'power2.out' });
+        } else {
+          cursor.style.transform = 'translate(-50%, -50%) scale(0.85)';
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        isClicking = false;
+        const scale = isHovering ? 1.2 : 1;
+        if (typeof gsap !== 'undefined') {
+          gsap.to(cursor, { scale: scale, duration: 0.2, ease: 'power2.out' });
+        } else {
+          cursor.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        }
+      });
+
+      // Smooth cursor following animation - Vanilla JS
+      function animateCursor() {
+        if (isMouseMoving) {
+          // Smooth easing
+          const easing = 0.15;
+          cursorX += (mouseX - cursorX) * easing;
+          cursorY += (mouseY - cursorY) * easing;
+
+          // Update position
+          cursor.style.left = `${cursorX}px`;
+          cursor.style.top = `${cursorY}px`;
+        }
+        animationFrameId = requestAnimationFrame(animateCursor);
+      }
+
+      // Start cursor animation
+      animateCursor();
+
+      // Hover effects for interactive elements
+      const interactiveElements = document.querySelectorAll(
+        'a, button, input, textarea, select, ' +
+        '.cta-button, .magnetic-cta, .magnetic-cta-large, ' +
+        '.feature-card, .benefit-card, .testimonial-card, ' +
+        '.flow-card, .stat-card-premium, .genztech-card, ' +
+        '.feature-highlight, .stat-badge'
+      );
+
+      interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          isHovering = true;
+          if (!isClicking) {
+            gsap.to(cursor, {
+              scale: 1.2,
+              duration: 0.3,
+              ease: 'back.out(1.7)'
+            });
+          }
+        });
+
+        el.addEventListener('mouseleave', () => {
+          isHovering = false;
+          if (!isClicking) {
+            gsap.to(cursor, {
+              scale: 1,
+              duration: 0.3,
+              ease: 'power2.out'
+            });
+          }
+        });
+      });
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      });
+    } else {
+      // On mobile/touch devices, hide custom cursor
+      if (cursor) {
+        cursor.style.display = 'none';
+      }
+      document.body.style.cursor = 'auto';
+    }
+
+    // ==================== PARALLAX EFFECTS - DISABLED ON MOBILE ====================
+    if (!isMobile) {
+      let mouseParallaxX = 0, mouseParallaxY = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseParallaxX = (e.clientX / window.innerWidth - 0.5) * 20;
+        mouseParallaxY = (e.clientY / window.innerHeight - 0.5) * 20;
+
+        // Apply parallax to star layers
+        canvasFar.style.transform = `translate(${mouseParallaxX * 0.3}px, ${mouseParallaxY * 0.3}px)`;
+        canvasMid.style.transform = `translate(${mouseParallaxX * 0.6}px, ${mouseParallaxY * 0.6}px)`;
+        canvasNear.style.transform = `translate(${mouseParallaxX}px, ${mouseParallaxY}px)`;
+
+        // Apply subtle parallax to hero text
+        const heroHeadline = document.querySelector('.hero-headline');
+        if (heroHeadline) {
+          heroHeadline.style.transform = `translate(${mouseParallaxX * 0.5}px, ${mouseParallaxY * 0.5}px)`;
+        }
+      });
+    }
+
+    // ==================== CONTACT MODAL FUNCTIONALITY ====================
+    const contactModal = document.getElementById('contactModal');
+    const openContactFormBtn = document.getElementById('openContactForm');
+    const closeModalBtn = document.getElementById('closeModal');
+    const contactForm = document.getElementById('contactForm');
+    const navCtaButton = document.querySelector('nav .cta-button');
+    const heroCtaButton = document.querySelector('#hero .magnetic-cta');
+    const finalCtaButton = document.querySelector('section:has(.magnetic-cta-large) .magnetic-cta-large');
+
+    // Function to open modal
+    function openModal() {
+      if (contactModal) {
+        contactModal.classList.remove('pointer-events-none', 'opacity-0');
+        contactModal.classList.add('pointer-events-auto', 'opacity-100');
+        document.body.style.overflow = 'hidden';
+
+        // Animate modal content
+        const modalContent = contactModal.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.style.transform = 'scale(1)';
+        }
+      }
+    }
+
+    // Function to close modal
+    function closeModal() {
+      if (contactModal) {
+        const modalContent = contactModal.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.style.transform = 'scale(0.9)';
+        }
+
+        setTimeout(() => {
+          contactModal.classList.add('pointer-events-none', 'opacity-0');
+          contactModal.classList.remove('pointer-events-auto', 'opacity-100');
+          document.body.style.overflow = 'auto';
+        }, 200);
+      }
+    }
+
+    // Event listeners for opening modal
+    if (openContactFormBtn) {
+      openContactFormBtn.addEventListener('click', openModal);
+    }
+    if (navCtaButton) {
+      navCtaButton.addEventListener('click', openModal);
+    }
+    if (heroCtaButton) {
+      heroCtaButton.addEventListener('click', openModal);
+    }
+    if (finalCtaButton) {
+      finalCtaButton.addEventListener('click', openModal);
+    }
+
+    // Event listener for closing modal
+    if (closeModalBtn) {
+      closeModalBtn.addEventListener('click', closeModal);
+    }
+
+    // Close modal when clicking backdrop
+    if (contactModal) {
+      contactModal.addEventListener('click', (e) => {
+        if (e.target === contactModal || e.target.classList.contains('modal-backdrop')) {
+          closeModal();
+        }
+      });
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && contactModal && !contactModal.classList.contains('pointer-events-none')) {
+        closeModal();
+      }
+    });
+
+    // Handle form submission
+    if (contactForm) {
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const phone = document.getElementById('phone') ? document.getElementById('phone').value : '';
+        const email = document.getElementById('email') ? document.getElementById('email').value : '';
+
+        // Here you would typically send the data to your backend
+        console.log('Form submitted:', { phone, email });
+
+        // Show success message (you can customize this)
+        alert('Cảm ơn bạn! Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.');
+
+        // Reset form and close modal
+        contactForm.reset();
+        closeModal();
+      });
+    }
+
+    // ==================== MAIN CONTACT FORM HANDLER ====================
+    const mainContactForm = document.getElementById('mainContactForm');
+    const successMessage = document.getElementById('successMessage');
+    const resetFormBtn = document.getElementById('resetFormBtn');
+
+    if (mainContactForm) {
+      mainContactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const message = document.getElementById('message') ? document.getElementById('message').value : '';
+        const contactEmail = document.getElementById('contact-email') ? document.getElementById('contact-email').value : '';
+        const contactPhone = document.getElementById('contact-phone') ? document.getElementById('contact-phone').value : '';
+
+        // Here you would typically send the data to your backend
+        console.log('Contact form submitted:', { message, email: contactEmail, phone: contactPhone });
+
+        // Hide form and show success message
+        mainContactForm.style.display = 'none';
+        if (successMessage) {
+          successMessage.classList.remove('hidden');
+
+          // Scroll to success message
+          successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+
+    // Reset form button
+    if (resetFormBtn) {
+      resetFormBtn.addEventListener('click', () => {
+        if (mainContactForm) {
+          mainContactForm.reset();
+          mainContactForm.style.display = 'block';
+        }
+        if (successMessage) {
+          successMessage.classList.add('hidden');
+        }
+
+        // Scroll back to form
+        if (mainContactForm) {
+          mainContactForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
+
+    // ==================== GSAP ANIMATIONS ====================
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Hero subtitle word reveal
+    gsap.to('.word-reveal', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.1,
+      ease: 'power3.out'
+    });
+
+    // Hero description fade in
+    gsap.to('.hero-description', {
+      opacity: 1,
+      y: 0,
+      duration: 1,
+      delay: 0.6,
+      ease: 'power3.out'
+    });
+
+    // Hero description secondary fade in
+    gsap.to('.hero-description-secondary', {
+      opacity: 1,
+      y: 0,
+      duration: 1,
+      delay: 0.8,
+      ease: 'power3.out'
+    });
+
+    // Feature highlights stagger animation
+    gsap.from('.feature-highlight', {
+      opacity: 0,
+      y: 30,
+      scale: 0.9,
+      duration: 0.6,
+      stagger: 0.1,
+      delay: 1,
+      ease: 'back.out(1.7)'
+    });
+
+    // Stats badges animation
+    gsap.from('.stat-badge', {
+      opacity: 0,
+      scale: 0.8,
+      duration: 0.6,
+      stagger: 0.15,
+      delay: 1.4,
+      ease: 'back.out(1.7)'
+    });
+
+    // Trust logos fade in
+    gsap.from('.trust-logos', {
+      opacity: 0,
+      y: 20,
+      duration: 0.8,
+      delay: 1.8,
+      ease: 'power3.out'
+    });
+
+    // Ambient rings animation
+    gsap.to('.ambient-ring', {
+      scale: 2,
+      opacity: 0,
+      duration: 3,
+      repeat: -1,
+      ease: 'power1.out',
+      stagger: 1
+    });
+
+    // Geometric shapes animation - disabled on mobile
+    if (!isMobile) {
+      const shape1 = document.querySelector('.shape-1');
+      const shape2 = document.querySelector('.shape-2');
+      const shape3 = document.querySelector('.shape-3');
+      const shape4 = document.querySelector('.shape-4');
+
+      if (shape1) {
+        gsap.to(shape1, {
+          rotation: 360,
+          duration: 20,
+          repeat: -1,
+          ease: 'none'
+        });
+      }
+
+      if (shape2) {
+        gsap.to(shape2, {
+          rotation: -360,
+          duration: 15,
+          repeat: -1,
+          ease: 'none'
+        });
+      }
+
+      if (shape3) {
+        gsap.to(shape3, {
+          rotation: 360,
+          duration: 25,
+          repeat: -1,
+          ease: 'none'
+        });
+      }
+
+      if (shape4) {
+        gsap.to(shape4, {
+          rotation: -360,
+          duration: 18,
+          repeat: -1,
+          ease: 'none'
+        });
+      }
+    }
+
+    // Feature cards scroll animation
+    gsap.utils.toArray('.feature-card').forEach((card, i) => {
+      gsap.from(card, {
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 80%',
+          end: 'top 50%',
+          scrub: isMobile ? 0.5 : 1
+        },
+        opacity: 0,
+        y: isMobile ? 50 : 100,
+        scale: 0.9,
+        duration: 1
+      });
+    });
+
+    // GenZtech cards scroll animation
+    gsap.utils.toArray('.genztech-card').forEach((card, i) => {
+      gsap.from(card, {
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 80%'
+        },
+        opacity: 0,
+        y: isMobile ? 40 : 80,
+        scale: 0.95,
+        duration: 0.8,
+        delay: i * 0.15,
+        ease: 'power3.out'
+      });
+    });
+
+    // Benefit cards stagger animation
+    gsap.utils.toArray('.benefit-card').forEach((card, i) => {
+      gsap.from(card, {
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 85%'
+        },
+        opacity: 0,
+        x: isMobile ? 0 : (i % 2 === 0 ? -50 : 50),
+        y: isMobile ? 40 : 0,
+        duration: 0.8,
+        delay: i * 0.1,
+        ease: 'power3.out'
+      });
+    });
+
+    // Testimonial cards animation
+    gsap.utils.toArray('.testimonial-card').forEach((card, i) => {
+      gsap.from(card, {
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 80%'
+        },
+        opacity: 0,
+        y: 50,
+        rotation: isMobile ? 0 : (i % 2 === 0 ? -5 : 5),
+        duration: 0.8,
+        delay: i * 0.15,
+        ease: 'power3.out'
+      });
+    });
+
+    // Contact form wrapper animation
+    const contactFormWrapper = document.querySelector('.contact-form-wrapper');
+    if (contactFormWrapper) {
+      gsap.from(contactFormWrapper, {
+        scrollTrigger: {
+          trigger: contactFormWrapper,
+          start: 'top 80%'
+        },
+        opacity: 0,
+        y: 60,
+        duration: 1,
+        ease: 'power3.out'
+      });
+    }
+
+    // ==================== STATS COUNTER - FIXED ANIMATION ====================
+    const statNumbers = document.querySelectorAll('.stat-number');
+
+    statNumbers.forEach(stat => {
+      const target = parseInt(stat.dataset.target);
+      let hasAnimated = false;
+
+      // Create counter object for GSAP to animate
+      const counterObj = { val: 0 };
+
+      // Create ScrollTrigger with better configuration
+      ScrollTrigger.create({
+        trigger: stat.closest('.stat-card-premium'),
+        start: 'top 75%',
+        once: true,
+        onEnter: () => {
+          if (!hasAnimated) {
+            hasAnimated = true;
+
+            // Animate the counter
+            gsap.to(counterObj, {
+              val: target,
+              duration: 2.5,
+              ease: 'power2.out',
+              onUpdate: function () {
+                stat.textContent = Math.ceil(counterObj.val);
+              },
+              onComplete: function () {
+                stat.textContent = target;
+              }
+            });
+          }
+        }
+      });
+    });
+
+    // Star warp effect on scroll - disabled on mobile
+    if (!isMobile) {
+      const starWarpSection = document.querySelector('.star-warp-section');
+      if (starWarpSection) {
+        gsap.to(canvasNear, {
+          scrollTrigger: {
+            trigger: starWarpSection,
+            start: 'top center',
+            end: 'bottom center',
+            scrub: true
+          },
+          filter: 'blur(5px)',
+          scale: 1.3
+        });
+      }
+    }
+
+    // Magnetic CTA effects - disabled on mobile
+    if (!isMobile) {
+      document.querySelectorAll('.magnetic-cta, .magnetic-cta-large').forEach(btn => {
+        btn.addEventListener('mousemove', (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          gsap.to(btn, {
+            x: x * 0.4,
+            y: y * 0.4,
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        });
+
+        btn.addEventListener('mouseleave', () => {
+          gsap.to(btn, {
+            x: 0,
+            y: 0,
+            duration: 0.6,
+            ease: 'elastic.out(1, 0.5)'
+          });
+        });
+      });
+    }
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      canvasConstellation.width = window.innerWidth;
+      canvasConstellation.height = window.innerHeight;
+      canvasData.width = window.innerWidth;
+      canvasData.height = window.innerHeight;
+      initConstellationPoints();
+
+    });
+
+    // Performance optimization
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    // ANTI-COPY PROTECTION
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('keydown', event => {
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'u' || event.key === 's')) {
+        event.preventDefault();
+      }
+    });
+    document.addEventListener('copy', event => event.preventDefault());
+    document.addEventListener('dragstart', event => event.preventDefault());
+
+  </script>
+
+  <!-- Footer -->
+  <footer
+    class="py-10 text-center text-gray-500 text-sm relative z-10 border-t border-white/5 bg-space-black/50 backdrop-blur-sm mt-20">
+    <div class="flex justify-center gap-6 mb-4">
+      <a href="privacy-policy.html" class="hover:text-blue-400 transition-colors">Chính sách quyền riêng tư</a>
+      <span class="text-gray-700">|</span>
+      <a href="data-deletion.html" class="hover:text-blue-400 transition-colors">Hướng dẫn xóa dữ liệu</a>
+    </div>
+    <p>&copy; 2026 Genztech. All rights reserved.</p>
+  </footer>
+
+  <!-- Smart Contact Speed Dial -->
+  <div id="smart-contact-dial" class="fixed bottom-12 right-8 z-[9999] flex flex-col items-end">
+
+    <!-- Speed Dial Options -->
+    <div id="dial-options"
+      class="mb-4 flex flex-col gap-4 items-end transition-all duration-300 opacity-0 translate-y-4 invisible pointer-events-none relative z-10">
+
+      <!-- Zalo -->
+      <a href="https://zalo.me/0346727045" target="_blank"
+        class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
+        <span
+          class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">Chat
+          Zalo</span>
+        <div
+          class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-blue-500/20 flex items-center justify-center relative overflow-hidden group-hover/item:border-facebook-blue/50 transition-colors">
+          <span class="font-black text-white text-xl z-10">Z</span>
+        </div>
+      </a>
+
+      <!-- Facebook -->
+      <a href="https://www.facebook.com/GenztechCorp1/" target="_blank"
+        class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
+        <span
+          class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">Facebook</span>
+        <div
+          class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-blue-500/20 flex items-center justify-center relative group-hover/item:border-facebook-blue/50 transition-colors">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+          </svg>
+        </div>
+      </a>
+
+      <!-- Instagram -->
+      <a href="#" target="_blank"
+        class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
+        <span
+          class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">Instagram</span>
+        <div
+          class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-pink-500/20 flex items-center justify-center relative group-hover/item:border-pink-500/50 transition-colors">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+          </svg>
+        </div>
+      </a>
+
+      <!-- X -->
+      <a href="#" target="_blank"
+        class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
+        <span
+          class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">X</span>
+        <div
+          class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-gray-500/20 flex items-center justify-center relative group-hover/item:border-gray-500/50 transition-colors">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+        </div>
+      </a>
+
+    </div>
+
+
+
+    <!-- Main Trigger Button -->
+    <button id="dial-trigger" onclick="toggleSmartDial()"
+      class="w-16 h-16 rounded-full bg-gradient-to-r from-facebook-blue to-cyan shadow-[0_0_20px_rgba(24,119,242,0.6)] flex items-center justify-center relative z-20 transition-all duration-300 hover:scale-110 active:scale-95">
+      <!-- Icon Closed (Chat Bubble) -->
+      <svg id="icon-closed" class="w-8 h-8 text-white absolute transition-all duration-300 rotate-0 scale-100"
+        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+        </path>
+      </svg>
+      <!-- Icon Open (Close X) -->
+      <svg id="icon-open" class="w-8 h-8 text-white absolute transition-all duration-300 opacity-0 -rotate-90"
+        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+  </div>
+
+  <script>
+    function toggleSmartDial() {
+      const options = document.getElementById('dial-options');
+      const iconClosed = document.getElementById('icon-closed');
+      const iconOpen = document.getElementById('icon-open');
+      const isHidden = options.classList.contains('invisible');
+
+      if (isHidden) {
+        // OPEN
+        options.classList.remove('invisible', 'opacity-0', 'translate-y-4', 'pointer-events-none');
+        options.classList.add('visible', 'opacity-100', 'translate-y-0', 'pointer-events-auto');
+
+        iconClosed.classList.add('rotate-90', 'scale-0', 'opacity-0');
+        iconClosed.classList.remove('rotate-0', 'scale-100');
+
+        iconOpen.classList.remove('opacity-0', '-rotate-90');
+        iconOpen.classList.add('opacity-100', 'rotate-0');
+      } else {
+        // CLOSE
+        options.classList.add('invisible', 'opacity-0', 'translate-y-4', 'pointer-events-none');
+        options.classList.remove('visible', 'opacity-100', 'translate-y-0', 'pointer-events-auto');
+
+        iconClosed.classList.remove('rotate-90', 'scale-0', 'opacity-0');
+        iconClosed.classList.add('rotate-0', 'scale-100');
+
+        iconOpen.classList.add('opacity-0', '-rotate-90');
+        iconOpen.classList.remove('opacity-100', 'rotate-0');
+      }
+    }
+  </script>
+
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js"></script>
+
+  <script>
+    // 2. Cấu hình SDK
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: '807344775697014', // Thay App ID vào đây
+        cookie: true,
+        xfbml: true,
+        version: 'v24.0' // Luôn dùng bản mới nhất
+      });
+    };
+
+    // 3. Hàm xử lý khi bấm nút "Kết nối Facebook"
+    function handleFBLogin() {
+
+      FB.login(function (response) {
+
+        if (response.status === 'connected') {
+          // User đã đồng ý, lấy được Token tạm
+          const accessToken = response.authResponse.accessToken;
+          const userID = response.authResponse.userID;
+
+
+
+          // GỌI NGAY VỀ BACKEND GOLANG ĐỂ SYNC
+          syncWithBackend(accessToken, userID);
+
+        } else {
+
+        }
+      }, {
+        // [QUAN TRỌNG] Xin các quyền cần thiết cho Tool Ads
+        // Nếu thiếu dòng này, bạn chỉ lấy được Tên & Avatar, không lấy được tk quảng cáo
+        scope: 'email,public_profile,ads_read,ads_management,pages_show_list,pages_read_engagement'
+      });
+    }
+
+    // 4. Hàm bắn về Backend (Giống SMIT /sync/basic)
+    function syncWithBackend(token, uid) {
+      fetch('https://api.genztechcorp.com/api/facebook/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: token,
+          facebook_uid: uid
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert("Đồng bộ thành công!");
+            window.location.reload(); // Reload để hiện dữ liệu mới
+          } else {
+            alert("Lỗi: " + data.message);
+          }
+        });
+    }
+  </script>
+
+</body>
+
+</html>
