@@ -1272,44 +1272,127 @@
 
 <!-- ===================== MODAL: CONNECT FACEBOOK ===================== -->
 <div class="modal-bg hidden" id="modal-connect">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:480px;">
     <button class="modal-close" onclick="closeModal('modal-connect')"><i class="bi bi-x-lg"></i></button>
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="width:60px;height:60px;border-radius:16px;background:rgba(24,119,242,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-        <i class="bi bi-facebook" style="font-size:28px;color:#60a5fa;"></i>
+
+    <!-- Tab switcher: Đăng nhập / Đăng ký -->
+    <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;">
+      <button id="tab-login-btn" onclick="switchAuthTab('login')" style="flex:1;padding:10px;background:rgba(99,102,241,0.2);border:none;color:#a5b4fc;font-weight:600;cursor:pointer;font-size:13px;">🔐 Đăng nhập</button>
+      <button id="tab-register-btn" onclick="switchAuthTab('register')" style="flex:1;padding:10px;background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:13px;">✨ Đăng ký</button>
+    </div>
+
+    <!-- STEP 1: Đăng nhập GenZTech -->
+    <div id="step-login">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <i class="bi bi-shield-lock-fill" style="font-size:24px;color:#a5b4fc;"></i>
+        </div>
+        <div class="modal-title" style="font-size:18px;">Đăng nhập GenZTech</div>
+        <div class="modal-sub">Tài khoản bảo mật token Facebook của bạn</div>
       </div>
-      <div class="modal-title">Kết nối Facebook</div>
-      <div class="modal-sub">Nhập Access Token để kết nối với Facebook Page của bạn</div>
+      <div class="glow-line"></div>
+      <div class="field" style="margin-top:14px;">
+        <div class="field-label"><i class="bi bi-person"></i> Username</div>
+        <input id="gz-username" class="gz-input" type="text" placeholder="Nhập username..." style="width:100%;">
+      </div>
+      <div class="field">
+        <div class="field-label"><i class="bi bi-lock"></i> Password</div>
+        <input id="gz-password" class="gz-input" type="password" placeholder="Nhập password..." style="width:100%;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+        <button class="btn btn-primary btn-full" onclick="doLogin()">
+          <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="closeModal('modal-connect')">Hủy</button>
+      </div>
+      <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:12px;">Chưa có tài khoản? <a href="#" onclick="switchAuthTab('register')" style="color:#a5b4fc;">Đăng ký ngay</a></p>
     </div>
 
-    <div class="glow-line"></div>
-
-    <div class="field">
-      <div class="field-label"><i class="bi bi-key"></i> Access Token</div>
-      <textarea id="fb-token" class="gz-textarea" rows="3"
-        placeholder="Dán Access Token vào đây...&#10;&#10;Lấy token tại: developers.facebook.com/tools/explorer"></textarea>
-      <p style="font-size:11px;color:var(--text-3);margin-top:6px;">
-        <i class="bi bi-shield-lock"></i> Token được lưu cục bộ, không gửi lên server
-      </p>
+    <!-- STEP 1b: Đăng ký -->
+    <div id="step-register" class="hidden">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <i class="bi bi-person-plus-fill" style="font-size:24px;color:#4ade80;"></i>
+        </div>
+        <div class="modal-title" style="font-size:18px;">Tạo tài khoản</div>
+        <div class="modal-sub">Đăng ký để sử dụng đầy đủ tính năng</div>
+      </div>
+      <div class="glow-line"></div>
+      <div class="field" style="margin-top:14px;">
+        <div class="field-label"><i class="bi bi-person"></i> Username</div>
+        <input id="reg-username" class="gz-input" type="text" placeholder="Chọn username..." style="width:100%;">
+      </div>
+      <div class="field">
+        <div class="field-label"><i class="bi bi-lock"></i> Password (tối thiểu 6 ký tự)</div>
+        <input id="reg-password" class="gz-input" type="password" placeholder="Tạo password..." style="width:100%;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+        <button class="btn btn-primary btn-full" onclick="doRegister()" style="background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.4);color:#4ade80;">
+          <i class="bi bi-check-circle"></i> Đăng ký
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="closeModal('modal-connect')">Hủy</button>
+      </div>
     </div>
 
-    <div class="glow-line"></div>
+    <!-- STEP 2: Kết nối Facebook (sau khi đăng nhập) -->
+    <div id="step-facebook" class="hidden">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(24,119,242,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <i class="bi bi-facebook" style="font-size:24px;color:#60a5fa;"></i>
+        </div>
+        <div class="modal-title" style="font-size:18px;">Kết nối Facebook</div>
+        <div class="modal-sub">Token sẽ được lưu bảo mật trên server — tự động gia hạn</div>
+      </div>
+      <div class="glow-line"></div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-      <button class="btn btn-primary btn-full" onclick="doConnect()">
-        <i class="bi bi-plug"></i> Kết nối
-      </button>
-      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-connect')">Hủy</button>
-    </div>
+      <!-- Token status banner (hiện khi đã kết nối) -->
+      <div id="token-status-banner" class="hidden" style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;padding:12px 14px;margin:12px 0;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="bi bi-check-circle-fill" style="color:#4ade80;font-size:18px;"></i>
+          <div>
+            <div id="token-status-name" style="font-size:13px;font-weight:600;color:#4ade80;"></div>
+            <div id="token-status-expiry" style="font-size:11px;color:var(--text-3);"></div>
+          </div>
+          <button onclick="doRefreshToken()" style="margin-left:auto;padding:5px 10px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:6px;color:#4ade80;font-size:11px;cursor:pointer;">
+            <i class="bi bi-arrow-clockwise"></i> Gia hạn
+          </button>
+        </div>
+      </div>
 
-    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
-      <p style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">📋 Cách lấy Access Token:</p>
-      <ol style="font-size:12px;color:var(--text-3);line-height:1.8;padding-left:16px;">
-        <li>Truy cập <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:#60a5fa;">Graph API Explorer</a></li>
-        <li>Chọn App → cấp quyền <code style="color:#c084fc;">pages_manage_posts</code></li>
-        <li>Nhấn <strong>Generate Access Token</strong></li>
-        <li>Copy token và dán vào ô trên</li>
-      </ol>
+      <!-- Warning banner khi token sắp hết -->
+      <div id="token-warning-banner" class="hidden" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px 14px;margin:12px 0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i class="bi bi-exclamation-triangle-fill" style="color:#fbbf24;"></i>
+          <span id="token-warning-text" style="font-size:12px;color:#fbbf24;"></span>
+          <button onclick="doRefreshToken()" style="margin-left:auto;padding:5px 10px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);border-radius:6px;color:#fbbf24;font-size:11px;cursor:pointer;">Gia hạn ngay</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <div class="field-label"><i class="bi bi-key"></i> Facebook Access Token</div>
+        <textarea id="fb-token" class="gz-textarea" rows="3"
+          placeholder="Dán Access Token vào đây...&#10;&#10;Lấy token tại: developers.facebook.com/tools/explorer"></textarea>
+        <p style="font-size:11px;color:var(--text-3);margin-top:6px;">
+          <i class="bi bi-shield-check"></i> Token được mã hóa và lưu trên server — tự động gia hạn mỗi 15 ngày
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <button class="btn btn-primary btn-full" onclick="doConnect()">
+          <i class="bi bi-plug"></i> Kết nối
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="doLogout()"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
+        <p style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">📋 Cách lấy Access Token:</p>
+        <ol style="font-size:12px;color:var(--text-3);line-height:1.8;padding-left:16px;">
+          <li>Truy cập <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:#60a5fa;">Graph API Explorer</a></li>
+          <li>Chọn App → cấp quyền <code style="color:#c084fc;">pages_manage_posts</code></li>
+          <li>Nhấn <strong>Generate Access Token</strong></li>
+          <li>Copy token và dán vào ô trên</li>
+        </ol>
+      </div>
     </div>
   </div>
 </div>
@@ -1352,40 +1435,158 @@
 <!-- ===================== SCRIPTS ===================== -->
 <script>
 // ============================================================
+//  CONFIG
+// ============================================================
+const API_BASE = localStorage.getItem('gz_api_base') || 'https://your-server.com';
+// Để test local: localStorage.setItem('gz_api_base', 'http://localhost:3001')
+
+// ============================================================
 //  STATE
 // ============================================================
 const S = {
+  // Auth
+  jwtToken:  localStorage.getItem('gz_jwt') || '',
+  username:  localStorage.getItem('gz_username') || '',
+  loggedIn:  !!localStorage.getItem('gz_jwt'),
+  // Facebook
   connected: false,
-  token: localStorage.getItem('gz_token') || '',
-  pages: JSON.parse(localStorage.getItem('gz_pages') || '[]'),
-  page: JSON.parse(localStorage.getItem('gz_page') || 'null'),
-  posts: JSON.parse(localStorage.getItem('gz_posts') || '[]'),
-  aiLen: 'short',
-  aiCount: 0,
-  tagCount: 0,
+  fbUser:    null,
+  pages:     JSON.parse(localStorage.getItem('gz_pages') || '[]'),
+  page:      JSON.parse(localStorage.getItem('gz_page') || 'null'),
+  tokenExpiry: null,
+  // Posts (local cache)
+  posts:     JSON.parse(localStorage.getItem('gz_posts') || '[]'),
+  aiLen:     'short',
+  aiCount:   0,
+  tagCount:  0,
 };
+
+// ============================================================
+//  API HELPER
+// ============================================================
+async function api(method, path, body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (S.jwtToken) opts.headers['Authorization'] = 'Bearer ' + S.jwtToken;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API_BASE + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
 
 // ============================================================
 //  INIT
 // ============================================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initCursor();
   initCanvas();
-  refreshStats();
-  renderScheduled();
-  renderHistory('all');
-  refreshAnalytics();
 
   // Default date/time
   const d = new Date(); d.setHours(d.getHours()+1);
   document.getElementById('sch-date').value = d.toISOString().split('T')[0];
   document.getElementById('sch-time').value = d.toTimeString().slice(0,5);
 
-  if (S.token) verifyToken(S.token);
+  if (S.loggedIn) {
+    // Đã đăng nhập: kiểm tra trạng thái Facebook
+    await checkFbStatus();
+    await loadServerPosts();
+  }
 
-  // Auto-check scheduler every 30s
-  setInterval(checkScheduler, 30000);
+  refreshStats();
+  renderScheduled();
+  renderHistory('all');
+  refreshAnalytics();
+
+  // Auto-check scheduler (server đã xử lý, frontend chỉ cập nhật UI)
+  setInterval(loadServerPosts, 60000);
+  // Kiểm tra token hết hạn mỗi 10 phút
+  setInterval(checkTokenExpiry, 600000);
 });
+
+// ============================================================
+//  AUTH TAB SWITCHER
+// ============================================================
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('step-login').classList.toggle('hidden', !isLogin);
+  document.getElementById('step-register').classList.toggle('hidden', isLogin);
+  document.getElementById('step-facebook').classList.add('hidden');
+  document.getElementById('tab-login-btn').style.background = isLogin ? 'rgba(99,102,241,0.2)' : 'transparent';
+  document.getElementById('tab-login-btn').style.color = isLogin ? '#a5b4fc' : 'var(--text-3)';
+  document.getElementById('tab-register-btn').style.background = !isLogin ? 'rgba(34,197,94,0.15)' : 'transparent';
+  document.getElementById('tab-register-btn').style.color = !isLogin ? '#4ade80' : 'var(--text-3)';
+}
+
+// ============================================================
+//  ĐĂNG NHẬP
+// ============================================================
+async function doLogin() {
+  const username = document.getElementById('gz-username').value.trim();
+  const password = document.getElementById('gz-password').value.trim();
+  if (!username || !password) { toast('Vui lòng nhập đủ thông tin', 'error'); return; }
+
+  try {
+    toast('Đang đăng nhập...', 'info');
+    const data = await api('POST', '/api/auth/login', { username, password });
+    S.jwtToken = data.token;
+    S.username = data.username;
+    S.loggedIn = true;
+    localStorage.setItem('gz_jwt', data.token);
+    localStorage.setItem('gz_username', data.username);
+    toast(`Chào ${data.username}! Đăng nhập thành công`, 'success');
+    // Chuyển sang step kết nối Facebook
+    showFacebookStep();
+    await checkFbStatus();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ============================================================
+//  ĐĂNG KÝ
+// ============================================================
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  if (!username || !password) { toast('Vui lòng nhập đủ thông tin', 'error'); return; }
+
+  try {
+    toast('Đang tạo tài khoản...', 'info');
+    const data = await api('POST', '/api/auth/register', { username, password });
+    S.jwtToken = data.token;
+    S.username = data.username;
+    S.loggedIn = true;
+    localStorage.setItem('gz_jwt', data.token);
+    localStorage.setItem('gz_username', data.username);
+    toast(`Tài khoản đã tạo! Chào ${data.username}`, 'success');
+    showFacebookStep();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ============================================================
+//  ĐĂNG XUẤT
+// ============================================================
+function doLogout() {
+  S.jwtToken = ''; S.username = ''; S.loggedIn = false;
+  S.connected = false; S.fbUser = null; S.pages = []; S.page = null;
+  localStorage.removeItem('gz_jwt'); localStorage.removeItem('gz_username');
+  localStorage.removeItem('gz_pages'); localStorage.removeItem('gz_page');
+  updateConnUI(null);
+  closeModal('modal-connect');
+  toast('Đã đăng xuất', 'info');
+}
+
+function showFacebookStep() {
+  document.getElementById('step-login').classList.add('hidden');
+  document.getElementById('step-register').classList.add('hidden');
+  document.getElementById('step-facebook').classList.remove('hidden');
+  document.getElementById('tab-login-btn').parentElement.style.display = 'none';
+}
 
 // ============================================================
 //  BACKGROUND ENGINE (identical to homepage)
@@ -1753,17 +1954,15 @@ Ngành: ${indMap[industry]}, Giọng văn: ${toneMap[tone]}, Độ dài: ${lenMa
 Ngôn ngữ: Tiếng Việt. Mỗi bài phải hấp dẫn, có emoji, có call-to-action, có 3-5 hashtag cuối bài.
 Trả về JSON: {"posts":["bài 1","bài 2","bài 3"]}`;
 
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+getOAIKey()},
-      body: JSON.stringify({model:'gpt-4.1-mini',messages:[{role:'user',content:prompt}],temperature:.8,max_tokens:1600})
-    });
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    const raw  = data.choices[0].message.content;
     let posts;
-    try { posts = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]).posts; }
-    catch { posts = [raw]; }
+    if (S.loggedIn) {
+      // Gọi backend API — OpenAI key bảo mật trên server
+      const data = await api('POST', '/api/ai/generate', { topic, tone, industry, length: S.aiLen });
+      posts = data.posts;
+    } else {
+      // Fallback khi chưa đăng nhập
+      throw new Error('no_login');
+    }
     renderAISuggestions(posts);
     S.aiCount++; refreshAnalytics();
     toast('AI đã tạo 3 phiên bản nội dung!', 'success');
@@ -1860,39 +2059,96 @@ function renderTags(tags) {
 function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-async function doConnect() {
-  const token = document.getElementById('fb-token').value.trim();
-  if (!token) { toast('Vui lòng nhập Access Token', 'error'); return; }
-  await verifyToken(token);
+// ============================================================
+//  KIỂM TRA TRẠNG THÁI FACEBOOK TỪ SERVER
+// ============================================================
+async function checkFbStatus() {
+  if (!S.loggedIn) return;
+  try {
+    const data = await api('GET', '/api/facebook/status');
+    if (data.connected) {
+      S.connected = true;
+      S.fbUser = data.fbUser;
+      S.pages = data.pages || [];
+      S.tokenExpiry = data.expiresAt;
+      localStorage.setItem('gz_pages', JSON.stringify(S.pages));
+      updateConnUI(data.fbUser);
+      renderPageList();
+      checkTokenExpiry();
+    }
+  } catch {}
 }
 
-async function verifyToken(token) {
-  toast('Đang xác thực token...', 'info');
+// ============================================================
+//  KẼT NỐI FACEBOOK QUA BACKEND
+// ============================================================
+async function doConnect() {
+  if (!S.loggedIn) { toast('Vui lòng đăng nhập GenZTech trước', 'error'); return; }
+  const token = document.getElementById('fb-token').value.trim();
+  if (!token) { toast('Vui lòng nhập Access Token', 'error'); return; }
+
+  toast('Đang kết nối và đổi sang Long-lived Token...', 'info');
   try {
-    const r = await fetch(`https://graph.facebook.com/me?access_token=${token}&fields=id,name,picture`);
-    const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    S.token = token; S.connected = true;
-    localStorage.setItem('gz_token', token);
-    await loadPages(token);
-    updateConnUI(d);
+    const data = await api('POST', '/api/facebook/connect', { token });
+    S.connected = true;
+    S.fbUser = data.fbUser;
+    S.pages = data.pages || [];
+    S.tokenExpiry = data.expiresAt;
+    localStorage.setItem('gz_pages', JSON.stringify(S.pages));
+    updateConnUI(data.fbUser);
+    renderPageList();
     closeModal('modal-connect');
-    toast(`Đã kết nối: ${d.name}`, 'success');
-  } catch(e) {
-    toast('Token không hợp lệ hoặc đã hết hạn', 'error');
+    toast(data.message || 'Kết nối thành công!', 'success');
+    checkTokenExpiry();
+  } catch (err) {
+    toast(err.message, 'error');
   }
 }
 
-async function loadPages(token) {
+// ============================================================
+//  GIA HẠN TOKEN
+// ============================================================
+async function doRefreshToken() {
+  toast('Đang gia hạn token...', 'info');
   try {
-    const r = await fetch(`https://graph.facebook.com/me/accounts?access_token=${token}&fields=id,name,access_token,picture`);
-    const d = await r.json();
-    if (d.data?.length) {
-      S.pages = d.data;
-      localStorage.setItem('gz_pages', JSON.stringify(S.pages));
-      renderPageList();
-    }
-  } catch {}
+    const data = await api('POST', '/api/facebook/refresh');
+    S.tokenExpiry = data.expiresAt;
+    toast(data.message, 'success');
+    checkTokenExpiry();
+    // Cập nhật banner
+    document.getElementById('token-warning-banner').classList.add('hidden');
+    document.getElementById('token-status-expiry').textContent = `Token hết hạn: ${new Date(data.expiresAt).toLocaleDateString('vi-VN')} (• Còn ${data.daysLeft} ngày)`;
+  } catch (err) {
+    toast('Gia hạn thất bại: ' + err.message, 'error');
+  }
+}
+
+// ============================================================
+//  KIỂM TRA TOKEN HẾT HẠN
+// ============================================================
+function checkTokenExpiry() {
+  if (!S.tokenExpiry) return;
+  const daysLeft = Math.ceil((new Date(S.tokenExpiry) - Date.now()) / (1000 * 3600 * 24));
+  const warningBanner = document.getElementById('token-warning-banner');
+  const statusBanner  = document.getElementById('token-status-banner');
+  const statusName    = document.getElementById('token-status-name');
+  const statusExpiry  = document.getElementById('token-status-expiry');
+  const warningText   = document.getElementById('token-warning-text');
+
+  if (statusName) statusName.textContent = S.fbUser?.name || 'Facebook';
+  if (statusExpiry) statusExpiry.textContent = `Token hết hạn: ${new Date(S.tokenExpiry).toLocaleDateString('vi-VN')} (• Còn ${daysLeft} ngày)`;
+
+  if (daysLeft <= 0) {
+    if (warningBanner) { warningBanner.classList.remove('hidden'); warningText.textContent = 'Token đã hết hạn! Vui lòng gia hạn ngay.'; }
+    if (statusBanner) statusBanner.classList.add('hidden');
+    toast('⚠️ Token Facebook đã hết hạn! Vui lòng gia hạn.', 'error');
+  } else if (daysLeft <= 15) {
+    if (warningBanner) { warningBanner.classList.remove('hidden'); warningText.textContent = `Token sắp hết hạn trong ${daysLeft} ngày!`; }
+    if (statusBanner) statusBanner.classList.add('hidden');
+  } else {
+    if (warningBanner) warningBanner.classList.add('hidden');
+    if (statusBanner) statusBanner.classList.remove('hidden');
+  }
 }
 
 function renderPageList() {
@@ -1928,17 +2184,29 @@ function selectPage(p) {
 }
 
 function updateConnUI(user) {
-  document.getElementById('conn-dot').classList.add('on');
-  document.getElementById('conn-text').textContent = user.name;
-  const btn = document.getElementById('btn-connect');
-  btn.innerHTML = '<i class="bi bi-check-circle"></i> Đã kết nối';
-  btn.style.background = 'rgba(34,197,94,0.2)';
-  btn.style.border = '1px solid rgba(34,197,94,0.4)';
+  const dot  = document.getElementById('conn-dot');
+  const text = document.getElementById('conn-text');
+  const btn  = document.getElementById('btn-connect');
 
-  const su = document.getElementById('sidebar-user');
-  su.classList.remove('hidden');
-  document.getElementById('sb-name').textContent = user.name;
-  if (user.picture) document.getElementById('sb-avatar').src = user.picture.data?.url||'';
+  if (user) {
+    dot.classList.add('on');
+    text.textContent = user.name || S.username;
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Đã kết nối';
+    btn.style.background = 'rgba(34,197,94,0.2)';
+    btn.style.border = '1px solid rgba(34,197,94,0.4)';
+    const su = document.getElementById('sidebar-user');
+    if (su) su.classList.remove('hidden');
+    const sbName = document.getElementById('sb-name');
+    if (sbName) sbName.textContent = user.name || S.username;
+    const sbAvatar = document.getElementById('sb-avatar');
+    if (sbAvatar && user.picture) sbAvatar.src = user.picture;
+  } else {
+    dot.classList.remove('on');
+    text.textContent = 'Chưa kết nối';
+    btn.innerHTML = '<i class="bi bi-facebook"></i> Kết nối Facebook';
+    btn.style.background = '';
+    btn.style.border = '';
+  }
 }
 
 // ============================================================
@@ -1966,24 +2234,20 @@ async function doPost(content) {
 
   try {
     const link = document.getElementById('post-link').value.trim();
-    const imgFile = document.getElementById('img-file').files[0];
-    let endpoint = `https://graph.facebook.com/v25.0/${S.page.id}/feed`;
-    const fd = new FormData();
-    fd.append('message', content);
-    fd.append('access_token', S.page.access_token);
-    if (link) fd.append('link', link);
-    if (imgFile) { endpoint = `https://graph.facebook.com/v25.0/${S.page.id}/photos`; fd.append('source', imgFile); }
+    // Gọi backend API — token được lưu bảo mật trên server
+    const data = await api('POST', '/api/facebook/post', {
+      pageId:   S.page.id,
+      content,
+      linkUrl:  link || null,
+      imageUrl: null, // TODO: upload ảnh lên server trước
+    });
 
-    const r = await fetch(endpoint, {method:'POST', body:fd});
-    const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-
-    savePost({id:d.id||Date.now()+'',content,status:'posted',page:S.page.name,postedAt:new Date().toISOString(),fbId:d.id});
+    savePost({id: data.postId || Date.now()+'', content, status:'posted', page: S.page.name, postedAt: new Date().toISOString(), fbId: data.postId});
     toast('🎉 Đăng bài thành công!', 'success');
     clearForm(); refreshStats(); renderHistory('all');
   } catch(e) {
-    savePost({id:Date.now()+'',content,status:'failed',page:S.page?.name||'',postedAt:new Date().toISOString(),error:e.message});
-    toast('Lỗi khi đăng: '+e.message, 'error');
+    savePost({id: Date.now()+'', content, status:'failed', page: S.page?.name||'', postedAt: new Date().toISOString(), error: e.message});
+    toast('Lỗi khi đăng: ' + e.message, 'error');
     refreshStats(); renderHistory('all');
   } finally {
     btn.disabled = false;
@@ -1991,7 +2255,38 @@ async function doPost(content) {
   }
 }
 
-function doSchedule(content) {
+// ============================================================
+//  TẢI BÀI VIẾT TỪ SERVER
+// ============================================================
+async function loadServerPosts() {
+  if (!S.loggedIn) return;
+  try {
+    const [schedData, histData, statsData] = await Promise.all([
+      api('GET', '/api/posts/scheduled'),
+      api('GET', '/api/posts/history'),
+      api('GET', '/api/posts/stats'),
+    ]);
+    // Merge vào S.posts (giữ cả local drafts)
+    const serverPosts = [
+      ...(schedData.posts || []).map(p => ({...p, _source:'server'})),
+      ...(histData.posts  || []).map(p => ({...p, _source:'server'})),
+    ];
+    const localDrafts = S.posts.filter(p => p.status === 'draft');
+    S.posts = [...serverPosts, ...localDrafts];
+    localStorage.setItem('gz_posts', JSON.stringify(S.posts));
+    // Cập nhật stats từ server
+    if (statsData.stats) {
+      document.getElementById('stat-total').textContent   = statsData.stats.total;
+      document.getElementById('stat-pending').textContent = statsData.stats.pending;
+      document.getElementById('stat-posted').textContent  = statsData.stats.posted;
+      document.getElementById('stat-failed').textContent  = statsData.stats.failed;
+    }
+    renderScheduled();
+    renderHistory('all');
+  } catch {}
+}
+
+async function doSchedule(content) {
   const date = document.getElementById('sch-date').value;
   const time = document.getElementById('sch-time').value;
   if (!date||!time) { toast('Chọn ngày và giờ đăng', 'error'); return; }
@@ -1999,13 +2294,35 @@ function doSchedule(content) {
   if (at <= new Date()) { toast('Thời gian phải sau thời điểm hiện tại', 'error'); return; }
 
   const link = document.getElementById('post-link').value.trim();
-  const imgSrc = document.getElementById('img-preview').src;
+  const repeatType = document.getElementById('sch-repeat')?.value || 'none';
+  const postType   = document.getElementById('post-type')?.value || 'feed';
 
+  if (S.loggedIn && S.page) {
+    // Lên lịch qua backend — server sẽ tự động đăng
+    try {
+      const data = await api('POST', '/api/posts/schedule', {
+        pageId:      S.page.id,
+        pageName:    S.page.name,
+        content,
+        linkUrl:     link || null,
+        postType,
+        scheduledAt: at.toISOString(),
+        repeatType,
+      });
+      toast(`✅ ${data.message}`, 'success');
+      clearForm(); await loadServerPosts();
+      switchTab('schedule');
+      return;
+    } catch (err) {
+      toast('Lỗi lên lịch: ' + err.message, 'error');
+    }
+  }
+
+  // Fallback: lưu local nếu chưa đăng nhập
   savePost({
     id: Date.now()+'', content, status:'scheduled',
     page: S.page?.name||'Chưa chọn Page',
     scheduledAt: at.toISOString(), link,
-    imgPreview: imgSrc !== location.href ? imgSrc : null
   });
   toast(`✅ Lên lịch thành công: ${at.toLocaleString('vi-VN')}`, 'success');
   clearForm(); refreshStats(); renderScheduled();
@@ -2168,26 +2485,20 @@ function refreshAnalytics() {
 //  AUTO SCHEDULER
 // ============================================================
 async function checkScheduler() {
-  const now = new Date();
-  const due = S.posts.filter(p=>p.status==='scheduled' && new Date(p.scheduledAt)<=now);
-  for (const p of due) {
-    if (S.connected && S.page) {
-      try {
-        const r = await fetch(`https://graph.facebook.com/v25.0/${S.page.id}/feed`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({message:p.content, access_token:S.page.access_token})
-        });
-        const d = await r.json();
-        if (d.error) throw new Error(d.error.message);
-        p.status='posted'; p.postedAt=new Date().toISOString(); p.fbId=d.id;
-        toast(`✅ Tự động đăng: "${p.content.slice(0,30)}..."`, 'success');
-      } catch(e) { p.status='failed'; p.error=e.message; }
-    } else { p.status='failed'; p.error='Chưa kết nối Facebook'; }
-  }
-  if (due.length) {
-    localStorage.setItem('gz_posts', JSON.stringify(S.posts));
-    refreshStats(); renderScheduled(); renderHistory('all'); refreshAnalytics();
+  // Server tự động xử lý việc đăng bài theo lịch mỗi phút
+  // Frontend chỉ cần tải lại dữ liệu để cập nhật UI
+  if (S.loggedIn) {
+    await loadServerPosts();
+  } else {
+    // Fallback local scheduler cho user chưa đăng nhập
+    const now = new Date();
+    const due = S.posts.filter(p => p.status === 'scheduled' && new Date(p.scheduledAt) <= now && p._source !== 'server');
+    if (due.length) {
+      due.forEach(p => { p.status = 'failed'; p.error = 'Cần đăng nhập GenZTech để tự động đăng'; });
+      localStorage.setItem('gz_posts', JSON.stringify(S.posts));
+      refreshStats(); renderScheduled(); renderHistory('all');
+      toast('⚠️ Cần đăng nhập để sử dụng tính năng lên lịch', 'error');
+    }
   }
 }
 

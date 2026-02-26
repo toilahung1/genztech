@@ -1,0 +1,31 @@
+{
+  "name": "genztech-backend",
+  "version": "1.0.0",
+  "description": "GenZTech Backend — Facebook Token Manager & Auto Post Scheduler",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "node --watch server.js",
+    "pm2":   "pm2 start server.js --name genztech-api",
+    "test":  "echo \"No tests yet\" && exit 0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["facebook", "token", "scheduler", "genztech"],
+  "author": "GenZTech",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.5",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "node-cron": "^4.2.1"
+  }
+}
