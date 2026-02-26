@@ -1079,13 +1079,13 @@
     btn.innerHTML = '<span class="spinner"></span> Đang đăng nhập...';
     btn.disabled = true;
     try {
-      const data = await api('POST', '/api/auth/login', { email: user, password: pass });
+      const data = await api('POST', '/api/auth/login', { username: user, password: pass });
       S.jwtToken = data.token;
-      S.username = data.user.username;
+      S.username = data.username || (data.user && data.user.username) || user;
       S.loggedIn = true;
       localStorage.setItem('gz_jwt', data.token);
-      localStorage.setItem('gz_username', data.user.username);
-      toast('Đăng nhập thành công! Chào ' + data.user.username, 'success');
+      localStorage.setItem('gz_username', S.username);
+      toast('Đăng nhập thành công! Chào ' + S.username, 'success');
       document.getElementById('fbTokenSection').style.display = 'block';
       updateConnUI();
     } catch(e) {
@@ -1107,11 +1107,11 @@
     try {
       const data = await api('POST', '/api/auth/register', { username: user, email, password: pass });
       S.jwtToken = data.token;
-      S.username = data.user.username;
+      S.username = data.username || (data.user && data.user.username) || user;
       S.loggedIn = true;
       localStorage.setItem('gz_jwt', data.token);
-      localStorage.setItem('gz_username', data.user.username);
-      toast('Đăng ký thành công! Chào mừng ' + data.user.username, 'success');
+      localStorage.setItem('gz_username', S.username);
+      toast('Đăng ký thành công! Chào mừng ' + S.username, 'success');
       document.getElementById('fbTokenSection').style.display = 'block';
       updateConnUI();
     } catch(e) {
@@ -1130,9 +1130,9 @@
     btn.innerHTML = '<span class="spinner"></span> Đang kết nối...';
     btn.disabled = true;
     try {
-      const data = await api('POST', '/api/facebook/connect', { shortLivedToken: token });
+      const data = await api('POST', '/api/facebook/connect', { token: token });
       S.connected = true;
-      S.fbUser = data.user;
+      S.fbUser = data.fbUser || data.user;
       S.pages = data.pages || [];
       localStorage.setItem('gz_pages', JSON.stringify(S.pages));
       renderPageSelect(S.pages);
