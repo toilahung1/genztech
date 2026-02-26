@@ -5,11 +5,22 @@ const { userStmt } = require('../database');
 
 const router = express.Router();
 
+// Kiểm tra độ mạnh mật khẩu
+function validatePassword(password) {
+  if (!password || password.length < 8) return 'Mật khẩu tối thiểu 8 ký tự';
+  if (!/[a-zA-Z]/.test(password))       return 'Mật khẩu phải chứa ít nhất 1 chữ cái';
+  if (!/[0-9]/.test(password))          return 'Mật khẩu phải chứa ít nhất 1 chữ số';
+  return null;
+}
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'username và password là bắt buộc' });
-  if (password.length < 6) return res.status(400).json({ error: 'Password tối thiểu 6 ký tự' });
+  if (username.length < 3) return res.status(400).json({ error: 'Username tối thiểu 3 ký tự' });
+
+  const pwErr = validatePassword(password);
+  if (pwErr) return res.status(400).json({ error: pwErr });
 
   try {
     const existing = userStmt.findByUsername.get(username);
