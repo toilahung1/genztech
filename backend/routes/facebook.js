@@ -226,8 +226,30 @@ router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) =>
 
   } catch (err) {
     files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
-    const msg = err.response?.data?.error?.message || err.message;
-    res.status(400).json({ error: 'Upload media thất bại: ' + msg });
+    const fbErr = err.response?.data?.error;
+    const msg = fbErr?.message || err.message;
+    const code = fbErr?.code;
+    const subcode = fbErr?.error_subcode;
+    const type = fbErr?.type;
+    // Phân loại lỗi Facebook để hiển thị rõ hơn
+    let userMsg = 'Upload media thất bại: ' + msg;
+    if (code === 32 || code === 613 || subcode === 1487742) {
+      userMsg = 'Facebook đang giới hạn tần suất gọi API (rate limit). Vui lòng chờ 15-60 phút rồi thử lại.';
+    } else if (code === 190) {
+      userMsg = 'Access Token đã hết hạn hoặc bị thu hồi. Vui lòng kết nối lại Facebook.';
+    } else if (code === 200 || code === 10 || code === 100) {
+      userMsg = 'Không có quyền upload media. Kiểm tra lại quyền pages_manage_posts và pages_read_engagement.';
+    } else if (code === 368 || code === 21) {
+      userMsg = 'Tài khoản Facebook bị tạm khóa hoặc bị cấm gọi API. Vui lòng đợi vài ngày rồi thử lại.';
+    }
+    console.error(`[Upload] FB Error code=${code} subcode=${subcode} type=${type}: ${msg}`);
+    res.status(400).json({
+      error: userMsg,
+      fbCode: code,
+      fbSubcode: subcode,
+      fbType: type,
+      fbMessage: msg,
+    });
   }
 });
 
@@ -257,7 +279,19 @@ router.post('/post', async (req, res) => {
     });
     res.json({ success: true, postId: result.id, message: 'Đăng bài thành công!' });
   } catch (err) {
-    const msg = err.response?.data?.error?.message || err.message;
+    const fbErr = err.response?.data?.error;
+    const msg = fbErr?.message || err.message;
+    const code = fbErr?.code;
+    const subcode = fbErr?.error_subcode;
+    // Phân loại lỗi Facebook
+    let userMsg = 'Đăng bài thất bại: ' + msg;
+    if (code === 32 || code === 613) {
+      userMsg = 'Facebook đang giới hạn tần suất gọi API. Vui lòng chờ 15-60 phút rồi thử lại.';
+    } else if (code === 190) {
+      userMsg = 'Access Token đã hết hạn. Vui lòng kết nối lại Facebook.';
+    } else if (code === 368 || code === 21) {
+      userMsg = 'Tài khoản Facebook bị tạm khóa. Vui lòng đợi vài ngày rồi thử lại.';
+    }
     const { histStmt } = require('../database');
     histStmt.create.run({
       user_id:    req.userId,
@@ -266,9 +300,10 @@ router.post('/post', async (req, res) => {
       content,
       fb_post_id: null,
       status:     'failed',
-      error_msg:  msg,
+      error_msg:  `[${code}] ${msg}`,
     });
-    res.status(400).json({ error: 'Đăng bài thất bại: ' + msg });
+    console.error(`[Post] FB Error code=${code} subcode=${subcode}: ${msg}`);
+    res.status(400).json({ error: userMsg, fbCode: code, fbMessage: msg });
   }
 });
 

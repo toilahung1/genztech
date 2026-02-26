@@ -1586,11 +1586,14 @@
           headers: { 'Authorization': 'Bearer ' + S.jwtToken },
           body: fd
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload ảnh thất bại');
+         const data = await res.json();
+        if (!res.ok) {
+          const errMsg = data.error || 'Upload ảnh thất bại';
+          if (data.fbCode) console.warn('[FB Upload Error] code=' + data.fbCode + ' | ' + data.fbMessage);
+          throw new Error(errMsg);
+        }
         photoIds = data.photoIds || [];
       }
-
       // Upload video (mode: video)
       if (S.mediaMode === 'video' && S.video) {
         btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
@@ -1601,11 +1604,14 @@
           headers: { 'Authorization': 'Bearer ' + S.jwtToken },
           body: fd
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload video thất bại');
+         const data = await res.json();
+        if (!res.ok) {
+          const errMsg = data.error || 'Upload video thất bại';
+          if (data.fbCode) console.warn('[FB Upload Error] code=' + data.fbCode + ' | ' + data.fbMessage);
+          throw new Error(errMsg);
+        }
         videoId = data.videoId || null;
       }
-
       // Upload mixed: ảnh + video cùng lúc
       if (S.mediaMode === 'mixed') {
         if (!S.mixImages) S.mixImages = [];
