@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <style>
     /* ====================================================
        RESET & BASE
@@ -37,7 +38,7 @@
 
     html, body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--space);
+      background: var(--space-black, #0A0E27);
       color: var(--text-1);
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -45,41 +46,16 @@
       cursor: none !important;
     }
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
-
-    /* ====================================================
-       CANVAS BACKGROUND
-    ==================================================== */
-    #bg-canvas {
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 0;
-    }
-    .nebula-1 {
-      position: fixed; width: 700px; height: 700px;
-      background: radial-gradient(circle, rgba(24,119,242,0.07) 0%, transparent 70%);
-      top: -200px; left: -200px; pointer-events: none; z-index: 0;
-      animation: nebula-drift 20s ease-in-out infinite alternate;
-    }
-    .nebula-2 {
-      position: fixed; width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(157,80,187,0.06) 0%, transparent 70%);
-      bottom: -150px; right: -150px; pointer-events: none; z-index: 0;
-      animation: nebula-drift 25s ease-in-out infinite alternate-reverse;
-    }
-    @keyframes nebula-drift {
-      from { transform: translate(0,0) scale(1); }
-      to   { transform: translate(40px,30px) scale(1.1); }
+    @media (hover: none) and (pointer: coarse) {
+      body { cursor: auto !important; }
+      #custom-cursor { display: none !important; }
     }
 
     /* ====================================================
-       CURSOR
+       TOPBAR background override — use homepage space-black
     ==================================================== */
-    #cursor {
-      position: fixed; width: 40px; height: 40px;
-      border-radius: 50%; pointer-events: none; z-index: 9999;
-      transform: translate(-50%,-50%);
-      transition: opacity .2s;
-      filter: drop-shadow(0 0 8px rgba(0,212,255,0.8));
-    }
+    .topbar { background: rgba(10,14,39,0.8) !important; }
+    .sidebar { background: rgba(10,14,39,0.6) !important; }
 
     /* ====================================================
        LAYOUT
@@ -766,13 +742,26 @@
 </head>
 <body>
 
-<!-- Background -->
-<canvas id="bg-canvas"></canvas>
-<div class="nebula-1"></div>
-<div class="nebula-2"></div>
+<!-- Multi-Layer Starfield Canvas (same as homepage) -->
+<canvas id="starfield-far" class="fixed inset-0 pointer-events-none" style="z-index:0;"></canvas>
+<canvas id="starfield-mid" class="fixed inset-0 pointer-events-none" style="z-index:1;"></canvas>
+<canvas id="starfield-near" class="fixed inset-0 pointer-events-none" style="z-index:2;"></canvas>
+<canvas id="constellation-lines" class="fixed inset-0 pointer-events-none" style="z-index:3;"></canvas>
+<canvas id="data-particles" class="fixed inset-0 pointer-events-none" style="z-index:4;"></canvas>
 
-<!-- Cursor -->
-<img id="cursor" src="images/logo.png" alt="" style="opacity:0;">
+<!-- Cosmic Fog -->
+<div class="fixed inset-0 pointer-events-none opacity-30" style="z-index:5;">
+  <div class="cosmic-fog"></div>
+</div>
+
+<!-- Noise Texture -->
+<div class="fixed inset-0 pointer-events-none noise-overlay opacity-10" style="z-index:6;"></div>
+
+<!-- Custom Cursor (same as homepage) -->
+<div id="custom-cursor" class="fixed pointer-events-none" style="z-index:9999;opacity:0;transition:opacity 0.3s;transform:translate(-50%,-50%);will-change:transform;">
+  <img src="images/logo.png" alt="Genztech Cursor"
+    style="width:40px;height:40px;object-fit:cover;border-radius:50%;filter:drop-shadow(0 0 8px rgba(0,212,255,0.8));pointer-events:none;">
+</div>
 
 <!-- Toast -->
 <div id="toast-box"></div>
@@ -1399,52 +1388,242 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-//  CURSOR
+//  BACKGROUND ENGINE (identical to homepage)
 // ============================================================
-function initCursor() {
-  const c = document.getElementById('cursor');
-  document.addEventListener('mousemove', e => {
-    c.style.left = e.clientX + 'px';
-    c.style.top  = e.clientY + 'px';
-    c.style.opacity = '1';
-  });
-  document.addEventListener('mouseleave', () => c.style.opacity = '0');
-}
+function initCursor() {}
+function initCanvas() {}
 
-// ============================================================
-//  STARFIELD CANVAS
-// ============================================================
-function initCanvas() {
-  const cv = document.getElementById('bg-canvas');
-  const ctx = cv.getContext('2d');
-  let W, H, stars = [];
+(function initBackground() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-  function resize() {
-    W = cv.width  = window.innerWidth;
-    H = cv.height = window.innerHeight;
-    stars = Array.from({length:120}, () => ({
-      x: Math.random()*W, y: Math.random()*H,
-      r: Math.random()*1.2+.2,
-      o: Math.random()*.4+.1,
-      vx:(Math.random()-.5)*.12,
-      vy:(Math.random()-.5)*.12,
-    }));
-  }
-  resize();
-  window.addEventListener('resize', resize);
+  // ---- MULTI-LAYER STARFIELD ----
+  const canvasFar  = document.getElementById('starfield-far');
+  const canvasMid  = document.getElementById('starfield-mid');
+  const canvasNear = document.getElementById('starfield-near');
+  const ctxFar  = canvasFar.getContext('2d');
+  const ctxMid  = canvasMid.getContext('2d');
+  const ctxNear = canvasNear.getContext('2d');
 
-  function draw() {
-    ctx.clearRect(0,0,W,H);
-    stars.forEach(s => {
-      s.x = (s.x+s.vx+W)%W;
-      s.y = (s.y+s.vy+H)%H;
-      ctx.fillStyle = `rgba(255,255,255,${s.o})`;
-      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  function resizeCanvases() {
+    [canvasFar, canvasMid, canvasNear].forEach(c => {
+      c.width  = window.innerWidth;
+      c.height = window.innerHeight;
     });
-    requestAnimationFrame(draw);
   }
-  draw();
-}
+  resizeCanvases();
+  window.addEventListener('resize', resizeCanvases);
+
+  const mult = isMobile ? 0.5 : 1;
+
+  const starsFar = Array.from({length: Math.floor(200*mult)}, () => ({
+    x: Math.random()*canvasFar.width, y: Math.random()*canvasFar.height,
+    radius: Math.random()*0.8+0.2, opacity: Math.random()*0.3+0.2
+  }));
+
+  const starsMid = Array.from({length: Math.floor(100*mult)}, () => ({
+    x: Math.random()*canvasMid.width, y: Math.random()*canvasMid.height,
+    radius: Math.random()*1.2+0.5,
+    vx: (Math.random()-0.5)*(isMobile?0.1:0.2),
+    vy: (Math.random()-0.5)*(isMobile?0.1:0.2),
+    opacity: Math.random()*0.5+0.3
+  }));
+
+  const starsNear = Array.from({length: Math.floor(50*mult)}, () => ({
+    x: Math.random()*canvasNear.width, y: Math.random()*canvasNear.height,
+    radius: Math.random()*1.8+0.8,
+    vx: (Math.random()-0.5)*(isMobile?0.2:0.4),
+    vy: (Math.random()-0.5)*(isMobile?0.2:0.4),
+    opacity: Math.random()*0.7+0.3,
+    pulse: Math.random()*Math.PI*2
+  }));
+
+  // Shooting Stars
+  const shootingStars = [];
+  let lastShootingStarTime = 0;
+
+  class ShootingStar {
+    constructor() { this.reset(); }
+    reset() {
+      this.length = Math.random()*200+100;
+      this.speed  = Math.random()*2+1;
+      this.size   = Math.random()*2+1.5;
+      this.dirX   = Math.random()<0.5 ? 1 : -1;
+      this.x      = this.dirX===1 ? -100 : canvasFar.width+100;
+      this.y      = Math.random()*canvasFar.height*0.5;
+      this.vx     = this.dirX*this.speed;
+      this.vy     = this.speed*0.5;
+      this.opacity= 0; this.life=0; this.maxLife=200; this.active=true;
+    }
+    update() {
+      this.x+=this.vx; this.y+=this.vy; this.life++;
+      if(this.life<20) this.opacity=this.life/20;
+      else if(this.life>this.maxLife-40) this.opacity=(this.maxLife-this.life)/40;
+      else this.opacity=1;
+      if(this.life>=this.maxLife||this.x<-300||this.x>canvasFar.width+300||this.y>canvasFar.height+300) this.active=false;
+    }
+    draw(ctx) {
+      if(!this.active) return;
+      const tx=this.x-this.vx*(this.length/this.speed), ty=this.y-this.vy*(this.length/this.speed);
+      const g=ctx.createLinearGradient(this.x,this.y,tx,ty);
+      g.addColorStop(0,`rgba(255,255,255,${this.opacity})`); g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.strokeStyle=g; ctx.lineWidth=this.size; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(tx,ty); ctx.stroke();
+      ctx.fillStyle=`rgba(255,255,255,${this.opacity})`;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.size*1.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=`rgba(100,200,255,${this.opacity*0.5})`;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.size*5,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  function animateStarfield() {
+    ctxFar.clearRect(0,0,canvasFar.width,canvasFar.height);
+    starsFar.forEach(s => {
+      ctxFar.fillStyle=`rgba(255,255,255,${s.opacity})`;
+      ctxFar.beginPath(); ctxFar.arc(s.x,s.y,s.radius,0,Math.PI*2); ctxFar.fill();
+    });
+    const now=Date.now();
+    if(now-lastShootingStarTime>(Math.random()*1000+500)) {
+      if(shootingStars.length<8){ shootingStars.push(new ShootingStar()); lastShootingStarTime=now; }
+    }
+    ctxMid.clearRect(0,0,canvasMid.width,canvasMid.height);
+    for(let i=shootingStars.length-1;i>=0;i--) {
+      shootingStars[i].update(); shootingStars[i].draw(ctxMid);
+      if(!shootingStars[i].active) shootingStars.splice(i,1);
+    }
+    starsMid.forEach(s => {
+      s.x=(s.x+s.vx+canvasMid.width)%canvasMid.width;
+      s.y=(s.y+s.vy+canvasMid.height)%canvasMid.height;
+      ctxMid.fillStyle=`rgba(255,255,255,${s.opacity})`;
+      ctxMid.beginPath(); ctxMid.arc(s.x,s.y,s.radius,0,Math.PI*2); ctxMid.fill();
+    });
+    ctxNear.clearRect(0,0,canvasNear.width,canvasNear.height);
+    starsNear.forEach(s => {
+      s.x=(s.x+s.vx+canvasNear.width)%canvasNear.width;
+      s.y=(s.y+s.vy+canvasNear.height)%canvasNear.height;
+      s.pulse+=(isMobile?0.01:0.02);
+      const po=s.opacity*(0.7+Math.sin(s.pulse)*0.3);
+      if(isMobile) {
+        ctxNear.fillStyle=`rgba(24,119,242,${po})`;
+        ctxNear.beginPath(); ctxNear.arc(s.x,s.y,s.radius,0,Math.PI*2); ctxNear.fill();
+      } else {
+        const g=ctxNear.createRadialGradient(s.x,s.y,0,s.x,s.y,s.radius*3);
+        g.addColorStop(0,`rgba(24,119,242,${po})`); g.addColorStop(0.5,`rgba(0,212,255,${po*0.5})`); g.addColorStop(1,'rgba(0,212,255,0)');
+        ctxNear.fillStyle=g; ctxNear.beginPath(); ctxNear.arc(s.x,s.y,s.radius*3,0,Math.PI*2); ctxNear.fill();
+      }
+    });
+    requestAnimationFrame(animateStarfield);
+  }
+  animateStarfield();
+
+  // ---- CONSTELLATION LINES ----
+  const canvasCon = document.getElementById('constellation-lines');
+  const ctxCon = canvasCon.getContext('2d');
+  canvasCon.width=window.innerWidth; canvasCon.height=window.innerHeight;
+  let conPoints=[];
+  function initConPoints() {
+    conPoints=[];
+    const n=isMobile?8:15;
+    for(let i=0;i<n;i++) conPoints.push({x:Math.random()*canvasCon.width,y:Math.random()*canvasCon.height,connections:[]});
+    conPoints.forEach((p,i)=>{
+      const nc=Math.floor(Math.random()*2)+1;
+      for(let j=0;j<nc;j++) p.connections.push(Math.floor(Math.random()*conPoints.length));
+    });
+  }
+  initConPoints();
+  let conOp=0;
+  function animateCon() {
+    ctxCon.clearRect(0,0,canvasCon.width,canvasCon.height);
+    if(!isMobile) {
+      conOp=Math.min(conOp+0.02,0.3);
+      if(conOp>0) {
+        conPoints.forEach((p,i)=>{
+          p.connections.forEach(ti=>{
+            const t=conPoints[ti];
+            const g=ctxCon.createLinearGradient(p.x,p.y,t.x,t.y);
+            g.addColorStop(0,`rgba(24,119,242,${conOp})`); g.addColorStop(0.5,`rgba(0,212,255,${conOp*0.7})`); g.addColorStop(1,`rgba(138,43,226,${conOp*0.5})`);
+            ctxCon.strokeStyle=g; ctxCon.lineWidth=0.5;
+            ctxCon.beginPath(); ctxCon.moveTo(p.x,p.y); ctxCon.lineTo(t.x,t.y); ctxCon.stroke();
+          });
+        });
+      }
+    }
+    requestAnimationFrame(animateCon);
+  }
+  animateCon();
+
+  // ---- DATA PARTICLES ----
+  const canvasDP = document.getElementById('data-particles');
+  const ctxDP = canvasDP.getContext('2d');
+  canvasDP.width=window.innerWidth; canvasDP.height=window.innerHeight;
+  const dpCount=isMobile?15:30;
+  const dataParticles=Array.from({length:dpCount},()=>({
+    x:Math.random()*canvasDP.width, y:Math.random()*canvasDP.height,
+    radius:Math.random()*2+1,
+    path:{centerX:Math.random()*canvasDP.width,centerY:Math.random()*canvasDP.height,
+      radiusX:Math.random()*(isMobile?50:100)+(isMobile?25:50),
+      radiusY:Math.random()*(isMobile?50:100)+(isMobile?25:50),
+      angle:Math.random()*Math.PI*2,
+      speed:Math.random()*(isMobile?0.005:0.01)+(isMobile?0.003:0.005)},
+    pulse:Math.random()*Math.PI*2, pulseSpeed:Math.random()*0.02+0.01
+  }));
+  function animateDP() {
+    ctxDP.clearRect(0,0,canvasDP.width,canvasDP.height);
+    dataParticles.forEach(p=>{
+      p.path.angle+=p.path.speed;
+      p.x=p.path.centerX+Math.cos(p.path.angle)*p.path.radiusX;
+      p.y=p.path.centerY+Math.sin(p.path.angle)*p.path.radiusY;
+      p.pulse+=p.pulseSpeed;
+      const ps=1+Math.sin(p.pulse)*0.5;
+      if(isMobile){
+        ctxDP.fillStyle=`rgba(24,119,242,${0.6*ps})`;
+        ctxDP.beginPath(); ctxDP.arc(p.x,p.y,p.radius*ps,0,Math.PI*2); ctxDP.fill();
+      } else {
+        const g=ctxDP.createRadialGradient(p.x,p.y,0,p.x,p.y,p.radius*ps*3);
+        g.addColorStop(0,`rgba(24,119,242,${0.8*ps})`); g.addColorStop(0.5,`rgba(0,212,255,${0.4*ps})`); g.addColorStop(1,'rgba(0,212,255,0)');
+        ctxDP.fillStyle=g; ctxDP.beginPath(); ctxDP.arc(p.x,p.y,p.radius*ps*3,0,Math.PI*2); ctxDP.fill();
+      }
+    });
+    requestAnimationFrame(animateDP);
+  }
+  animateDP();
+
+  // ---- CUSTOM CURSOR ----
+  const cursor = document.getElementById('custom-cursor');
+  if(cursor && !isTouchDevice) {
+    let mouseX=0,mouseY=0,cursorX=0,cursorY=0,isMoving=false,isHover=false;
+    document.body.style.cursor='none';
+    document.addEventListener('mousemove',e=>{
+      mouseX=e.clientX; mouseY=e.clientY;
+      if(!isMoving){ isMoving=true; cursor.style.opacity='1'; }
+    });
+    document.addEventListener('mouseleave',()=>{ isMoving=false; cursor.style.opacity='0'; });
+    document.addEventListener('mousedown',()=>{
+      if(typeof gsap!=='undefined') gsap.to(cursor,{scale:0.85,duration:0.15,ease:'power2.out'});
+      else cursor.style.transform='translate(-50%,-50%) scale(0.85)';
+    });
+    document.addEventListener('mouseup',()=>{
+      const sc=isHover?1.2:1;
+      if(typeof gsap!=='undefined') gsap.to(cursor,{scale:sc,duration:0.2,ease:'power2.out'});
+      else cursor.style.transform=`translate(-50%,-50%) scale(${sc})`;
+    });
+    function animCursor(){
+      if(isMoving){
+        cursorX+=(mouseX-cursorX)*0.15; cursorY+=(mouseY-cursorY)*0.15;
+        cursor.style.left=cursorX+'px'; cursor.style.top=cursorY+'px';
+      }
+      requestAnimationFrame(animCursor);
+    }
+    animCursor();
+    document.querySelectorAll('a,button,input,textarea,select,.card,.nav-item').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{ isHover=true; if(typeof gsap!=='undefined') gsap.to(cursor,{scale:1.2,duration:0.3,ease:'back.out(1.7)'}); });
+      el.addEventListener('mouseleave',()=>{ isHover=false; if(typeof gsap!=='undefined') gsap.to(cursor,{scale:1,duration:0.3,ease:'power2.out'}); });
+    });
+  } else if(cursor) {
+    cursor.style.display='none';
+    document.body.style.cursor='auto';
+  }
+})();
 
 // ============================================================
 //  TABS
