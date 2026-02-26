@@ -271,7 +271,7 @@ router.get('/pages', async (req, res) => {
 // ============================================================
 //  POST /api/facebook/upload-media
 // ============================================================
-router.post('/upload-media', upload.array('media', 10), async (req, res) => {
+router.post('/upload-media', upload.array('files', 10), async (req, res) => {
   const pageId = req.query?.pageId || req.body?.pageId;
   if (!pageId) return res.status(400).json({ error: 'pageId là bắt buộc' });
   const files = req.files || [];
