@@ -1458,7 +1458,7 @@
         const fd = new FormData();
         S.images.forEach(function(f) { fd.append('files', f); });
         fd.append('pageId', S.page.id);
-        const res = await fetch(API_BASE + '/api/facebook/upload-media', {
+        const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + S.jwtToken },
           body: fd
@@ -1473,8 +1473,7 @@
         btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
         const fd = new FormData();
         fd.append('files', S.video);
-        fd.append('pageId', S.page.id);
-        const res = await fetch(API_BASE + '/api/facebook/upload-media', {
+        const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + S.jwtToken },
           body: fd
@@ -1491,8 +1490,7 @@
           btn.innerHTML = '<span class="spinner"></span> Đang upload ảnh...';
           const fd = new FormData();
           S.mixImages.forEach(function(f) { fd.append('files', f); });
-          fd.append('pageId', S.page.id);
-          const res = await fetch(API_BASE + '/api/facebook/upload-media', {
+          const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + S.jwtToken },
             body: fd
@@ -1505,8 +1503,7 @@
           btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
           const fd = new FormData();
           fd.append('files', S.mixVideo);
-          fd.append('pageId', S.page.id);
-          const res = await fetch(API_BASE + '/api/facebook/upload-media', {
+          const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + S.jwtToken },
             body: fd

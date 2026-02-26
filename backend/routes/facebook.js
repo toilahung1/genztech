@@ -145,7 +145,7 @@ router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) =>
   const files = req.files;
   if (!files || files.length === 0) return res.status(400).json({ error: 'Không có file nào được gửi lên' });
 
-  const { pageId } = req.body;
+  const pageId = req.body?.pageId || req.query?.pageId;
   if (!pageId) {
     files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
     return res.status(400).json({ error: 'pageId là bắt buộc' });
