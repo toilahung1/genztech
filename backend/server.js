@@ -8,6 +8,11 @@
 
 require('dotenv').config();
 
+// ============================================================
+//  Restore DB từ GitHub backup trước khi khởi động
+// ============================================================
+const { restoreFromGitHub, ensureBackupBranch, startAutoBackup } = require('./dbBackup');
+
 const express    = require('express');
 const cors       = require('cors');
 const helmet     = require('helmet');
@@ -17,8 +22,13 @@ const path       = require('path');
 
 // ============================================================
 //  Khởi tạo database (tạo bảng nếu chưa có)
+//  Restore từ GitHub backup nếu có
 // ============================================================
-require('./database');
+async function initDatabase() {
+  await restoreFromGitHub();
+  require('./database');
+}
+initDatabase().catch(console.error);
 
 // ============================================================
 //  Khởi tạo Express app
@@ -147,6 +157,9 @@ app.listen(PORT, () => {
   // Khởi động scheduler
   const { startScheduler } = require('./scheduler');
   startScheduler();
+
+  // Khởi động auto-backup DB lên GitHub mỗi 5 phút
+  ensureBackupBranch().then(() => startAutoBackup(5 * 60 * 1000));
 });
 
 module.exports = app;
