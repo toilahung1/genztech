@@ -27,11 +27,13 @@ router.post('/register', async (req, res) => {
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Thiếu thông tin đăng nhập' });
+  // Chấp nhận cả 'username' và 'email' field (backward compatible)
+  const { username, email, password } = req.body;
+  const loginId = username || email;
+  if (!loginId || !password) return res.status(400).json({ error: 'Thiếu thông tin đăng nhập' });
 
   try {
-    const user = userStmt.findByUsername.get(username);
+    const user = userStmt.findByUsername.get(loginId);
     if (!user) return res.status(401).json({ error: 'Sai username hoặc password' });
 
     const ok = await bcrypt.compare(password, user.password);

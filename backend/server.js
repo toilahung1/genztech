@@ -25,6 +25,9 @@ require('./database');
 // ============================================================
 const app = express();
 
+// Trust proxy — cần thiết khi deploy trên Railway/Heroku/Render
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
