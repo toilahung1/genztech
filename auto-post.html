@@ -1790,10 +1790,32 @@
 
     try {
       let versions = [];
-      if (S.loggedIn) {
-        const data = await api('POST', '/api/ai/generate', { topic, tone, industry, length });
-        versions = data.versions || [];
+      const oaiKey = localStorage.getItem('gz_oai_key') || '';
+
+      if (oaiKey) {
+        // Gọi AI trực tiếp từ frontend với key người dùng
+        const toneMap = { professional:'chuyên nghiệp, lịch sự', friendly:'thân thiện, gần gũi', excited:'hào hứng, năng động', informative:'thông tin, giáo dục', humorous:'hài hước, vui vẻ' };
+        const industryMap = { general:'tổng quát', ecommerce:'thương mại điện tử', food:'ẩm thực & nhà hàng', fashion:'thời trang', tech:'công nghệ', beauty:'làm đẹp & spa', education:'giáo dục', realestate:'bất động sản', fitness:'thể thao & sức khỏe', travel:'du lịch' };
+        const lengthMap = { short:'ngắn gọn khoảng 80-120 từ', medium:'vừa phải khoảng 180-220 từ', long:'chi tiết khoảng 350-420 từ' };
+        const prompt = 'Bạn là chuyên gia marketing Facebook người Việt Nam.\nTạo 3 phiên bản bài đăng Facebook KHÁC NHAU cho chủ đề: "' + topic + '"\n- Ngành: ' + (industryMap[industry]||'tổng quát') + '\n- Giọng văn: ' + (toneMap[tone]||'thân thiện') + '\n- Độ dài: ' + (lengthMap[length]||'vừa phải') + '\n- Ngôn ngữ: Tiếng Việt tự nhiên\n- Mỗi bài phải có: emoji phù hợp, nội dung hấp dẫn, call-to-action rõ ràng, 3-5 hashtag cuối bài\n- 3 phiên bản phải khác nhau về cách tiếp cận\n\nTrả về JSON hợp lệ: {"posts":["bài 1 đầy đủ","bài 2 đầy đủ","bài 3 đầy đủ"]}';
+        const aiResp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + oaiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.8, max_tokens: 1800 })
+        });
+        const aiData = await aiResp.json();
+        if (aiData.choices && aiData.choices[0]) {
+          const raw = aiData.choices[0].message.content;
+          try { versions = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]).posts; } catch { versions = [raw]; }
+        }
+      } else if (S.loggedIn) {
+        // Fallback: gọi qua backend
+        try {
+          const data = await api('POST', '/api/ai/generate', { topic, tone, industry, length });
+          versions = data.posts || data.versions || [];
+        } catch(e) { versions = []; }
       }
+
       if (!versions.length) versions = getFallbackVersions(topic, tone);
 
       S.aiCount += 3;
