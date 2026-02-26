@@ -1,6 +1,7 @@
 /**
  * GenZTech — Facebook Token Manager
  * Xử lý: exchange short→long token, lấy page tokens, auto-refresh, kiểm tra hết hạn
+ * PostgreSQL async version
  */
 
 const axios = require('axios');
@@ -14,8 +15,7 @@ const APP_SECRET = process.env.FB_APP_SECRET;
 //  1. Đổi Short-lived → Long-lived User Token (60 ngày)
 // ============================================================
 async function exchangeToLongLived(shortToken) {
-  const url = `${FB_GRAPH}/oauth/access_token`;
-  const res = await axios.get(url, {
+  const res = await axios.get(`${FB_GRAPH}/oauth/access_token`, {
     params: {
       grant_type:        'fb_exchange_token',
       client_id:         APP_ID,
@@ -23,7 +23,6 @@ async function exchangeToLongLived(shortToken) {
       fb_exchange_token: shortToken,
     },
   });
-
   const { access_token, expires_in } = res.data;
   const expiresAt = new Date(Date.now() + (expires_in || 5184000) * 1000).toISOString();
   return { longToken: access_token, expiresAt };
@@ -66,8 +65,7 @@ async function inspectToken(token) {
 }
 
 // ============================================================
-//  5. Refresh Long-lived Token (gọi lại exchange với chính nó)
-//     Facebook cho phép refresh trong vòng 60 ngày
+//  5. Refresh Long-lived Token
 // ============================================================
 async function refreshLongToken(currentLongToken) {
   try {
@@ -88,35 +86,34 @@ async function fullConnect(userId, shortToken) {
   // Bước 2: Lấy thông tin user
   const userInfo = await getUserInfo(longToken);
 
-  // Bước 3: Lưu token vào DB
-  tokenStmt.upsert.run({
-    user_id:           userId,
-    fb_user_id:        userInfo.id,
-    fb_user_name:      userInfo.name,
-    fb_user_picture:   userInfo.picture?.data?.url || null,
-    short_token:       shortToken,
-    long_token:        longToken,
+  // Bước 3: Lưu token vào DB (async)
+  const fbTokenRow = await tokenStmt.upsert({
+    user_id:            userId,
+    fb_user_id:         userInfo.id,
+    fb_user_name:       userInfo.name,
+    fb_user_picture:    userInfo.picture?.data?.url || null,
+    short_token:        shortToken,
+    long_token:         longToken,
     long_token_expires: expiresAt,
   });
 
   // Bước 4: Lấy danh sách Pages
   const pages = await getPages(longToken);
-  const fbTokenRow = tokenStmt.findByUser.get(userId);
 
   // Bước 5: Lưu Page tokens (page token không hết hạn)
   for (const page of pages) {
-    pageStmt.upsert.run({
+    await pageStmt.upsert({
       user_id:      userId,
       fb_token_id:  fbTokenRow.id,
       page_id:      page.id,
       page_name:    page.name,
-      page_token:   page.access_token,  // Đây là Page Token — không hết hạn
+      page_token:   page.access_token,
       page_picture: page.picture?.data?.url || null,
       category:     page.category || null,
     });
   }
 
-  logStmt.create.run(userId, userInfo.id, 'exchange', 1, `Exchanged to long-lived, expires: ${expiresAt}`);
+  await logStmt.create(userId, userInfo.id, 'exchange', true, `Exchanged to long-lived, expires: ${expiresAt}`);
 
   return {
     fbUser:   userInfo,
@@ -128,29 +125,21 @@ async function fullConnect(userId, shortToken) {
 
 // ============================================================
 //  7. Auto-refresh tất cả token sắp hết hạn (chạy bởi cron)
-//     Refresh token còn <= 30 ngày (an toàn hơn, tránh mất kết nối)
+//     Refresh token còn <= 30 ngày
 // ============================================================
 async function autoRefreshExpiring() {
-  const { db } = require('./database');
-  const soon = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(); // Refresh khi còn <= 30 ngày
-
-  const expiring = db.prepare(`
-    SELECT * FROM facebook_tokens
-    WHERE long_token_expires IS NOT NULL
-      AND long_token_expires < ?
-  `).all(soon);
-
+  const expiring = await tokenStmt.findAllExpiring(30);
   const results = [];
+
   for (const row of expiring) {
     try {
       const { longToken, expiresAt, success } = await refreshLongToken(row.long_token);
       if (success) {
-        tokenStmt.updateLong.run(longToken, expiresAt, row.user_id, row.fb_user_id);
+        await tokenStmt.updateLong(longToken, expiresAt, row.user_id, row.fb_user_id);
 
-        // Cập nhật lại page tokens sau khi refresh
         const pages = await getPages(longToken);
         for (const page of pages) {
-          pageStmt.upsert.run({
+          await pageStmt.upsert({
             user_id:      row.user_id,
             fb_token_id:  row.id,
             page_id:      page.id,
@@ -161,11 +150,11 @@ async function autoRefreshExpiring() {
           });
         }
 
-        logStmt.create.run(row.user_id, row.fb_user_id, 'refresh', 1, `Refreshed, new expiry: ${expiresAt}`);
+        await logStmt.create(row.user_id, row.fb_user_id, 'refresh', true, `Refreshed, new expiry: ${expiresAt}`);
         results.push({ fb_user_id: row.fb_user_id, success: true, expiresAt });
       }
     } catch (err) {
-      logStmt.create.run(row.user_id, row.fb_user_id, 'refresh', 0, err.message);
+      await logStmt.create(row.user_id, row.fb_user_id, 'refresh', false, err.message).catch(() => {});
       results.push({ fb_user_id: row.fb_user_id, success: false, error: err.message });
     }
   }
@@ -174,31 +163,21 @@ async function autoRefreshExpiring() {
 }
 
 // ============================================================
-//  8. Đăng bài lên Facebook Page qua server (bảo mật token)
+//  8. Đăng bài lên Facebook Page
 // ============================================================
-// postToPage: hỗ trợ text-only, nhiều ảnh, hoặc video
 async function postToPage(pageId, pageToken, content, linkUrl = null, photoIds = null, videoId = null) {
   const endpoint = `${FB_GRAPH}/${pageId}/feed`;
   const params = { message: content, access_token: pageToken };
 
   if (linkUrl) params.link = linkUrl;
 
-  // Nhiều ảnh — attach tất cả vào bài feed
   if (photoIds && photoIds.length > 0) {
-    params.attached_media = JSON.stringify(
-      photoIds.map(id => ({ media_fbid: id }))
-    );
+    params.attached_media = JSON.stringify(photoIds.map(id => ({ media_fbid: id })));
   }
 
-  // Video — cập nhật description rồi publish
   if (videoId) {
-    // Cập nhật description cho video
     await axios.post(`${FB_GRAPH}/${videoId}`, null, {
-      params: {
-        description:  content,
-        published:    'true',
-        access_token: pageToken,
-      },
+      params: { description: content, published: 'true', access_token: pageToken },
     });
     return { id: videoId };
   }
