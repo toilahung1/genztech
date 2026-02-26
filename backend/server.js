@@ -103,7 +103,7 @@ app.use('/api/ai',       require('./routes/ai'));
 app.get('/health', (req, res) => {
   res.json({
     status:    'ok',
-    version:   '1.0.0',
+    version:   '1.0.1',
     service:   'GenZTech API',
     timestamp: new Date().toISOString(),
     uptime:    Math.floor(process.uptime()) + 's',
