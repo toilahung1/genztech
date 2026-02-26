@@ -291,7 +291,7 @@ router.delete('/disconnect', (req, res) => {
 router.get('/token-log', (req, res) => {
   const { db } = require('../database');
   const logs = db.prepare(`
-    SELECT action, success, detail, created_at
+    SELECT action, success, message, created_at
     FROM token_refresh_log
     WHERE user_id = ?
     ORDER BY created_at DESC
