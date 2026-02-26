@@ -1099,6 +1099,26 @@
 
     // Auto-scheduler check every 30s
     setInterval(checkScheduler, 30000);
+
+    // Auto-check Facebook status nếu đã đăng nhập
+    if (S.loggedIn && S.jwtToken) {
+      setTimeout(async function() {
+        try {
+          const data = await api('GET', '/api/facebook/status');
+          if (data.connected) {
+            S.connected = true;
+            S.fbUser = data.fbUser;
+            S.pages = data.pages || [];
+            localStorage.setItem('gz_pages', JSON.stringify(S.pages));
+            renderPageSelect(S.pages);
+            updateConnUI();
+            if (data.warning) {
+              toast('⚠️ Token Facebook sắp hết hạn (' + data.daysLeft + ' ngày). Hãy gia hạn sớm!', 'error');
+            }
+          }
+        } catch(e) { /* silent fail */ }
+      }, 500);
+    }
   }
 
   // ============================================================
@@ -1519,7 +1539,7 @@
       const result = await api('POST', '/api/facebook/post', {
         pageId: S.page.id,
         content: content,
-        link: link || null,
+        linkUrl: link || null,
         photoIds: photoIds,
         videoId: videoId
       });
@@ -1556,9 +1576,10 @@
       if (S.loggedIn) {
         await api('POST', '/api/posts/schedule', {
           pageId: S.page.id,
+          pageName: S.page.name,
           content: content,
-          scheduledTime: schedTime.toISOString(),
-          repeat: document.getElementById('scheduleRepeat').value
+          scheduledAt: schedTime.toISOString(),
+          repeatType: document.getElementById('scheduleRepeat').value
         });
       }
       addToHistory({
