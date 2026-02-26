@@ -1,12 +1,12 @@
 /**
  * GenZTech — Scheduler (node-cron)
+ * PostgreSQL async version
  * - Mỗi phút: kiểm tra bài viết đến giờ đăng
  * - Mỗi ngày 3h sáng: auto-refresh token sắp hết hạn
  * - Mỗi ngày 6h sáng: dọn dẹp log cũ
  */
-
 const cron = require('node-cron');
-const { schedStmt, histStmt, pageStmt } = require('./database');
+const { schedStmt, histStmt, pageStmt, pool } = require('./database');
 const { postToPage, autoRefreshExpiring } = require('./tokenManager');
 
 let isRunning = false;
@@ -17,23 +17,19 @@ let isRunning = false;
 async function checkAndPost() {
   if (isRunning) return;
   isRunning = true;
-
   try {
-    const duePosts = schedStmt.findPending.all();
+    const duePosts = await schedStmt.findPending();
     if (duePosts.length === 0) { isRunning = false; return; }
-
     console.log(`[Scheduler] Found ${duePosts.length} post(s) due`);
 
     for (const post of duePosts) {
       try {
-        // Lấy page token từ DB
-        const pageRow = pageStmt.findByPageId.get(post.user_id, post.page_id);
+        const pageRow = await pageStmt.findByPageId(post.user_id, post.page_id);
         if (!pageRow) {
-          schedStmt.updateStatus.run('failed', null, 'Page token not found in database', post.id);
+          await schedStmt.updateStatus('failed', null, 'Page token not found in database', post.id);
           continue;
         }
 
-        // Đăng bài
         const result = await postToPage(
           post.page_id,
           pageRow.page_token,
@@ -42,11 +38,8 @@ async function checkAndPost() {
           post.image_url
         );
 
-        // Cập nhật trạng thái
-        schedStmt.updateStatus.run('posted', result.id || null, null, post.id);
-
-        // Lưu vào lịch sử
-        histStmt.create.run({
+        await schedStmt.updateStatus('posted', result.id || null, null, post.id);
+        await histStmt.create({
           user_id:    post.user_id,
           page_id:    post.page_id,
           page_name:  post.page_name,
@@ -60,7 +53,7 @@ async function checkAndPost() {
         if (post.repeat_type && post.repeat_type !== 'none') {
           const nextAt = calcNextRepeat(post.scheduled_at, post.repeat_type);
           if (nextAt) {
-            schedStmt.create.run({
+            await schedStmt.create({
               user_id:      post.user_id,
               page_id:      post.page_id,
               page_name:    post.page_name,
@@ -78,11 +71,9 @@ async function checkAndPost() {
       } catch (err) {
         const msg = err.response?.data?.error?.message || err.message;
         const retries = (post.retry_count || 0) + 1;
-
         if (retries >= 3) {
-          // Đã thử 3 lần → đánh dấu thất bại
-          schedStmt.updateStatus.run('failed', null, msg, post.id);
-          histStmt.create.run({
+          await schedStmt.updateStatus('failed', null, msg, post.id);
+          await histStmt.create({
             user_id:    post.user_id,
             page_id:    post.page_id,
             page_name:  post.page_name,
@@ -93,11 +84,9 @@ async function checkAndPost() {
           });
           console.error(`[Scheduler] ✗ Failed (max retries): ${msg}`);
         } else {
-          // Thử lại sau 5 phút
           const retryAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-          schedStmt.updateStatus.run('pending', null, `Retry ${retries}: ${msg}`, post.id);
-          const { db } = require('./database');
-          db.prepare('UPDATE scheduled_posts SET scheduled_at = ? WHERE id = ?').run(retryAt, post.id);
+          await schedStmt.updateStatus('pending', null, `Retry ${retries}: ${msg}`, post.id);
+          await pool.query('UPDATE scheduled_posts SET scheduled_at = $1 WHERE id = $2', [retryAt, post.id]);
           console.warn(`[Scheduler] ↺ Retry ${retries}/3 in 5min: ${msg}`);
         }
       }
@@ -127,15 +116,14 @@ async function runTokenRefresh() {
 // ============================================================
 //  JOB 3: Dọn dẹp log cũ hơn 30 ngày (6h sáng mỗi ngày)
 // ============================================================
-function cleanupOldLogs() {
-  const { db } = require('./database');
-  const deleted = db.prepare(`
-    DELETE FROM token_refresh_log WHERE created_at < datetime('now', '-30 days')
-  `).run();
-  const deletedHist = db.prepare(`
-    DELETE FROM post_history WHERE posted_at < datetime('now', '-90 days')
-  `).run();
-  console.log(`[Cleanup] Removed ${deleted.changes} log entries, ${deletedHist.changes} old history entries`);
+async function cleanupOldLogs() {
+  try {
+    const r1 = await pool.query(`DELETE FROM token_refresh_log WHERE created_at < NOW() - INTERVAL '30 days'`);
+    const r2 = await pool.query(`DELETE FROM post_history WHERE posted_at < NOW() - INTERVAL '90 days'`);
+    console.log(`[Cleanup] Removed ${r1.rowCount} log entries, ${r2.rowCount} old history entries`);
+  } catch (err) {
+    console.error('[Cleanup] Error:', err.message);
+  }
 }
 
 // ============================================================
@@ -156,15 +144,9 @@ function calcNextRepeat(scheduledAt, repeatType) {
 //  Khởi động tất cả cron jobs
 // ============================================================
 function startScheduler() {
-  // Mỗi phút — kiểm tra bài cần đăng
   cron.schedule('* * * * *', checkAndPost);
-
-  // 3h sáng mỗi ngày — refresh token
   cron.schedule('0 3 * * *', runTokenRefresh);
-
-  // 6h sáng mỗi ngày — dọn dẹp
   cron.schedule('0 6 * * *', cleanupOldLogs);
-
   console.log('[Scheduler] ✓ All cron jobs started');
   console.log('  → Post checker:    every minute');
   console.log('  → Token refresh:   daily at 03:00');
