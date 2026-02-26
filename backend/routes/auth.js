@@ -23,12 +23,12 @@ router.post('/register', async (req, res) => {
   if (pwErr) return res.status(400).json({ error: pwErr });
 
   try {
-    const existing = userStmt.findByUsername.get(username);
+    const existing = await userStmt.findByUsername(username);
     if (existing) return res.status(409).json({ error: 'Username đã tồn tại' });
 
     const hash = await bcrypt.hash(password, 12);
-    const info = userStmt.create.run(username, hash);
-    const token = jwt.sign({ userId: info.lastInsertRowid, username }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const info = await userStmt.create(username, hash);
+    const token = jwt.sign({ userId: info.id, username }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
     res.json({ success: true, token, username });
   } catch (err) {
@@ -44,13 +44,13 @@ router.post('/login', async (req, res) => {
   if (!loginId || !password) return res.status(400).json({ error: 'Thiếu thông tin đăng nhập' });
 
   try {
-    const user = userStmt.findByUsername.get(loginId);
+    const user = await userStmt.findByUsername(loginId);
     if (!user) return res.status(401).json({ error: 'Sai username hoặc password' });
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Sai username hoặc password' });
 
-    userStmt.updateLogin.run(user.id);
+    await userStmt.updateLogin(user.id);
     const token = jwt.sign({ userId: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
     res.json({ success: true, token, username: user.username });
