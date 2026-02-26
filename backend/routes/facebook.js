@@ -1,4 +1,16 @@
 const express = require('express');
+const multer  = require('multer');
+const fs      = require('fs');
+
+// Multer — lưu ảnh tạm vào /tmp/gz_uploads
+const upload = multer({
+  dest: '/tmp/gz_uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = /image\/(jpeg|png|gif|webp)/.test(file.mimetype);
+    cb(ok ? null : new Error('Chỉ chấp nhận file ảnh'), ok);
+  },
+});
 const auth    = require('../middleware/auth');
 const { tokenStmt, pageStmt, logStmt } = require('../database');
 const { fullConnect, inspectToken, refreshLongToken, getPages, postToPage } = require('../tokenManager');
@@ -135,14 +147,14 @@ router.get('/pages', (req, res) => {
 //  Đăng bài ngay lập tức qua server (token bảo mật ở backend)
 // ============================================================
 router.post('/post', async (req, res) => {
-  const { pageId, content, linkUrl, imageUrl } = req.body;
+  const { pageId, content, linkUrl, imageUrl, photoId } = req.body;
   if (!pageId || !content) return res.status(400).json({ error: 'pageId và content là bắt buộc' });
 
   const pageRow = pageStmt.findByPageId.get(req.userId, pageId);
   if (!pageRow) return res.status(404).json({ error: 'Không tìm thấy Page hoặc bạn không có quyền' });
 
   try {
-    const result = await postToPage(pageId, pageRow.page_token, content, linkUrl, imageUrl);
+    const result = await postToPage(pageId, pageRow.page_token, content, linkUrl, imageUrl, photoId);
     const { histStmt } = require('../database');
     histStmt.create.run({
       user_id:    req.userId,
@@ -167,6 +179,52 @@ router.post('/post', async (req, res) => {
       error_msg:  msg,
     });
     res.status(400).json({ error: 'Đăng bài thất bại: ' + msg });
+  }
+});
+
+// ============================================================
+//  POST /api/facebook/upload-image
+//  Upload ảnh từ frontend → gửi thẳng lên Facebook Graph API
+//  Trả về { imageUrl } để dùng khi đăng bài
+// ============================================================
+router.post('/upload-image', upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Không có file ảnh' });
+
+  const { pageId } = req.body;
+  if (!pageId) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ error: 'pageId là bắt buộc' });
+  }
+
+  const pageRow = pageStmt.findByPageId.get(req.userId, pageId);
+  if (!pageRow) {
+    fs.unlinkSync(req.file.path);
+    return res.status(404).json({ error: 'Không tìm thấy Page' });
+  }
+
+  try {
+    const axios = require('axios');
+    const FormData = require('form-data');
+    const form = new FormData();
+    form.append('source', fs.createReadStream(req.file.path), {
+      filename: req.file.originalname || 'image.jpg',
+      contentType: req.file.mimetype,
+    });
+    form.append('published', 'false'); // Đăng ảnh không public — chỉ dùng để attach vào bài viết
+    form.append('access_token', pageRow.page_token);
+
+    const fbRes = await axios.post(
+      `https://graph.facebook.com/v19.0/${pageId}/photos`,
+      form,
+      { headers: form.getHeaders() }
+    );
+    fs.unlinkSync(req.file.path);
+    // Trả về photo_id để attach vào bài feed
+    res.json({ success: true, photoId: fbRes.data.id });
+  } catch (err) {
+    try { fs.unlinkSync(req.file.path); } catch {}
+    const msg = err.response?.data?.error?.message || err.message;
+    res.status(400).json({ error: 'Upload ảnh thất bại: ' + msg });
   }
 });
 

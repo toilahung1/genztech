@@ -5,14 +5,19 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev":   "node --watch server.js",
-    "pm2":   "pm2 start server.js --name genztech-api",
-    "test":  "echo \"No tests yet\" && exit 0"
+    "dev": "node --watch server.js",
+    "pm2": "pm2 start server.js --name genztech-api",
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["facebook", "token", "scheduler", "genztech"],
+  "keywords": [
+    "facebook",
+    "token",
+    "scheduler",
+    "genztech"
+  ],
   "author": "GenZTech",
   "license": "ISC",
   "dependencies": {
@@ -26,6 +31,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "node-cron": "^4.2.1"
   }
 }

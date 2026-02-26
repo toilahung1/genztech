@@ -176,17 +176,15 @@ async function autoRefreshExpiring() {
 // ============================================================
 //  8. Đăng bài lên Facebook Page qua server (bảo mật token)
 // ============================================================
-async function postToPage(pageId, pageToken, content, linkUrl = null, imageUrl = null) {
-  let endpoint = `${FB_GRAPH}/${pageId}/feed`;
+async function postToPage(pageId, pageToken, content, linkUrl = null, imageUrl = null, photoId = null) {
+  const endpoint = `${FB_GRAPH}/${pageId}/feed`;
   const params = { message: content, access_token: pageToken };
 
   if (linkUrl) params.link = linkUrl;
 
-  // Nếu có ảnh URL (đã upload lên server)
-  if (imageUrl) {
-    endpoint = `${FB_GRAPH}/${pageId}/photos`;
-    params.url = imageUrl;
-    params.caption = content;
+  // Nếu có photo_id (đã upload lên Facebook trước) — attach vào bài feed
+  if (photoId) {
+    params.attached_media = JSON.stringify([{ media_fbid: photoId }]);
   }
 
   const res = await axios.post(endpoint, null, { params });

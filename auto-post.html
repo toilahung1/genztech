@@ -2234,12 +2234,32 @@ async function doPost(content) {
 
   try {
     const link = document.getElementById('post-link').value.trim();
+    const imgFile = document.getElementById('img-file').files[0];
+    let photoId = null;
+
+    // Nếu có ảnh — upload lên Facebook trước, lấy photoId
+    if (imgFile) {
+      btn.innerHTML = '<span class="spinner"></span> Đang upload ảnh...';
+      const formData = new FormData();
+      formData.append('image', imgFile);
+      formData.append('pageId', S.page.id);
+      const uploadRes = await fetch(API_BASE + '/api/facebook/upload-image', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + S.jwtToken },
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload ảnh thất bại');
+      photoId = uploadData.photoId;
+      btn.innerHTML = '<span class="spinner"></span> Đang đăng bài...';
+    }
+
     // Gọi backend API — token được lưu bảo mật trên server
     const data = await api('POST', '/api/facebook/post', {
-      pageId:   S.page.id,
+      pageId:  S.page.id,
       content,
-      linkUrl:  link || null,
-      imageUrl: null, // TODO: upload ảnh lên server trước
+      linkUrl: link || null,
+      photoId: photoId || null,
     });
 
     savePost({id: data.postId || Date.now()+'', content, status:'posted', page: S.page.name, postedAt: new Date().toISOString(), fbId: data.postId});
