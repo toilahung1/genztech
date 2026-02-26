@@ -1,46 +1,37 @@
 const express = require('express');
 const auth    = require('../middleware/auth');
-const { schedStmt, histStmt } = require('../database');
-
+const { schedStmt, histStmt, pool } = require('../database');
 const router = express.Router();
 router.use(auth);
 
-// ============================================================
-//  GET /api/posts/scheduled
-//  Lấy danh sách bài đã lên lịch
-// ============================================================
-router.get('/scheduled', (req, res) => {
-  const posts = schedStmt.findByUser.all(req.userId);
-  res.json({ success: true, posts });
+// GET /api/posts/scheduled
+router.get('/scheduled', async (req, res) => {
+  try {
+    const posts = await schedStmt.findByUser(req.userId);
+    res.json({ success: true, posts });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ============================================================
-//  GET /api/posts/scheduled/pending
-//  Chỉ lấy bài đang chờ đăng
-// ============================================================
-router.get('/scheduled/pending', (req, res) => {
-  const posts = schedStmt.findPendingByUser.all(req.userId);
-  res.json({ success: true, posts, count: posts.length });
+// GET /api/posts/scheduled/pending
+router.get('/scheduled/pending', async (req, res) => {
+  try {
+    const posts = await schedStmt.findPendingByUser(req.userId);
+    res.json({ success: true, posts, count: posts.length });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ============================================================
-//  POST /api/posts/schedule
-//  Lên lịch đăng bài mới
-// ============================================================
-router.post('/schedule', (req, res) => {
+// POST /api/posts/schedule
+router.post('/schedule', async (req, res) => {
   const { pageId, pageName, content, imageUrl, linkUrl, postType, scheduledAt, repeatType } = req.body;
-
   if (!pageId || !content || !scheduledAt) {
     return res.status(400).json({ error: 'pageId, content và scheduledAt là bắt buộc' });
   }
-
   const at = new Date(scheduledAt);
   if (at <= new Date()) {
     return res.status(400).json({ error: 'Thời gian đăng phải sau thời điểm hiện tại' });
   }
-
   try {
-    const info = schedStmt.create.run({
+    const post = await schedStmt.create({
       user_id:      req.userId,
       page_id:      pageId,
       page_name:    pageName || '',
@@ -51,54 +42,47 @@ router.post('/schedule', (req, res) => {
       scheduled_at: at.toISOString(),
       repeat_type:  repeatType || 'none',
     });
-
     res.json({
       success: true,
-      postId:  info.lastInsertRowid,
+      postId:  post.id,
       message: `Đã lên lịch đăng vào ${at.toLocaleString('vi-VN')}`,
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ============================================================
-//  DELETE /api/posts/scheduled/:id
-//  Hủy bài đã lên lịch
-// ============================================================
-router.delete('/scheduled/:id', (req, res) => {
-  const info = schedStmt.cancel.run(parseInt(req.params.id), req.userId);
-  if (info.changes === 0) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
-  res.json({ success: true, message: 'Đã hủy lịch đăng' });
+// DELETE /api/posts/scheduled/:id
+router.delete('/scheduled/:id', async (req, res) => {
+  try {
+    await schedStmt.cancel(parseInt(req.params.id), req.userId);
+    res.json({ success: true, message: 'Đã hủy lịch đăng' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ============================================================
-//  GET /api/posts/history
-//  Lấy lịch sử đăng bài
-// ============================================================
-router.get('/history', (req, res) => {
-  const { status } = req.query;
-  const posts = status
-    ? histStmt.findByStatus.all(req.userId, status)
-    : histStmt.findByUser.all(req.userId);
-  res.json({ success: true, posts });
+// GET /api/posts/history
+router.get('/history', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const posts = status
+      ? await histStmt.findByStatus(req.userId, status)
+      : await histStmt.findByUser(req.userId);
+    res.json({ success: true, posts });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ============================================================
-//  GET /api/posts/stats
-//  Thống kê tổng quan
-// ============================================================
-router.get('/stats', (req, res) => {
-  const { db } = require('../database');
-
-  const total     = db.prepare('SELECT COUNT(*) as n FROM post_history WHERE user_id = ?').get(req.userId).n;
-  const posted    = db.prepare("SELECT COUNT(*) as n FROM post_history WHERE user_id = ? AND status = 'posted'").get(req.userId).n;
-  const failed    = db.prepare("SELECT COUNT(*) as n FROM post_history WHERE user_id = ? AND status = 'failed'").get(req.userId).n;
-  const pending   = db.prepare("SELECT COUNT(*) as n FROM scheduled_posts WHERE user_id = ? AND status = 'pending'").get(req.userId).n;
-  const today     = db.prepare("SELECT COUNT(*) as n FROM post_history WHERE user_id = ? AND posted_at >= date('now')").get(req.userId).n;
-  const thisWeek  = db.prepare("SELECT COUNT(*) as n FROM post_history WHERE user_id = ? AND posted_at >= date('now', '-7 days')").get(req.userId).n;
-
-  res.json({ success: true, stats: { total, posted, failed, pending, today, thisWeek } });
+// GET /api/posts/stats
+router.get('/stats', async (req, res) => {
+  try {
+    const uid = req.userId;
+    const [total, posted, failed, pending, today, thisWeek] = await Promise.all([
+      pool.query('SELECT COUNT(*) as n FROM post_history WHERE user_id=$1', [uid]).then(r => parseInt(r.rows[0].n)),
+      pool.query("SELECT COUNT(*) as n FROM post_history WHERE user_id=$1 AND status='posted'", [uid]).then(r => parseInt(r.rows[0].n)),
+      pool.query("SELECT COUNT(*) as n FROM post_history WHERE user_id=$1 AND status='failed'", [uid]).then(r => parseInt(r.rows[0].n)),
+      pool.query("SELECT COUNT(*) as n FROM scheduled_posts WHERE user_id=$1 AND status='pending'", [uid]).then(r => parseInt(r.rows[0].n)),
+      pool.query("SELECT COUNT(*) as n FROM post_history WHERE user_id=$1 AND posted_at >= CURRENT_DATE", [uid]).then(r => parseInt(r.rows[0].n)),
+      pool.query("SELECT COUNT(*) as n FROM post_history WHERE user_id=$1 AND posted_at >= NOW() - INTERVAL '7 days'", [uid]).then(r => parseInt(r.rows[0].n)),
+    ]);
+    res.json({ success: true, stats: { total, posted, failed, pending, today, thisWeek } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 module.exports = router;
