@@ -1,6 +1,6 @@
 {
   "name": "genztech-backend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "GenZTech Backend — Facebook Token Manager & Auto Post Scheduler",
   "main": "server.js",
   "scripts": {
@@ -23,7 +23,7 @@
   "dependencies": {
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.6.2",
+    "pg": "^8.13.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
