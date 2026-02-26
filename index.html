@@ -90,9 +90,9 @@
         <a href="privacy-policy.html" class="hover:text-facebook-blue transition-colors nav-link">Chính sách</a>
       </div>
       <div class="flex items-center gap-4">
-        <button onclick="handleFBLogin()"
+        <button onclick="openAuthModal()"
           class="hidden md:block cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
-          <span class="relative z-10">Kết nối Facebook</span>
+          <span class="relative z-10">Đăng Nhập</span>
         </button>
         <a href="#contact"
           class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
@@ -272,9 +272,9 @@
       </div>
 
       <!-- CTA -->
-      <button
+      <button onclick="openAuthModal()"
         class="magnetic-cta relative px-12 py-5 bg-facebook-blue rounded-full text-lg font-bold hover:shadow-glow-strong transition-all overflow-hidden animate-shake-slow">
-        <span class="relative z-10">XEM DEMO NGAY</span>
+        <span class="relative z-10">BẮT ĐẦU MIỄN PHÍ</span>
         <div class="button-shimmer"></div>
       </button>
 
@@ -2294,66 +2294,137 @@
     }
   </script>
 
+  <!-- Auth Modal -->
+  <div id="homeAuthModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);align-items:center;justify-content:center">
+    <div style="background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;width:100%;max-width:420px;margin:20px;position:relative;box-shadow:0 0 60px rgba(24,119,242,0.2)">
+      <button onclick="closeAuthModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:22px;cursor:pointer;line-height:1">&times;</button>
+      <div style="text-align:center;margin-bottom:24px">
+        <img src="images/logo.png" alt="GenZTech" style="width:48px;height:48px;border-radius:50%;margin:0 auto 12px;display:block">
+        <h2 style="color:#fff;font-size:20px;font-weight:800;margin:0">GENZTECH PLATFORM</h2>
+        <p style="color:rgba(255,255,255,0.4);font-size:13px;margin:6px 0 0">Đăng nhập để bắt đầu tự động hóa</p>
+      </div>
+      <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:20px">
+        <button id="homeTabLogin" onclick="switchHomeTab('login')" style="flex:1;padding:10px;background:none;border:none;border-bottom:2px solid #1877f2;color:#1877f2;font-weight:700;font-size:14px;cursor:pointer">Đăng Nhập</button>
+        <button id="homeTabRegister" onclick="switchHomeTab('register')" style="flex:1;padding:10px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);font-weight:600;font-size:14px;cursor:pointer">Đăng Ký</button>
+      </div>
+      <div id="homePaneLogin">
+        <div style="margin-bottom:14px"><label style="color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px">Email hoặc Tên đăng nhập</label><input id="homeLoginUser" type="text" placeholder="email@example.com" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div>
+        <div style="margin-bottom:20px"><label style="color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px">Mật khẩu</label><input id="homeLoginPass" type="password" placeholder="••••••••" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div>
+        <button id="homeLoginBtn" onclick="doHomeLogin()" style="width:100%;padding:13px;background:#1877f2;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Đăng Nhập</button>
+        <div id="homeLoginErr" style="color:#f87171;font-size:12px;margin-top:10px;text-align:center;display:none"></div>
+      </div>
+      <div id="homePaneRegister" style="display:none">
+        <div style="margin-bottom:14px"><label style="color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px">Tên đăng nhập</label><input id="homeRegUser" type="text" placeholder="username" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div>
+        <div style="margin-bottom:14px"><label style="color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px">Email</label><input id="homeRegEmail" type="email" placeholder="email@example.com" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div>
+        <div style="margin-bottom:20px"><label style="color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;display:block;margin-bottom:6px">Mật khẩu</label><input id="homeRegPass" type="password" placeholder="VD: MyPass2024" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"><div style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:5px">Tối thiểu 8 ký tự, gồm cả chữ và số</div></div>
+        <button id="homeRegBtn" onclick="doHomeRegister()" style="width:100%;padding:13px;background:#1877f2;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Đăng Ký</button>
+        <div id="homeRegErr" style="color:#f87171;font-size:12px;margin-top:10px;text-align:center;display:none"></div>
+      </div>
+    </div>
+  </div>
+
   <script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js"></script>
 
   <script>
-    // 2. Cấu hình SDK
-    window.fbAsyncInit = function () {
-      FB.init({
-        appId: '807344775697014', // Thay App ID vào đây
-        cookie: true,
-        xfbml: true,
-        version: 'v24.0' // Luôn dùng bản mới nhất
-      });
-    };
+    const API_BASE = 'https://genztech-production.up.railway.app';
 
-    // 3. Hàm xử lý khi bấm nút "Kết nối Facebook"
-    function handleFBLogin() {
-
-      FB.login(function (response) {
-
-        if (response.status === 'connected') {
-          // User đã đồng ý, lấy được Token tạm
-          const accessToken = response.authResponse.accessToken;
-          const userID = response.authResponse.userID;
-
-
-
-          // GỌI NGAY VỀ BACKEND GOLANG ĐỂ SYNC
-          syncWithBackend(accessToken, userID);
-
-        } else {
-
-        }
-      }, {
-        // [QUAN TRỌNG] Xin các quyền cần thiết cho Tool Ads
-        // Nếu thiếu dòng này, bạn chỉ lấy được Tên & Avatar, không lấy được tk quảng cáo
-        scope: 'email,public_profile,ads_read,ads_management,pages_show_list,pages_read_engagement'
-      });
+    function openAuthModal() {
+      if (localStorage.getItem('gz_jwt')) {
+        window.location.href = 'auto-post.html';
+        return;
+      }
+      const modal = document.getElementById('homeAuthModal');
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
     }
 
-    // 4. Hàm bắn về Backend (Giống SMIT /sync/basic)
-    function syncWithBackend(token, uid) {
-      fetch('https://api.genztechcorp.com/api/facebook/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_token: token,
-          facebook_uid: uid
-        })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            alert("Đồng bộ thành công!");
-            window.location.reload(); // Reload để hiện dữ liệu mới
-          } else {
-            alert("Lỗi: " + data.message);
-          }
+    function closeAuthModal() {
+      document.getElementById('homeAuthModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function switchHomeTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('homePaneLogin').style.display = isLogin ? 'block' : 'none';
+      document.getElementById('homePaneRegister').style.display = isLogin ? 'none' : 'block';
+      document.getElementById('homeTabLogin').style.color = isLogin ? '#1877f2' : 'rgba(255,255,255,0.4)';
+      document.getElementById('homeTabLogin').style.borderBottomColor = isLogin ? '#1877f2' : 'transparent';
+      document.getElementById('homeTabRegister').style.color = isLogin ? 'rgba(255,255,255,0.4)' : '#1877f2';
+      document.getElementById('homeTabRegister').style.borderBottomColor = isLogin ? 'transparent' : '#1877f2';
+    }
+
+    document.getElementById('homeAuthModal').addEventListener('click', function(e) {
+      if (e.target === this) closeAuthModal();
+    });
+
+    async function doHomeLogin() {
+      const user = document.getElementById('homeLoginUser').value.trim();
+      const pass = document.getElementById('homeLoginPass').value.trim();
+      const errEl = document.getElementById('homeLoginErr');
+      const btn = document.getElementById('homeLoginBtn');
+      errEl.style.display = 'none';
+      if (!user || !pass) { errEl.textContent = 'Vui lòng điền đầy đủ thông tin'; errEl.style.display = 'block'; return; }
+      btn.textContent = 'Đang đăng nhập...';
+      btn.disabled = true;
+      try {
+        const res = await fetch(API_BASE + '/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Đăng nhập thất bại');
+        localStorage.setItem('gz_jwt', data.token);
+        localStorage.setItem('gz_username', data.username || user);
+        window.location.href = 'auto-post.html';
+      } catch(e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+        btn.textContent = 'Đăng Nhập';
+        btn.disabled = false;
+      }
     }
-  </script>
 
+    async function doHomeRegister() {
+      const user = document.getElementById('homeRegUser').value.trim();
+      const email = document.getElementById('homeRegEmail').value.trim();
+      const pass = document.getElementById('homeRegPass').value.trim();
+      const errEl = document.getElementById('homeRegErr');
+      const btn = document.getElementById('homeRegBtn');
+      errEl.style.display = 'none';
+      if (!user || !email || !pass) { errEl.textContent = 'Vui lòng điền đầy đủ thông tin'; errEl.style.display = 'block'; return; }
+      if (pass.length < 8 || !/[a-zA-Z]/.test(pass) || !/[0-9]/.test(pass)) {
+        errEl.textContent = 'Mật khẩu phải tối thiểu 8 ký tự, gồm cả chữ và số';
+        errEl.style.display = 'block'; return;
+      }
+      btn.textContent = 'Đang đăng ký...';
+      btn.disabled = true;
+      try {
+        const res = await fetch(API_BASE + '/api/auth/register', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, email, password: pass })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Đăng ký thất bại');
+        localStorage.setItem('gz_jwt', data.token);
+        localStorage.setItem('gz_username', data.username || user);
+        window.location.href = 'auto-post.html';
+      } catch(e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+        btn.textContent = 'Đăng Ký';
+        btn.disabled = false;
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      const modal = document.getElementById('homeAuthModal');
+      if (modal.style.display !== 'flex') return;
+      if (e.key === 'Enter') {
+        if (document.getElementById('homePaneLogin').style.display !== 'none') doHomeLogin();
+        else doHomeRegister();
+      }
+      if (e.key === 'Escape') closeAuthModal();
+    });
+   </script>
 </body>
-
 </html>

@@ -1129,9 +1129,12 @@
     renderPosts();
     updateStats();
 
-    // Auto-scheduler check every 30s
+     // Auto-scheduler check every 30s
     setInterval(checkScheduler, 30000);
-
+    // Nếu chưa đăng nhập thì tự động mở modal đăng nhập
+    if (!S.loggedIn) {
+      setTimeout(function() { openModal('connectModal'); }, 300);
+    }
     // Auto-check Facebook status nếu đã đăng nhập
     if (S.loggedIn && S.jwtToken) {
       setTimeout(async function() {
