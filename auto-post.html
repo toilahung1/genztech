@@ -973,6 +973,25 @@
           <button class="btn-sm btn-primary" style="width:100%" id="fbConnectBtn" onclick="doConnectFB()">
             <i class="bi bi-facebook"></i> Kết Nối Facebook
           </button>
+          <!-- Token status (hiển sau khi đã kết nối) -->
+          <div id="tokenStatusBox" style="display:none;margin-top:14px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;border:1px solid rgba(255,255,255,0.08)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:12px;color:rgba(255,255,255,0.5)">Trạng thái Token</span>
+              <span id="tokenDaysLabel" style="font-size:12px;font-weight:700"></span>
+            </div>
+            <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:6px;overflow:hidden;margin-bottom:10px">
+              <div id="tokenProgressBar" style="height:100%;border-radius:4px;transition:width 0.5s"></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-sm btn-outline" style="flex:1;font-size:11px" onclick="doRefreshToken()" id="refreshTokenBtn">
+                <i class="bi bi-arrow-clockwise"></i> Gia Hạn Ngay
+              </button>
+              <button class="btn-sm btn-outline" style="flex:1;font-size:11px;color:#f87171;border-color:rgba(248,113,113,0.3)" onclick="doDisconnect()">
+                <i class="bi bi-x-circle"></i> Ngắt Kết Nối
+              </button>
+            </div>
+            <div id="tokenRefreshMsg" style="font-size:11px;margin-top:8px;text-align:center"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1108,12 +1127,14 @@
           if (data.connected) {
             S.connected = true;
             S.fbUser = data.fbUser;
+            S.tokenDaysLeft = data.daysLeft;
+            S.tokenExpiresAt = data.expiresAt;
             S.pages = data.pages || [];
             localStorage.setItem('gz_pages', JSON.stringify(S.pages));
             renderPageSelect(S.pages);
             updateConnUI();
             if (data.warning) {
-              toast('⚠️ Token Facebook sắp hết hạn (' + data.daysLeft + ' ngày). Hãy gia hạn sớm!', 'error');
+              toast('⚠️ Token Facebook sắp hết hạn (' + data.daysLeft + ' ngày). Nhấn "Gia Hạn Ngay" trong mục Kết Nối!', 'error');
             }
           }
         } catch(e) { /* silent fail */ }
@@ -1187,11 +1208,15 @@
       S.connected = true;
       S.fbUser = data.fbUser || data.user;
       S.pages = data.pages || [];
+      S.tokenExpiresAt = data.expiresAt;
+      S.tokenDaysLeft = data.expiresAt
+        ? Math.ceil((new Date(data.expiresAt) - Date.now()) / (1000 * 3600 * 24))
+        : null;
       localStorage.setItem('gz_pages', JSON.stringify(S.pages));
       renderPageSelect(S.pages);
       updateConnUI();
       closeModal('connectModal');
-      toast('Kết nối Facebook thành công! ' + S.pages.length + ' Page', 'success');
+      toast('Kết nối Facebook thành công! ' + S.pages.length + ' Page. Token hết hạn: ' + (S.tokenDaysLeft ? S.tokenDaysLeft + ' ngày nữa' : 'Không rõ'), 'success');
     } catch(e) {
       toast(e.message, 'error');
     } finally {
@@ -1200,6 +1225,54 @@
     }
   }
 
+  // ============================================================
+  //  REFRESH TOKEN
+  // ============================================================
+  async function doRefreshToken() {
+    const btn = document.getElementById('refreshTokenBtn');
+    const msg = document.getElementById('tokenRefreshMsg');
+    btn.innerHTML = '<span class="spinner"></span> Đang gia hạn...';
+    btn.disabled = true;
+    msg.textContent = '';
+    try {
+      const data = await api('POST', '/api/facebook/refresh');
+      S.tokenExpiresAt = data.expiresAt;
+      S.tokenDaysLeft = data.daysLeft;
+      updateTokenStatusUI(data.daysLeft);
+      msg.style.color = '#4ade80';
+      msg.textContent = '✅ ' + data.message;
+      toast(data.message, 'success');
+    } catch(e) {
+      msg.style.color = '#f87171';
+      msg.textContent = '❌ ' + e.message;
+      toast('Gia hạn thất bại: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Gia Hạn Ngay';
+      btn.disabled = false;
+    }
+  }
+  // ============================================================
+  //  DISCONNECT FACEBOOK
+  // ============================================================
+  async function doDisconnect() {
+    if (!confirm('Bạn có chắc muốn ngắt kết nối Facebook không?')) return;
+    try {
+      await api('DELETE', '/api/facebook/disconnect');
+      S.connected = false;
+      S.fbUser = null;
+      S.pages = [];
+      S.page = null;
+      S.tokenDaysLeft = null;
+      S.tokenExpiresAt = null;
+      localStorage.removeItem('gz_pages');
+      localStorage.removeItem('gz_page');
+      document.getElementById('tokenStatusBox').style.display = 'none';
+      updateConnUI();
+      toast('Đã ngắt kết nối Facebook', 'info');
+    } catch(e) {
+      toast('Lỗi: ' + e.message, 'error');
+    }
+  }
   function updateConnUI() {
     const dot = document.getElementById('connDot');
     const label = document.getElementById('connLabel');
@@ -1211,17 +1284,47 @@
       label.textContent = S.fbUser.name || S.username;
       btnLabel.textContent = 'Đã Kết Nối';
       btn.className = 'btn-sm btn-success';
+      // Hiển thị token status box
+      document.getElementById('fbTokenSection').style.display = 'block';
+      updateTokenStatusUI(S.tokenDaysLeft);
     } else if (S.loggedIn) {
       dot.classList.add('online');
       label.textContent = S.username;
       btnLabel.textContent = 'Kết Nối FB';
       btn.className = 'btn-sm btn-outline';
       document.getElementById('fbTokenSection').style.display = 'block';
+      document.getElementById('tokenStatusBox').style.display = 'none';
     } else {
       dot.classList.remove('online');
       label.textContent = 'Chưa kết nối';
       btnLabel.textContent = 'Kết Nối';
       btn.className = 'btn-sm btn-outline';
+      document.getElementById('tokenStatusBox').style.display = 'none';
+    }
+  }
+  // Cập nhật UI hiển thị số ngày còn lại của token
+  function updateTokenStatusUI(daysLeft) {
+    const box = document.getElementById('tokenStatusBox');
+    const label = document.getElementById('tokenDaysLabel');
+    const bar = document.getElementById('tokenProgressBar');
+    if (!box || daysLeft === null || daysLeft === undefined) return;
+    box.style.display = 'block';
+    const pct = Math.min(100, Math.max(0, Math.round(daysLeft / 60 * 100)));
+    if (daysLeft <= 7) {
+      label.textContent = '⚠️ Còn ' + daysLeft + ' ngày';
+      label.style.color = '#f87171';
+      bar.style.width = pct + '%';
+      bar.style.background = '#ef4444';
+    } else if (daysLeft <= 15) {
+      label.textContent = '⚠️ Còn ' + daysLeft + ' ngày';
+      label.style.color = '#fbbf24';
+      bar.style.width = pct + '%';
+      bar.style.background = '#f59e0b';
+    } else {
+      label.textContent = '✅ Còn ' + daysLeft + ' ngày';
+      label.style.color = '#4ade80';
+      bar.style.width = pct + '%';
+      bar.style.background = '#22c55e';
     }
   }
 

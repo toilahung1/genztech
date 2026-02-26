@@ -128,11 +128,11 @@ async function fullConnect(userId, shortToken) {
 
 // ============================================================
 //  7. Auto-refresh tất cả token sắp hết hạn (chạy bởi cron)
-//     Refresh token còn < 15 ngày
+//     Refresh token còn <= 30 ngày (an toàn hơn, tránh mất kết nối)
 // ============================================================
 async function autoRefreshExpiring() {
   const { db } = require('./database');
-  const soon = new Date(Date.now() + 15 * 24 * 3600 * 1000).toISOString();
+  const soon = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(); // Refresh khi còn <= 30 ngày
 
   const expiring = db.prepare(`
     SELECT * FROM facebook_tokens

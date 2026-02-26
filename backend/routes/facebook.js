@@ -284,4 +284,20 @@ router.delete('/disconnect', (req, res) => {
   res.json({ success: true, message: 'Đã ngắt kết nối Facebook' });
 });
 
+// ============================================================
+//  GET /api/facebook/token-log
+//  Lịch sử refresh token của user (tối đa 20 mục gần nhất)
+// ============================================================
+router.get('/token-log', (req, res) => {
+  const { db } = require('../database');
+  const logs = db.prepare(`
+    SELECT action, success, detail, created_at
+    FROM token_refresh_log
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 20
+  `).all(req.userId);
+  res.json({ success: true, logs });
+});
+
 module.exports = router;
