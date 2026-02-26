@@ -695,10 +695,13 @@
                   <label class="form-label"><i class="bi bi-images"></i> Ảnh / Video</label>
                   <div class="media-mode-tabs">
                     <button class="media-mode-btn active" id="modeImgBtn" onclick="setMediaMode('image')">
-                      <i class="bi bi-images"></i> Ảnh (tối đa 10)
+                      <i class="bi bi-images"></i> Ảnh
                     </button>
                     <button class="media-mode-btn" id="modeVidBtn" onclick="setMediaMode('video')">
                       <i class="bi bi-play-circle"></i> Video
+                    </button>
+                    <button class="media-mode-btn" id="modeMixBtn" onclick="setMediaMode('mixed')">
+                      <i class="bi bi-collection-play"></i> Ảnh + Video
                     </button>
                   </div>
 
@@ -729,6 +732,36 @@
                     </div>
                     <input type="file" id="vidInput" accept="video/*" style="display:none" onchange="onVideoSelected(event)">
                     <div class="media-grid count-1" id="vidGrid" style="display:none"></div>
+                  </div>
+
+                  <!-- Mixed zone: Ảnh + Video cùng lúc -->
+                  <div id="mixedZone" style="display:none">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+                      <div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:6px"><i class="bi bi-images"></i> Ảnh (tối đa 10)</div>
+                        <div class="upload-zone" id="mixImgDropZone" style="padding:16px"
+                          onclick="document.getElementById('mixImgInput').click()"
+                          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropMixImages(event)">
+                          <i class="bi bi-cloud-upload" style="font-size:20px"></i>
+                          <p style="font-size:12px">Click hoặc kéo thả ảnh</p>
+                        </div>
+                        <input type="file" id="mixImgInput" accept="image/*" multiple style="display:none" onchange="onMixImagesSelected(event)">
+                        <div class="media-grid" id="mixImgGrid" style="display:none"></div>
+                        <button class="media-add-btn" id="mixImgAddBtn" style="display:none" onclick="document.getElementById('mixImgInput').click()"><i class="bi bi-plus-circle"></i> Thêm ảnh</button>
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:6px"><i class="bi bi-play-circle"></i> Video (1 file)</div>
+                        <div class="upload-zone" id="mixVidDropZone" style="padding:16px"
+                          onclick="document.getElementById('mixVidInput').click()"
+                          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropMixVideo(event)">
+                          <i class="bi bi-camera-video" style="font-size:20px"></i>
+                          <p style="font-size:12px">Click hoặc kéo thả video</p>
+                        </div>
+                        <input type="file" id="mixVidInput" accept="video/*" style="display:none" onchange="onMixVideoSelected(event)">
+                        <div class="media-grid count-1" id="mixVidGrid" style="display:none"></div>
+                      </div>
+                    </div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center">Ảnh và video sẽ được đăng trong cùng 1 bài viết</div>
                   </div>
                 </div>
 
@@ -1222,11 +1255,76 @@
     S.mediaMode = mode;
     document.getElementById('modeImgBtn').className = 'media-mode-btn' + (mode === 'image' ? ' active' : '');
     document.getElementById('modeVidBtn').className = 'media-mode-btn' + (mode === 'video' ? ' active' : '');
+    document.getElementById('modeMixBtn').className = 'media-mode-btn' + (mode === 'mixed' ? ' active' : '');
     document.getElementById('imageZone').style.display = mode === 'image' ? 'block' : 'none';
     document.getElementById('videoZone').style.display = mode === 'video' ? 'block' : 'none';
-    // Clear other mode
-    if (mode === 'image') { S.video = null; renderVideoGrid(); }
-    else { S.images = []; renderImageGrid(); }
+    document.getElementById('mixedZone').style.display = mode === 'mixed' ? 'block' : 'none';
+    // Clear other modes
+    if (mode === 'image') { S.video = null; S.mixImages = []; S.mixVideo = null; renderVideoGrid(); }
+    else if (mode === 'video') { S.images = []; S.mixImages = []; S.mixVideo = null; renderImageGrid(); }
+    else { S.images = []; S.video = null; renderImageGrid(); renderVideoGrid(); }
+  }
+
+  // ── Mixed Mode Handlers ──
+  function onDropMixImages(e) {
+    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files).filter(function(f) { return f.type.startsWith('image/'); });
+    addMixImages(files);
+  }
+  function onDropMixVideo(e) {
+    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files).filter(function(f) { return f.type.startsWith('video/'); });
+    if (files.length) setMixVideo(files[0]);
+  }
+  function onMixImagesSelected(e) { addMixImages(Array.from(e.target.files)); e.target.value = ''; }
+  function onMixVideoSelected(e) { if (e.target.files[0]) setMixVideo(e.target.files[0]); e.target.value = ''; }
+  function addMixImages(files) {
+    if (!S.mixImages) S.mixImages = [];
+    const remaining = 10 - S.mixImages.length;
+    if (remaining <= 0) return toast('Tối đa 10 ảnh', 'error');
+    S.mixImages = S.mixImages.concat(files.slice(0, remaining));
+    renderMixImageGrid();
+  }
+  function removeMixImage(idx) { S.mixImages.splice(idx, 1); renderMixImageGrid(); }
+  function setMixVideo(file) {
+    if (file.size > 200 * 1024 * 1024) return toast('Video tối đa 200MB', 'error');
+    S.mixVideo = file; renderMixVideoGrid();
+  }
+  function renderMixImageGrid() {
+    if (!S.mixImages) S.mixImages = [];
+    const grid = document.getElementById('mixImgGrid');
+    const zone = document.getElementById('mixImgDropZone');
+    const addBtn = document.getElementById('mixImgAddBtn');
+    const count = S.mixImages.length;
+    if (!count) { grid.style.display = 'none'; zone.style.display = 'block'; addBtn.style.display = 'none'; return; }
+    zone.style.display = 'none'; grid.style.display = 'grid'; addBtn.style.display = 'block';
+    const cls = count === 1 ? 'count-1' : count === 2 ? 'count-2' : count === 3 ? 'count-3' : count === 4 ? 'count-4' : 'count-5plus';
+    grid.className = 'media-grid ' + cls;
+    const show = Math.min(count, 5); const extra = count - show;
+    grid.innerHTML = '';
+    for (let i = 0; i < show; i++) {
+      const url = URL.createObjectURL(S.mixImages[i]);
+      const isLast = i === show - 1 && extra > 0;
+      const div = document.createElement('div'); div.className = 'media-thumb';
+      const img = document.createElement('img'); img.src = url; div.appendChild(img);
+      if (isLast) { const ov = document.createElement('div'); ov.className = 'more-overlay'; ov.textContent = '+' + extra; div.appendChild(ov); }
+      const rmBtn = document.createElement('button'); rmBtn.className = 'remove-btn'; rmBtn.innerHTML = '<i class="bi bi-x"></i>';
+      (function(idx) { rmBtn.onclick = function(e) { e.stopPropagation(); removeMixImage(idx); }; })(i);
+      div.appendChild(rmBtn); grid.appendChild(div);
+    }
+  }
+  function renderMixVideoGrid() {
+    const grid = document.getElementById('mixVidGrid');
+    const zone = document.getElementById('mixVidDropZone');
+    if (!S.mixVideo) { grid.style.display = 'none'; zone.style.display = 'block'; return; }
+    zone.style.display = 'none'; grid.style.display = 'grid'; grid.className = 'media-grid count-1';
+    const url = URL.createObjectURL(S.mixVideo);
+    const div = document.createElement('div'); div.className = 'media-thumb';
+    const vid = document.createElement('video'); vid.src = url; vid.muted = true; vid.setAttribute('playsinline', ''); vid.style.pointerEvents = 'none'; div.appendChild(vid);
+    const badge = document.createElement('div'); badge.className = 'video-badge'; badge.innerHTML = '<i class="bi bi-play-fill"></i> VIDEO'; div.appendChild(badge);
+    const rmBtn = document.createElement('button'); rmBtn.className = 'remove-btn'; rmBtn.style.opacity = '1'; rmBtn.innerHTML = '<i class="bi bi-x"></i>';
+    rmBtn.onclick = function() { S.mixVideo = null; renderMixVideoGrid(); };
+    div.appendChild(rmBtn); grid.innerHTML = ''; grid.appendChild(div);
   }
 
   // ── Drag & Drop ──
@@ -1354,11 +1452,11 @@
       let photoIds = [];
       let videoId = null;
 
-      // Upload images
+      // Upload images (mode: image)
       if (S.mediaMode === 'image' && S.images.length > 0) {
         btn.innerHTML = '<span class="spinner"></span> Đang upload ảnh...';
         const fd = new FormData();
-        S.images.forEach(function(f) { fd.append('media', f); });
+        S.images.forEach(function(f) { fd.append('files', f); });
         fd.append('pageId', S.page.id);
         const res = await fetch(API_BASE + '/api/facebook/upload-media', {
           method: 'POST',
@@ -1370,13 +1468,12 @@
         photoIds = data.photoIds || [];
       }
 
-      // Upload video
+      // Upload video (mode: video)
       if (S.mediaMode === 'video' && S.video) {
         btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
         const fd = new FormData();
-        fd.append('media', S.video);
+        fd.append('files', S.video);
         fd.append('pageId', S.page.id);
-        fd.append('type', 'video');
         const res = await fetch(API_BASE + '/api/facebook/upload-media', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + S.jwtToken },
@@ -1385,6 +1482,39 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Upload video thất bại');
         videoId = data.videoId || null;
+      }
+
+      // Upload mixed: ảnh + video cùng lúc
+      if (S.mediaMode === 'mixed') {
+        if (!S.mixImages) S.mixImages = [];
+        if (S.mixImages.length > 0) {
+          btn.innerHTML = '<span class="spinner"></span> Đang upload ảnh...';
+          const fd = new FormData();
+          S.mixImages.forEach(function(f) { fd.append('files', f); });
+          fd.append('pageId', S.page.id);
+          const res = await fetch(API_BASE + '/api/facebook/upload-media', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + S.jwtToken },
+            body: fd
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Upload ảnh thất bại');
+          photoIds = data.photoIds || [];
+        }
+        if (S.mixVideo) {
+          btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
+          const fd = new FormData();
+          fd.append('files', S.mixVideo);
+          fd.append('pageId', S.page.id);
+          const res = await fetch(API_BASE + '/api/facebook/upload-media', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + S.jwtToken },
+            body: fd
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Upload video thất bại');
+          videoId = data.videoId || null;
+        }
       }
 
       btn.innerHTML = '<span class="spinner"></span> Đang đăng bài...';
