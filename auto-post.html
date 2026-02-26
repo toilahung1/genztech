@@ -522,15 +522,6 @@
           <i class="bi bi-send-fill"></i> Tự Động Đăng Bài
           <span class="nav-badge" id="sidebarBadge">0</span>
         </a>
-        <a href="#" class="nav-item">
-          <i class="bi bi-megaphone"></i> Quản Lý Quảng Cáo
-        </a>
-        <a href="#" class="nav-item">
-          <i class="bi bi-people"></i> Đối Tượng
-        </a>
-        <a href="#" class="nav-item">
-          <i class="bi bi-bar-chart"></i> Phân Tích
-        </a>
         <div class="nav-group-label">Hệ thống</div>
         <a href="#" class="nav-item" onclick="openModal('settingsModal')">
           <i class="bi bi-gear"></i> Cài Đặt
@@ -661,11 +652,22 @@
 
             <!-- Compose Card -->
             <div class="card">
-              <div class="card-header">
-                <div class="card-title"><i class="bi bi-pencil-square"></i> Soạn Bài Viết</div>
-                <select class="form-control" id="pageSelect" style="width:auto;font-size:12px;padding:5px 10px" onchange="onPageChange()">
-                  <option value="">-- Chọn Facebook Page --</option>
-                </select>
+              <div class="card-header" style="flex-direction:column;align-items:flex-start;gap:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+                  <div class="card-title"><i class="bi bi-pencil-square"></i> Soạn Bài Viết</div>
+                  <div id="pageSelectedCount" style="font-size:11px;color:rgba(255,255,255,0.4)"></div>
+                </div>
+                <!-- Custom multi-select page -->
+                <div id="pageMultiSelect" style="width:100%;position:relative">
+                  <div id="pageSelectTrigger" onclick="togglePageDropdown()" style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;cursor:pointer;min-height:38px;flex-wrap:wrap;gap:6px">
+                    <span id="pageSelectPlaceholder" style="font-size:12px;color:rgba(255,255,255,0.3)">-- Chọn Facebook Page --</span>
+                    <div id="pageSelectedTags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+                    <i class="bi bi-chevron-down" style="margin-left:auto;font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0"></i>
+                  </div>
+                  <div id="pageDropdownList" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#0f1629;border:1px solid rgba(255,255,255,0.12);border-radius:10px;z-index:100;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5)">
+                    <div id="pageDropdownItems"></div>
+                  </div>
+                </div>
               </div>
               <div class="card-body">
                 <div class="form-group">
@@ -1093,7 +1095,8 @@
     connected: false,
     fbUser:    null,
     pages:     JSON.parse(localStorage.getItem('gz_pages') || '[]'),
-    page:      JSON.parse(localStorage.getItem('gz_page') || 'null'),
+    page:      JSON.parse(localStorage.getItem('gz_page') || 'null'),       // page đầu tiên được chọn (backward compat)
+    selectedPages: JSON.parse(localStorage.getItem('gz_selected_pages') || '[]'), // danh sách các page được chọn
     posts:     JSON.parse(localStorage.getItem('gz_posts') || '[]'),
     aiLen:     'short',
     aiCount:   0,
@@ -1146,9 +1149,7 @@
 
     // Restore pages
     if (S.pages.length) renderPageSelect(S.pages);
-    if (S.page) {
-      document.getElementById('pageSelect').value = S.page.id;
-    }
+    updatePageSelectedUI();
 
     // Update UI
     updateConnUI();
@@ -1369,10 +1370,12 @@
       S.fbUser = null;
       S.pages = [];
       S.page = null;
+      S.selectedPages = [];
       S.tokenDaysLeft = null;
       S.tokenExpiresAt = null;
       localStorage.removeItem('gz_pages');
       localStorage.removeItem('gz_page');
+      localStorage.removeItem('gz_selected_pages');
       document.getElementById('tokenStatusBox').style.display = 'none';
       updateConnUI();
       toast('Đã ngắt kết nối Facebook', 'info');
@@ -1431,26 +1434,120 @@
   }
 
   // ============================================================
-  //  PAGE SELECT
+  //  PAGE MULTI-SELECT
   // ============================================================
   function renderPageSelect(pages) {
-    const sel = document.getElementById('pageSelect');
-    sel.innerHTML = '<option value="">-- Chọn Facebook Page --</option>';
+    const container = document.getElementById('pageDropdownItems');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Restore saved selection
+    if (S.selectedPages.length === 0 && S.page) {
+      S.selectedPages = [S.page];
+    }
+
+    if (pages.length === 0) {
+      container.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:rgba(255,255,255,0.35)">Chưa có page nào. Vui lòng kết nối Facebook.</div>';
+      return;
+    }
+
     pages.forEach(function(p) {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      sel.appendChild(opt);
+      const isSelected = S.selectedPages.some(function(sp) { return sp.id === p.id; });
+      const avatarHtml = p.picture
+        ? '<img src="' + p.picture + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" >'
+          + '<div style="display:none;width:32px;height:32px;border-radius:50%;background:#1877f2;color:#fff;font-size:13px;font-weight:700;align-items:center;justify-content:center;flex-shrink:0">' + (p.name||'?').charAt(0).toUpperCase() + '</div>'
+        : '<div style="width:32px;height:32px;border-radius:50%;background:#1877f2;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (p.name||'?').charAt(0).toUpperCase() + '</div>';
+
+      const item = document.createElement('div');
+      item.setAttribute('data-page-id', p.id);
+      item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s;' + (isSelected ? 'background:rgba(24,119,242,0.15);' : '');
+      item.innerHTML = avatarHtml
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (p.name || 'Page') + '</div>'
+        + '<div style="font-size:11px;color:rgba(255,255,255,0.35)">' + p.id + '</div>'
+        + '</div>'
+        + '<div class="page-check-icon" style="width:18px;height:18px;border-radius:50%;border:2px solid ' + (isSelected ? '#1877f2' : 'rgba(255,255,255,0.2)') + ';background:' + (isSelected ? '#1877f2' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+        + (isSelected ? '<i class="bi bi-check" style="font-size:11px;color:#fff"></i>' : '')
+        + '</div>';
+
+      item.addEventListener('mouseenter', function() { if (!item.classList.contains('selected')) item.style.background = 'rgba(255,255,255,0.04)'; });
+      item.addEventListener('mouseleave', function() { if (!item.classList.contains('selected')) item.style.background = S.selectedPages.some(function(sp){return sp.id===p.id;}) ? 'rgba(24,119,242,0.15)' : ''; });
+      item.addEventListener('click', function(e) { e.stopPropagation(); togglePageSelection(p); });
+      container.appendChild(item);
     });
-    if (S.page) sel.value = S.page.id;
+
+    updatePageSelectedUI();
   }
 
-  function onPageChange() {
-    const sel = document.getElementById('pageSelect');
-    const pageId = sel.value;
-    S.page = S.pages.find(function(p) { return p.id === pageId; }) || null;
-    if (S.page) localStorage.setItem('gz_page', JSON.stringify(S.page));
+  function togglePageDropdown() {
+    const dd = document.getElementById('pageDropdownList');
+    if (!dd) return;
+    const isOpen = dd.style.display !== 'none';
+    dd.style.display = isOpen ? 'none' : 'block';
   }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('pageMultiSelect');
+    if (wrap && !wrap.contains(e.target)) {
+      const dd = document.getElementById('pageDropdownList');
+      if (dd) dd.style.display = 'none';
+    }
+  });
+
+  function togglePageSelection(page) {
+    const idx = S.selectedPages.findIndex(function(sp) { return sp.id === page.id; });
+    if (idx >= 0) {
+      S.selectedPages.splice(idx, 1);
+    } else {
+      S.selectedPages.push(page);
+    }
+    // Update S.page for backward compat
+    S.page = S.selectedPages.length > 0 ? S.selectedPages[0] : null;
+    localStorage.setItem('gz_selected_pages', JSON.stringify(S.selectedPages));
+    if (S.page) localStorage.setItem('gz_page', JSON.stringify(S.page));
+    // Re-render item in dropdown
+    const item = document.querySelector('[data-page-id="' + page.id + '"]');
+    if (item) {
+      const isNowSelected = S.selectedPages.some(function(sp) { return sp.id === page.id; });
+      item.style.background = isNowSelected ? 'rgba(24,119,242,0.15)' : '';
+      const checkIcon = item.querySelector('.page-check-icon');
+      if (checkIcon) {
+        checkIcon.style.borderColor = isNowSelected ? '#1877f2' : 'rgba(255,255,255,0.2)';
+        checkIcon.style.background = isNowSelected ? '#1877f2' : 'transparent';
+        checkIcon.innerHTML = isNowSelected ? '<i class="bi bi-check" style="font-size:11px;color:#fff"></i>' : '';
+      }
+    }
+    updatePageSelectedUI();
+  }
+
+  function updatePageSelectedUI() {
+    const placeholder = document.getElementById('pageSelectPlaceholder');
+    const tagsEl = document.getElementById('pageSelectedTags');
+    const countEl = document.getElementById('pageSelectedCount');
+    if (!tagsEl) return;
+
+    if (S.selectedPages.length === 0) {
+      if (placeholder) placeholder.style.display = 'inline';
+      tagsEl.innerHTML = '';
+      if (countEl) countEl.textContent = '';
+    } else {
+      if (placeholder) placeholder.style.display = 'none';
+      tagsEl.innerHTML = S.selectedPages.map(function(p) {
+        const avatarHtml = p.picture
+          ? '<img src="' + p.picture + '" style="width:18px;height:18px;border-radius:50%;object-fit:cover" onerror="this.style.display=\'none\'" >'
+          : '<span style="width:18px;height:18px;border-radius:50%;background:#1877f2;color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">' + (p.name||'?').charAt(0).toUpperCase() + '</span>';
+        return '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(24,119,242,0.2);border:1px solid rgba(24,119,242,0.4);border-radius:20px;padding:2px 8px 2px 4px;font-size:11px;font-weight:600;color:#60a5fa">'
+          + avatarHtml + '<span>' + (p.name||'Page') + '</span>'
+          + '<span onclick="event.stopPropagation();togglePageSelection(' + JSON.stringify(p).replace(/"/g,'&quot;') + ')" style="margin-left:2px;cursor:pointer;color:rgba(255,255,255,0.5);font-size:12px;line-height:1">&times;</span>'
+          + '</span>';
+      }).join('');
+      if (countEl) countEl.textContent = 'Đã chọn ' + S.selectedPages.length + ' page';
+    }
+  }
+
+  // Legacy: kept for backward compat (not used in new flow)
+  function onPageChange() {}
 
   // ============================================================
   //  CONTENT
@@ -1668,60 +1765,26 @@
   async function doPost() {
     const content = document.getElementById('postContent').value.trim();
     if (!content) return toast('Vui lòng nhập nội dung bài viết', 'error');
-    if (!S.connected || !S.page) return toast('Vui lòng kết nối Facebook và chọn Page', 'error');
+    if (!S.connected || S.selectedPages.length === 0) return toast('Vui lòng kết nối Facebook và chọn ít nhất 1 Page', 'error');
 
     const btn = document.getElementById('postBtn');
     btn.disabled = true;
+    const link = document.getElementById('postLink').value.trim();
+    let successCount = 0, failCount = 0;
 
-    try {
-      let photoIds = [];
-      let videoId = null;
+    for (let pi = 0; pi < S.selectedPages.length; pi++) {
+      const page = S.selectedPages[pi];
+      try {
+        let photoIds = [];
+        let videoId = null;
+        btn.innerHTML = '<span class="spinner"></span> Đang xử lý page ' + (pi+1) + '/' + S.selectedPages.length + '...';
 
-      // Upload images (mode: image)
-      if (S.mediaMode === 'image' && S.images.length > 0) {
-        btn.innerHTML = '<span class="spinner"></span> Đang upload ảnh...';
-        const fd = new FormData();
-        S.images.forEach(function(f) { fd.append('files', f); });
-        fd.append('pageId', S.page.id);
-        const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + S.jwtToken },
-          body: fd
-        });
-         const data = await res.json();
-        if (!res.ok) {
-          const errMsg = data.error || 'Upload ảnh thất bại';
-          if (data.fbCode) console.warn('[FB Upload Error] code=' + data.fbCode + ' | ' + data.fbMessage);
-          throw new Error(errMsg);
-        }
-        photoIds = data.photoIds || [];
-      }
-      // Upload video (mode: video)
-      if (S.mediaMode === 'video' && S.video) {
-        btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
-        const fd = new FormData();
-        fd.append('files', S.video);
-        const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + S.jwtToken },
-          body: fd
-        });
-         const data = await res.json();
-        if (!res.ok) {
-          const errMsg = data.error || 'Upload video thất bại';
-          if (data.fbCode) console.warn('[FB Upload Error] code=' + data.fbCode + ' | ' + data.fbMessage);
-          throw new Error(errMsg);
-        }
-        videoId = data.videoId || null;
-      }
-      // Upload mixed: ảnh + video cùng lúc
-      if (S.mediaMode === 'mixed') {
-        if (!S.mixImages) S.mixImages = [];
-        if (S.mixImages.length > 0) {
-          btn.innerHTML = '<span class="spinner"></span> Đang upload ảnh...';
+        // Upload images (mode: image)
+        if (S.mediaMode === 'image' && S.images.length > 0) {
           const fd = new FormData();
-          S.mixImages.forEach(function(f) { fd.append('files', f); });
-          const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
+          S.images.forEach(function(f) { fd.append('files', f); });
+          fd.append('pageId', page.id);
+          const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(page.id), {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + S.jwtToken },
             body: fd
@@ -1730,11 +1793,11 @@
           if (!res.ok) throw new Error(data.error || 'Upload ảnh thất bại');
           photoIds = data.photoIds || [];
         }
-        if (S.mixVideo) {
-          btn.innerHTML = '<span class="spinner"></span> Đang upload video...';
+        // Upload video (mode: video)
+        if (S.mediaMode === 'video' && S.video) {
           const fd = new FormData();
-          fd.append('files', S.mixVideo);
-          const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(S.page.id), {
+          fd.append('files', S.video);
+          const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(page.id), {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + S.jwtToken },
             body: fd
@@ -1743,31 +1806,61 @@
           if (!res.ok) throw new Error(data.error || 'Upload video thất bại');
           videoId = data.videoId || null;
         }
+        // Upload mixed
+        if (S.mediaMode === 'mixed') {
+          if (!S.mixImages) S.mixImages = [];
+          if (S.mixImages.length > 0) {
+            const fd = new FormData();
+            S.mixImages.forEach(function(f) { fd.append('files', f); });
+            const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(page.id), {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + S.jwtToken },
+              body: fd
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Upload ảnh thất bại');
+            photoIds = data.photoIds || [];
+          }
+          if (S.mixVideo) {
+            const fd = new FormData();
+            fd.append('files', S.mixVideo);
+            const res = await fetch(API_BASE + '/api/facebook/upload-media?pageId=' + encodeURIComponent(page.id), {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + S.jwtToken },
+              body: fd
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Upload video thất bại');
+            videoId = data.videoId || null;
+          }
+        }
+
+        const result = await api('POST', '/api/facebook/post', {
+          pageId: page.id,
+          content: content,
+          linkUrl: link || null,
+          photoIds: photoIds,
+          videoId: videoId
+        });
+        addToHistory({ content, page: page.name, status: 'posted', postId: result.postId, time: new Date().toISOString() });
+        successCount++;
+      } catch(e) {
+        addToHistory({ content, page: page.name, status: 'failed', error: e.message, time: new Date().toISOString() });
+        failCount++;
       }
-
-      btn.innerHTML = '<span class="spinner"></span> Đang đăng bài...';
-      const link = document.getElementById('postLink').value.trim();
-      const result = await api('POST', '/api/facebook/post', {
-        pageId: S.page.id,
-        content: content,
-        linkUrl: link || null,
-        photoIds: photoIds,
-        videoId: videoId
-      });
-
-      // Save to history
-      addToHistory({ content, page: S.page.name, status: 'posted', postId: result.postId, time: new Date().toISOString() });
-      toast('Đăng bài thành công!', 'success');
-      clearForm();
-      updateStats();
-
-    } catch(e) {
-      addToHistory({ content, page: S.page ? S.page.name : '?', status: 'failed', error: e.message, time: new Date().toISOString() });
-      toast('Lỗi: ' + e.message, 'error');
-    } finally {
-      btn.innerHTML = '<i class="bi bi-send-fill"></i> Đăng Ngay';
-      btn.disabled = false;
     }
+
+    if (successCount > 0 && failCount === 0) {
+      toast('Đăng bài thành công lên ' + successCount + ' page!', 'success');
+      clearForm();
+    } else if (successCount > 0) {
+      toast('Đăng ' + successCount + ' thành công, ' + failCount + ' thất bại', 'warning');
+    } else {
+      toast('Đăng bài thất bại trên tất cả page', 'error');
+    }
+    updateStats();
+    btn.innerHTML = '<i class="bi bi-send-fill"></i> Đăng Ngay';
+    btn.disabled = false;
   }
 
   // ============================================================
@@ -1778,26 +1871,29 @@
     const timeVal = document.getElementById('scheduleTime').value;
     if (!content) return toast('Vui lòng nhập nội dung', 'error');
     if (!timeVal) return toast('Vui lòng chọn thời gian đăng', 'error');
-    if (!S.connected || !S.page) return toast('Vui lòng kết nối Facebook và chọn Page', 'error');
+    if (!S.connected || S.selectedPages.length === 0) return toast('Vui lòng kết nối Facebook và chọn ít nhất 1 Page', 'error');
 
     const schedTime = new Date(timeVal);
     if (schedTime <= new Date()) return toast('Thời gian phải trong tương lai', 'error');
 
     try {
-      if (S.loggedIn) {
-        await api('POST', '/api/posts/schedule', {
-          pageId: S.page.id,
-          pageName: S.page.name,
-          content: content,
-          scheduledAt: schedTime.toISOString(),
-          repeatType: document.getElementById('scheduleRepeat').value
+      for (let pi = 0; pi < S.selectedPages.length; pi++) {
+        const page = S.selectedPages[pi];
+        if (S.loggedIn) {
+          await api('POST', '/api/posts/schedule', {
+            pageId: page.id,
+            pageName: page.name,
+            content: content,
+            scheduledAt: schedTime.toISOString(),
+            repeatType: document.getElementById('scheduleRepeat').value
+          });
+        }
+        addToHistory({
+          content, page: page.name, status: 'pending',
+          scheduledTime: schedTime.toISOString(), time: new Date().toISOString()
         });
       }
-      addToHistory({
-        content, page: S.page.name, status: 'pending',
-        scheduledTime: schedTime.toISOString(), time: new Date().toISOString()
-      });
-      toast('Đã lên lịch: ' + schedTime.toLocaleString('vi-VN'), 'success');
+      toast('Đã lên lịch cho ' + S.selectedPages.length + ' page: ' + schedTime.toLocaleString('vi-VN'), 'success');
       renderPosts(); updateStats();
     } catch(e) {
       toast('Lỗi: ' + e.message, 'error');
@@ -1810,7 +1906,8 @@
   function saveDraft() {
     const content = document.getElementById('postContent').value.trim();
     if (!content) return toast('Không có nội dung để lưu', 'error');
-    addToHistory({ content, page: S.page ? S.page.name : '?', status: 'draft', time: new Date().toISOString() });
+    const pageNames = S.selectedPages.length > 0 ? S.selectedPages.map(function(p){return p.name;}).join(', ') : (S.page ? S.page.name : '?');
+    addToHistory({ content, page: pageNames, status: 'draft', time: new Date().toISOString() });
     toast('Đã lưu nháp', 'info');
     renderPosts(); updateStats();
   }
@@ -1925,7 +2022,8 @@
       const p = S.posts[i];
       if (p.status === 'pending' && p.scheduledTime && new Date(p.scheduledTime) <= now) {
         try {
-          await api('POST', '/api/facebook/post', { pageId: S.page ? S.page.id : '', content: p.content });
+          const pageId = p.pageId || (S.selectedPages.length > 0 ? S.selectedPages[0].id : (S.page ? S.page.id : ''));
+          await api('POST', '/api/facebook/post', { pageId: pageId, content: p.content });
           S.posts[i].status = 'posted';
           toast('Đã tự động đăng bài lên lịch!', 'success');
         } catch(e) {
@@ -1944,7 +2042,7 @@
   function openPreview() {
     const content = document.getElementById('postContent').value.trim();
     const wrap = document.getElementById('fbPreviewWrap');
-    const page = S.page;
+    const page = S.selectedPages.length > 0 ? S.selectedPages[0] : S.page;
     const pageName = page ? page.name : 'Tên Facebook Page';
     const avatarUrl = page && page.picture ? page.picture : '';
 
