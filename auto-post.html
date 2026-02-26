@@ -1,0 +1,2258 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genztech - Tự Động Đăng Bài</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Genztech - Tự Động Đăng Bài Facebook" />
+  <meta property="og:description" content="Tự động lên lịch và đăng bài Facebook với AI thông minh." />
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <meta name="facebook-domain-verification" content="so8tfqvm6pf9m4ibfgkh4nzflzn2uw" />
+  <style>
+    html, body {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+
+    /* ===== CUSTOM STYLES ===== */
+    :root {
+      --space-black: #020408;
+      --facebook-blue: #1877F2;
+      --cyan: #00D4FF;
+      --violet: #9D50BB;
+      --card-bg: rgba(255,255,255,0.04);
+      --border-color: rgba(255,255,255,0.08);
+    }
+
+    /* Input & Textarea */
+    .gz-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: #fff;
+      padding: 12px 16px;
+      width: 100%;
+      font-size: 14px;
+      transition: all 0.2s;
+      outline: none;
+      resize: none;
+    }
+    .gz-input:focus {
+      border-color: var(--facebook-blue);
+      box-shadow: 0 0 0 3px rgba(24,119,242,0.15);
+      background: rgba(24,119,242,0.05);
+    }
+    .gz-input::placeholder { color: rgba(255,255,255,0.3); }
+    .gz-input option { background: #0d1117; color: #fff; }
+
+    /* Card */
+    .gz-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      padding: 28px;
+      transition: all 0.3s;
+    }
+    .gz-card:hover {
+      border-color: rgba(24,119,242,0.3);
+      box-shadow: 0 0 30px rgba(24,119,242,0.08);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #1877F2, #0052cc);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(24,119,242,0.4);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      color: #ccc;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .btn-ai {
+      background: linear-gradient(135deg, #9D50BB, #6E48AA);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-ai:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(157,80,187,0.4);
+    }
+    .btn-ai:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-danger {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px;
+      color: #f87171;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover {
+      background: rgba(239,68,68,0.25);
+      border-color: rgba(239,68,68,0.5);
+    }
+
+    .btn-success {
+      background: rgba(34,197,94,0.15);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 8px;
+      color: #4ade80;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-success:hover {
+      background: rgba(34,197,94,0.25);
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .icon-wrap {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .section-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 20px;
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-pending {
+      background: rgba(251,191,36,0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251,191,36,0.3);
+    }
+    .badge-posted {
+      background: rgba(34,197,94,0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    .badge-failed {
+      background: rgba(239,68,68,0.15);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.3);
+    }
+    .badge-draft {
+      background: rgba(148,163,184,0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(148,163,184,0.2);
+    }
+
+    /* Post item */
+    .post-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 18px 20px;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .post-item:hover {
+      border-color: rgba(24,119,242,0.25);
+      background: rgba(24,119,242,0.04);
+    }
+
+    /* Toast notification */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: rgba(15,20,30,0.95);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px 20px;
+      color: #fff;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 280px;
+      backdrop-filter: blur(20px);
+      animation: slideInRight 0.3s ease;
+    }
+    .toast.success { border-color: rgba(34,197,94,0.4); }
+    .toast.error { border-color: rgba(239,68,68,0.4); }
+    .toast.info { border-color: rgba(24,119,242,0.4); }
+    @keyframes slideInRight {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* AI typing animation */
+    .typing-dots span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--violet);
+      margin: 0 2px;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+    }
+
+    /* Tabs */
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      color: rgba(255,255,255,0.5);
+      background: transparent;
+    }
+    .tab-btn.active {
+      background: rgba(24,119,242,0.15);
+      border-color: rgba(24,119,242,0.4);
+      color: #60a5fa;
+    }
+    .tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* Sidebar nav */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: rgba(255,255,255,0.55);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .sidebar-link:hover {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.9);
+    }
+    .sidebar-link.active {
+      background: rgba(24,119,242,0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(24,119,242,0.25);
+    }
+    .sidebar-link i { font-size: 18px; width: 22px; text-align: center; }
+
+    /* Character counter */
+    .char-counter {
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      text-align: right;
+      margin-top: 6px;
+    }
+    .char-counter.warning { color: #fbbf24; }
+    .char-counter.danger { color: #f87171; }
+
+    /* Divider */
+    .gz-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin: 20px 0;
+    }
+
+    /* Stats card */
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #1877F2, #00D4FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 4px;
+    }
+
+    /* Glow text */
+    .glow-text {
+      text-shadow: 0 0 20px rgba(24,119,242,0.5);
+    }
+
+    /* Label */
+    .gz-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Schedule preview */
+    .schedule-preview {
+      background: rgba(24,119,242,0.08);
+      border: 1px solid rgba(24,119,242,0.2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #93c5fd;
+    }
+
+    /* Image preview */
+    .image-preview-wrap {
+      border: 2px dashed rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .image-preview-wrap:hover {
+      border-color: rgba(24,119,242,0.4);
+      background: rgba(24,119,242,0.04);
+    }
+    .image-preview-wrap img {
+      max-height: 200px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    /* Page selector */
+    .page-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+    .page-option:hover {
+      border-color: rgba(24,119,242,0.3);
+      background: rgba(24,119,242,0.05);
+    }
+    .page-option.selected {
+      border-color: rgba(24,119,242,0.5);
+      background: rgba(24,119,242,0.1);
+    }
+    .page-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1877F2, #00D4FF);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Scrollable list */
+    .post-list-container {
+      max-height: 520px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(24,119,242,0.3) transparent;
+    }
+    .post-list-container::-webkit-scrollbar { width: 4px; }
+    .post-list-container::-webkit-scrollbar-track { background: transparent; }
+    .post-list-container::-webkit-scrollbar-thumb {
+      background: rgba(24,119,242,0.3);
+      border-radius: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0 !important; }
+    }
+
+    /* Floating bg elements */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Content area */
+    .content-area {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toggle {
+      position: relative;
+      width: 44px; height: 24px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.15);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+    .toggle-slider:before {
+      content: "";
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--facebook-blue); }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+    /* Emoji picker button */
+    .emoji-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #fff;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .emoji-btn:hover { background: rgba(255,255,255,0.12); }
+
+    /* Hashtag chip */
+    .hashtag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(24,119,242,0.12);
+      border: 1px solid rgba(24,119,242,0.25);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #60a5fa;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .hashtag-chip:hover { background: rgba(24,119,242,0.2); }
+
+    /* Connection status */
+    .conn-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .conn-dot.connected { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+    .conn-dot.disconnected { background: #f87171; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: #0d1117;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 480px;
+      width: 100%;
+      position: relative;
+    }
+
+    /* Glow line */
+    .glow-line {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1877F2, #00D4FF, transparent);
+      border-radius: 2px;
+      margin: 24px 0;
+    }
+
+    /* AI suggestions */
+    .ai-suggestion {
+      background: rgba(157,80,187,0.08);
+      border: 1px solid rgba(157,80,187,0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1.6;
+    }
+    .ai-suggestion:hover {
+      border-color: rgba(157,80,187,0.4);
+      background: rgba(157,80,187,0.12);
+    }
+  </style>
+</head>
+
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+
+  <!-- Background effects -->
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none" style="z-index:0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none" style="z-index:1"></canvas>
+  <div class="bg-blob" style="width:500px;height:500px;background:rgba(24,119,242,0.06);top:-100px;left:-100px;"></div>
+  <div class="bg-blob" style="width:400px;height:400px;background:rgba(157,80,187,0.05);bottom:100px;right:-100px;"></div>
+
+  <!-- Custom Cursor -->
+  <div id="custom-cursor" class="fixed pointer-events-none flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform" style="z-index:100;opacity:0;transition:opacity 0.2s;">
+    <img src="images/logo.png" alt="Cursor" class="w-10 h-10 object-cover rounded-full" style="filter:drop-shadow(0 0 8px rgba(0,212,255,0.8));pointer-events:none;">
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-space-black/70 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <a href="maindashboard.html" class="flex items-center gap-3 text-xl font-bold tracking-tight glow-text">
+        <img src="images/logo.png" alt="GZ Icon" class="h-8 w-auto rounded-full">
+        GENZTECH <span class="hidden md:inline text-gray-400 font-normal text-base">/ Tự Động Đăng Bài</span>
+      </a>
+      <div class="flex items-center gap-4">
+        <!-- Connection status -->
+        <div id="conn-status" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
+          <span class="conn-dot disconnected" id="conn-dot"></span>
+          <span class="text-sm text-gray-400" id="conn-text">Chưa kết nối</span>
+        </div>
+        <button onclick="openConnectModal()" id="connect-btn"
+          class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
+          <span class="relative z-10 flex items-center gap-2">
+            <i class="bi bi-facebook"></i> Kết nối Facebook
+          </span>
+        </button>
+        <a href="maindashboard.html" class="btn-secondary text-sm px-4 py-2">
+          <i class="bi bi-grid-3x3-gap"></i>
+          <span class="hidden md:inline">Dashboard</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Layout -->
+  <div class="flex min-h-screen pt-20 content-area">
+
+    <!-- Sidebar -->
+    <aside class="sidebar fixed left-0 top-20 h-[calc(100vh-80px)] w-64 border-r border-white/5 bg-space-black/50 backdrop-blur-xl overflow-y-auto" style="z-index:40;">
+      <div class="p-4">
+        <!-- User info -->
+        <div id="user-info-sidebar" class="hidden mb-6 p-4 rounded-16" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">
+          <div class="flex items-center gap-3">
+            <img id="user-avatar" src="" alt="" class="w-10 h-10 rounded-full" style="border:2px solid rgba(24,119,242,0.5);">
+            <div>
+              <div id="user-name" class="text-sm font-semibold text-white"></div>
+              <div class="text-xs text-gray-500">Đã kết nối</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nav links -->
+        <div class="space-y-1">
+          <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3 mb-3">Chức năng</div>
+          <a class="sidebar-link active" onclick="showTab('create')">
+            <i class="bi bi-pencil-square"></i> Tạo bài viết
+          </a>
+          <a class="sidebar-link" onclick="showTab('schedule')">
+            <i class="bi bi-calendar3"></i> Lịch đăng bài
+          </a>
+          <a class="sidebar-link" onclick="showTab('history')">
+            <i class="bi bi-clock-history"></i> Lịch sử đăng
+          </a>
+          <a class="sidebar-link" onclick="showTab('analytics')">
+            <i class="bi bi-bar-chart-line"></i> Thống kê
+          </a>
+        </div>
+
+        <hr class="gz-divider">
+
+        <div class="space-y-1">
+          <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3 mb-3">Công cụ AI</div>
+          <a class="sidebar-link" onclick="showAITool('content')">
+            <i class="bi bi-magic"></i> Tạo nội dung AI
+          </a>
+          <a class="sidebar-link" onclick="showAITool('hashtag')">
+            <i class="bi bi-hash"></i> Gợi ý hashtag
+          </a>
+          <a class="sidebar-link" onclick="showAITool('image')">
+            <i class="bi bi-image"></i> Tạo ảnh AI
+          </a>
+        </div>
+
+        <hr class="gz-divider">
+
+        <div class="space-y-1">
+          <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3 mb-3">Cài đặt</div>
+          <a class="sidebar-link" onclick="showTab('settings')">
+            <i class="bi bi-gear"></i> Cài đặt tự động
+          </a>
+          <a class="sidebar-link" href="maindashboard.html">
+            <i class="bi bi-arrow-left-circle"></i> Quay lại Dashboard
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-6" style="min-height:calc(100vh - 80px);">
+      <div class="max-w-5xl mx-auto">
+
+        <!-- Page header -->
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-white mb-2" style="background:linear-gradient(135deg,#fff,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+            Tự Động Đăng Bài
+          </h1>
+          <p class="text-gray-500 text-sm">Tạo, lên lịch và đăng bài tự động lên Facebook Page với sức mạnh AI</p>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="stats-row">
+          <div class="stat-card">
+            <div class="stat-number" id="stat-total">0</div>
+            <div class="stat-label">Tổng bài viết</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="stat-scheduled" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">0</div>
+            <div class="stat-label">Đang chờ đăng</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="stat-posted" style="background:linear-gradient(135deg,#4ade80,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">0</div>
+            <div class="stat-label">Đã đăng</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="stat-failed" style="background:linear-gradient(135deg,#f87171,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">0</div>
+            <div class="stat-label">Thất bại</div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: TẠO BÀI VIẾT ===== -->
+        <div id="tab-create" class="tab-content">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left: Compose -->
+            <div class="lg:col-span-2 space-y-6">
+
+              <!-- Content card -->
+              <div class="gz-card">
+                <div class="section-title">
+                  <div class="icon-wrap" style="background:rgba(24,119,242,0.15);color:#60a5fa;">
+                    <i class="bi bi-pencil-square"></i>
+                  </div>
+                  Soạn nội dung bài viết
+                </div>
+                <p class="section-subtitle">Viết nội dung hoặc để AI tạo giúp bạn</p>
+
+                <!-- Page selector -->
+                <div class="mb-5">
+                  <div class="gz-label"><i class="bi bi-flag"></i> Chọn Facebook Page</div>
+                  <div id="page-list">
+                    <div class="text-sm text-gray-500 py-3 text-center" style="border:1px dashed rgba(255,255,255,0.1);border-radius:12px;">
+                      <i class="bi bi-facebook text-2xl mb-2 block text-gray-600"></i>
+                      Kết nối Facebook để chọn Page
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="gz-divider">
+
+                <!-- Content textarea -->
+                <div class="mb-4">
+                  <div class="gz-label"><i class="bi bi-text-left"></i> Nội dung bài viết</div>
+                  <div class="relative">
+                    <textarea id="post-content" class="gz-input" rows="7"
+                      placeholder="Nhập nội dung bài viết của bạn tại đây...&#10;&#10;Hoặc nhấn nút AI để tạo nội dung tự động ✨"
+                      oninput="updateCharCount()"></textarea>
+                    <div class="char-counter" id="char-counter">0 / 63,206</div>
+                  </div>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <button class="emoji-btn" onclick="insertEmoji('🔥')">🔥</button>
+                  <button class="emoji-btn" onclick="insertEmoji('💡')">💡</button>
+                  <button class="emoji-btn" onclick="insertEmoji('🚀')">🚀</button>
+                  <button class="emoji-btn" onclick="insertEmoji('✅')">✅</button>
+                  <button class="emoji-btn" onclick="insertEmoji('💰')">💰</button>
+                  <button class="emoji-btn" onclick="insertEmoji('🎯')">🎯</button>
+                  <button class="emoji-btn" onclick="insertEmoji('📢')">📢</button>
+                  <button class="emoji-btn" onclick="insertEmoji('⚡')">⚡</button>
+                  <button class="emoji-btn" onclick="insertEmoji('\n\n#')">🏷️ #Tag</button>
+                </div>
+
+                <!-- Hashtags -->
+                <div id="hashtag-area" class="mb-4 hidden">
+                  <div class="gz-label"><i class="bi bi-hash"></i> Hashtag gợi ý</div>
+                  <div id="hashtag-chips" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Image upload -->
+                <div class="mb-4">
+                  <div class="gz-label"><i class="bi bi-image"></i> Hình ảnh (tùy chọn)</div>
+                  <div class="image-preview-wrap" onclick="document.getElementById('img-input').click()" id="img-drop-zone">
+                    <div id="img-placeholder">
+                      <i class="bi bi-cloud-upload text-3xl text-gray-600 mb-2 block"></i>
+                      <p class="text-sm text-gray-500">Nhấp để tải ảnh lên hoặc kéo thả vào đây</p>
+                      <p class="text-xs text-gray-600 mt-1">PNG, JPG, GIF tối đa 10MB</p>
+                    </div>
+                    <img id="img-preview" class="hidden mx-auto" src="" alt="Preview">
+                  </div>
+                  <input type="file" id="img-input" accept="image/*" class="hidden" onchange="previewImage(event)">
+                  <button id="remove-img-btn" class="hidden btn-danger mt-2 text-xs" onclick="removeImage()">
+                    <i class="bi bi-trash"></i> Xóa ảnh
+                  </button>
+                </div>
+
+                <!-- Link -->
+                <div class="mb-4">
+                  <div class="gz-label"><i class="bi bi-link-45deg"></i> Đường dẫn (tùy chọn)</div>
+                  <input type="url" id="post-link" class="gz-input" placeholder="https://example.com">
+                </div>
+              </div>
+
+              <!-- AI Content Generator -->
+              <div class="gz-card" style="border-color:rgba(157,80,187,0.2);">
+                <div class="section-title">
+                  <div class="icon-wrap" style="background:rgba(157,80,187,0.15);color:#c084fc;">
+                    <i class="bi bi-magic"></i>
+                  </div>
+                  AI Tạo Nội Dung
+                </div>
+                <p class="section-subtitle">Mô tả ý tưởng, AI sẽ viết bài hoàn chỉnh cho bạn</p>
+
+                <div class="mb-4">
+                  <div class="gz-label">Chủ đề / Ý tưởng</div>
+                  <input type="text" id="ai-topic" class="gz-input" placeholder="Ví dụ: Giới thiệu sản phẩm mới, khuyến mãi 50%, tips marketing...">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <div class="gz-label">Giọng văn</div>
+                    <select id="ai-tone" class="gz-input">
+                      <option value="professional">Chuyên nghiệp</option>
+                      <option value="friendly">Thân thiện</option>
+                      <option value="exciting">Hào hứng</option>
+                      <option value="informative">Thông tin</option>
+                      <option value="humorous">Hài hước</option>
+                      <option value="urgent">Khẩn cấp</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="gz-label">Ngành nghề</div>
+                    <select id="ai-industry" class="gz-input">
+                      <option value="general">Tổng quát</option>
+                      <option value="ecommerce">Thương mại điện tử</option>
+                      <option value="food">Ẩm thực & Nhà hàng</option>
+                      <option value="fashion">Thời trang</option>
+                      <option value="tech">Công nghệ</option>
+                      <option value="beauty">Làm đẹp & Spa</option>
+                      <option value="education">Giáo dục</option>
+                      <option value="realestate">Bất động sản</option>
+                      <option value="fitness">Thể hình & Sức khỏe</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <div class="gz-label">Độ dài bài viết</div>
+                  <div class="flex gap-2">
+                    <button class="tab-btn active" id="len-short" onclick="setLength('short')">Ngắn (~100 từ)</button>
+                    <button class="tab-btn" id="len-medium" onclick="setLength('medium')">Vừa (~200 từ)</button>
+                    <button class="tab-btn" id="len-long" onclick="setLength('long')">Dài (~400 từ)</button>
+                  </div>
+                </div>
+
+                <div class="flex gap-3">
+                  <button class="btn-ai flex-1" onclick="generateAIContent()" id="ai-gen-btn">
+                    <i class="bi bi-magic"></i>
+                    Tạo nội dung với AI
+                  </button>
+                  <button class="btn-secondary" onclick="generateHashtags()" id="hashtag-btn">
+                    <i class="bi bi-hash"></i>
+                    Gợi ý hashtag
+                  </button>
+                </div>
+
+                <!-- AI loading -->
+                <div id="ai-loading" class="hidden mt-4 text-center py-4">
+                  <div class="typing-dots mb-2">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <p class="text-sm text-gray-500">AI đang tạo nội dung...</p>
+                </div>
+
+                <!-- AI suggestions -->
+                <div id="ai-suggestions" class="hidden mt-4 space-y-3">
+                  <div class="gz-label">Gợi ý từ AI (nhấp để chọn)</div>
+                  <div id="suggestion-list"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Schedule & Publish -->
+            <div class="space-y-6">
+
+              <!-- Schedule card -->
+              <div class="gz-card">
+                <div class="section-title">
+                  <div class="icon-wrap" style="background:rgba(251,191,36,0.15);color:#fbbf24;">
+                    <i class="bi bi-calendar3"></i>
+                  </div>
+                  Lên lịch đăng bài
+                </div>
+
+                <div class="mb-4">
+                  <div class="toggle-wrap mb-3">
+                    <label class="toggle">
+                      <input type="checkbox" id="schedule-toggle" onchange="toggleSchedule()">
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <span class="text-sm text-gray-400">Lên lịch đăng sau</span>
+                  </div>
+                </div>
+
+                <div id="schedule-fields" class="hidden space-y-4">
+                  <div>
+                    <div class="gz-label"><i class="bi bi-calendar-event"></i> Ngày đăng</div>
+                    <input type="date" id="schedule-date" class="gz-input">
+                  </div>
+                  <div>
+                    <div class="gz-label"><i class="bi bi-clock"></i> Giờ đăng</div>
+                    <input type="time" id="schedule-time" class="gz-input">
+                  </div>
+
+                  <!-- Best time suggestions -->
+                  <div>
+                    <div class="gz-label text-xs">Giờ vàng đăng bài</div>
+                    <div class="flex flex-wrap gap-2">
+                      <button class="hashtag-chip text-xs" onclick="setBestTime('08:00')">⏰ 8:00</button>
+                      <button class="hashtag-chip text-xs" onclick="setBestTime('12:00')">⏰ 12:00</button>
+                      <button class="hashtag-chip text-xs" onclick="setBestTime('18:00')">⏰ 18:00</button>
+                      <button class="hashtag-chip text-xs" onclick="setBestTime('20:00')">⏰ 20:00</button>
+                    </div>
+                  </div>
+
+                  <div id="schedule-preview-box" class="schedule-preview hidden">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    <span id="schedule-preview-text"></span>
+                  </div>
+                </div>
+
+                <!-- Repeat settings -->
+                <div id="repeat-section" class="hidden mt-4">
+                  <hr class="gz-divider">
+                  <div class="gz-label"><i class="bi bi-arrow-repeat"></i> Lặp lại</div>
+                  <select id="repeat-type" class="gz-input mb-3">
+                    <option value="none">Không lặp lại</option>
+                    <option value="daily">Hàng ngày</option>
+                    <option value="weekly">Hàng tuần</option>
+                    <option value="monthly">Hàng tháng</option>
+                  </select>
+                </div>
+
+                <hr class="gz-divider">
+
+                <!-- Post type -->
+                <div class="mb-4">
+                  <div class="gz-label"><i class="bi bi-layout-text-window"></i> Loại bài đăng</div>
+                  <select id="post-type" class="gz-input">
+                    <option value="feed">📰 Bài viết thường (Feed)</option>
+                    <option value="story">📱 Story</option>
+                    <option value="reel">🎬 Reels</option>
+                  </select>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="space-y-3">
+                  <button class="btn-primary w-full" onclick="publishPost()" id="publish-btn">
+                    <i class="bi bi-send-fill"></i>
+                    <span id="publish-btn-text">Đăng ngay</span>
+                  </button>
+                  <button class="btn-secondary w-full" onclick="saveDraft()">
+                    <i class="bi bi-save"></i> Lưu nháp
+                  </button>
+                  <button class="btn-secondary w-full" onclick="previewPost()">
+                    <i class="bi bi-eye"></i> Xem trước
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick tips -->
+              <div class="gz-card" style="border-color:rgba(0,212,255,0.15);">
+                <div class="section-title text-base">
+                  <div class="icon-wrap" style="background:rgba(0,212,255,0.12);color:#22d3ee;">
+                    <i class="bi bi-lightbulb"></i>
+                  </div>
+                  Mẹo đăng bài hiệu quả
+                </div>
+                <ul class="space-y-2 text-xs text-gray-500">
+                  <li class="flex gap-2"><span class="text-cyan-400">✦</span> Đăng vào giờ cao điểm: 8h, 12h, 18h, 20h</li>
+                  <li class="flex gap-2"><span class="text-cyan-400">✦</span> Sử dụng 3-5 hashtag liên quan</li>
+                  <li class="flex gap-2"><span class="text-cyan-400">✦</span> Thêm hình ảnh để tăng 3x tương tác</li>
+                  <li class="flex gap-2"><span class="text-cyan-400">✦</span> Đặt câu hỏi để tăng bình luận</li>
+                  <li class="flex gap-2"><span class="text-cyan-400">✦</span> Nội dung ngắn gọn, súc tích hơn</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: LỊCH ĐĂNG BÀI ===== -->
+        <div id="tab-schedule" class="tab-content hidden">
+          <div class="gz-card">
+            <div class="section-title">
+              <div class="icon-wrap" style="background:rgba(251,191,36,0.15);color:#fbbf24;">
+                <i class="bi bi-calendar3"></i>
+              </div>
+              Lịch đăng bài sắp tới
+            </div>
+            <p class="section-subtitle">Danh sách các bài viết đang chờ được đăng tự động</p>
+
+            <div id="scheduled-list" class="post-list-container">
+              <div class="text-center py-12 text-gray-600">
+                <i class="bi bi-calendar-x text-4xl mb-3 block"></i>
+                <p>Chưa có bài viết nào được lên lịch</p>
+                <button class="btn-primary mt-4" onclick="showTab('create')">
+                  <i class="bi bi-plus-circle"></i> Tạo bài viết mới
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: LỊCH SỬ ===== -->
+        <div id="tab-history" class="tab-content hidden">
+          <div class="gz-card">
+            <div class="section-title">
+              <div class="icon-wrap" style="background:rgba(34,197,94,0.15);color:#4ade80;">
+                <i class="bi bi-clock-history"></i>
+              </div>
+              Lịch sử đăng bài
+            </div>
+            <p class="section-subtitle">Tất cả bài viết đã được đăng hoặc thất bại</p>
+
+            <div class="flex gap-2 mb-4">
+              <button class="tab-btn active" id="hist-all" onclick="filterHistory('all')">Tất cả</button>
+              <button class="tab-btn" id="hist-posted" onclick="filterHistory('posted')">Đã đăng</button>
+              <button class="tab-btn" id="hist-failed" onclick="filterHistory('failed')">Thất bại</button>
+              <button class="tab-btn" id="hist-draft" onclick="filterHistory('draft')">Nháp</button>
+            </div>
+
+            <div id="history-list" class="post-list-container">
+              <div class="text-center py-12 text-gray-600">
+                <i class="bi bi-inbox text-4xl mb-3 block"></i>
+                <p>Chưa có lịch sử đăng bài</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: THỐNG KÊ ===== -->
+        <div id="tab-analytics" class="tab-content hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="gz-card">
+              <div class="section-title">
+                <div class="icon-wrap" style="background:rgba(24,119,242,0.15);color:#60a5fa;">
+                  <i class="bi bi-bar-chart-line"></i>
+                </div>
+                Tổng quan hoạt động
+              </div>
+              <div class="space-y-4 mt-4">
+                <div class="flex justify-between items-center py-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <span class="text-sm text-gray-400">Tổng bài đã tạo</span>
+                  <span class="font-bold text-white" id="ana-total">0</span>
+                </div>
+                <div class="flex justify-between items-center py-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <span class="text-sm text-gray-400">Bài đã đăng thành công</span>
+                  <span class="font-bold text-green-400" id="ana-posted">0</span>
+                </div>
+                <div class="flex justify-between items-center py-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <span class="text-sm text-gray-400">Bài đang lên lịch</span>
+                  <span class="font-bold text-yellow-400" id="ana-scheduled">0</span>
+                </div>
+                <div class="flex justify-between items-center py-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <span class="text-sm text-gray-400">Bài thất bại</span>
+                  <span class="font-bold text-red-400" id="ana-failed">0</span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                  <span class="text-sm text-gray-400">Tỷ lệ thành công</span>
+                  <span class="font-bold text-cyan-400" id="ana-rate">0%</span>
+                </div>
+              </div>
+            </div>
+            <div class="gz-card">
+              <div class="section-title">
+                <div class="icon-wrap" style="background:rgba(157,80,187,0.15);color:#c084fc;">
+                  <i class="bi bi-magic"></i>
+                </div>
+                Thống kê AI
+              </div>
+              <div class="space-y-4 mt-4">
+                <div class="flex justify-between items-center py-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <span class="text-sm text-gray-400">Nội dung AI tạo</span>
+                  <span class="font-bold text-white" id="ana-ai-gen">0</span>
+                </div>
+                <div class="flex justify-between items-center py-3" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                  <span class="text-sm text-gray-400">Hashtag được gợi ý</span>
+                  <span class="font-bold text-white" id="ana-hashtags">0</span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                  <span class="text-sm text-gray-400">Thời gian tiết kiệm</span>
+                  <span class="font-bold text-cyan-400" id="ana-time-saved">0 phút</span>
+                </div>
+              </div>
+              <div class="mt-6 p-4 rounded-14" style="background:rgba(157,80,187,0.08);border:1px solid rgba(157,80,187,0.2);">
+                <p class="text-xs text-purple-300">💡 Sử dụng AI tạo nội dung giúp tiết kiệm trung bình <strong>15 phút</strong> mỗi bài viết</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: CÀI ĐẶT ===== -->
+        <div id="tab-settings" class="tab-content hidden">
+          <div class="gz-card">
+            <div class="section-title">
+              <div class="icon-wrap" style="background:rgba(148,163,184,0.15);color:#94a3b8;">
+                <i class="bi bi-gear"></i>
+              </div>
+              Cài đặt tự động đăng bài
+            </div>
+            <p class="section-subtitle">Tùy chỉnh hành vi đăng bài tự động</p>
+
+            <div class="space-y-6">
+              <div class="flex items-center justify-between py-4" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div>
+                  <div class="text-sm font-semibold text-white">Tự động thêm hashtag</div>
+                  <div class="text-xs text-gray-500 mt-1">AI tự động gợi ý và thêm hashtag phù hợp</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="setting-auto-hashtag" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between py-4" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div>
+                  <div class="text-sm font-semibold text-white">Thông báo khi đăng xong</div>
+                  <div class="text-xs text-gray-500 mt-1">Nhận thông báo khi bài viết được đăng thành công</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="setting-notify" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between py-4" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div>
+                  <div class="text-sm font-semibold text-white">Tự động thử lại khi thất bại</div>
+                  <div class="text-xs text-gray-500 mt-1">Thử đăng lại tối đa 3 lần nếu gặp lỗi</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="setting-retry" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div>
+                <div class="gz-label">Ngôn ngữ mặc định cho AI</div>
+                <select class="gz-input" id="setting-lang">
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">English</option>
+                </select>
+              </div>
+              <div>
+                <div class="gz-label">Múi giờ</div>
+                <select class="gz-input" id="setting-timezone">
+                  <option value="Asia/Ho_Chi_Minh">Việt Nam (UTC+7)</option>
+                  <option value="Asia/Bangkok">Thái Lan (UTC+7)</option>
+                  <option value="Asia/Singapore">Singapore (UTC+8)</option>
+                </select>
+              </div>
+              <button class="btn-primary" onclick="saveSettings()">
+                <i class="bi bi-check-circle"></i> Lưu cài đặt
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== MODAL: CONNECT FACEBOOK ===== -->
+  <div id="connect-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <button onclick="closeConnectModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;font-size:20px;">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:rgba(24,119,242,0.15);">
+          <i class="bi bi-facebook text-3xl text-blue-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Kết nối Facebook</h3>
+        <p class="text-sm text-gray-500">Nhập Access Token của bạn để kết nối với Facebook Page</p>
+      </div>
+
+      <div class="glow-line"></div>
+
+      <div class="space-y-4">
+        <div>
+          <div class="gz-label">Access Token</div>
+          <textarea id="fb-token-input" class="gz-input" rows="3"
+            placeholder="Dán Access Token của bạn vào đây...&#10;&#10;Lấy token tại: developers.facebook.com/tools/explorer"></textarea>
+          <p class="text-xs text-gray-600 mt-2">
+            <i class="bi bi-shield-lock me-1"></i>
+            Token được lưu trữ cục bộ, không gửi lên server
+          </p>
+        </div>
+
+        <div>
+          <div class="gz-label">Hoặc sử dụng Facebook Login</div>
+          <button onclick="initFBLogin()" class="btn-primary w-full" style="background:linear-gradient(135deg,#1877F2,#0052cc);">
+            <i class="bi bi-facebook"></i>
+            Đăng nhập với Facebook
+          </button>
+        </div>
+
+        <div class="glow-line"></div>
+
+        <div class="flex gap-3">
+          <button onclick="connectWithToken()" class="btn-primary flex-1">
+            <i class="bi bi-plug"></i> Kết nối
+          </button>
+          <button onclick="closeConnectModal()" class="btn-secondary flex-1">
+            Hủy
+          </button>
+        </div>
+      </div>
+
+      <!-- How to get token -->
+      <div class="mt-4 p-4 rounded-12" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+        <p class="text-xs font-semibold text-gray-400 mb-2">📋 Cách lấy Access Token:</p>
+        <ol class="text-xs text-gray-600 space-y-1 list-decimal list-inside">
+          <li>Truy cập <a href="https://developers.facebook.com/tools/explorer" target="_blank" class="text-blue-400 hover:underline">Graph API Explorer</a></li>
+          <li>Chọn App và cấp quyền: <code class="text-purple-400">pages_manage_posts, pages_read_engagement</code></li>
+          <li>Nhấn "Generate Access Token"</li>
+          <li>Copy token và dán vào ô trên</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: PREVIEW POST ===== -->
+  <div id="preview-modal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:520px;">
+      <button onclick="closePreviewModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;font-size:20px;">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <h3 class="text-lg font-bold text-white mb-4">Xem trước bài viết</h3>
+
+      <!-- Facebook-style preview -->
+      <div style="background:#1a1a2e;border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,0.08);">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full" style="background:linear-gradient(135deg,#1877F2,#00D4FF);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-person-fill text-white"></i>
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-white" id="preview-page-name">Trang Facebook của bạn</div>
+            <div class="text-xs text-gray-500" id="preview-time">Vừa xong · 🌐</div>
+          </div>
+        </div>
+        <p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap" id="preview-content">Nội dung bài viết sẽ hiển thị ở đây...</p>
+        <img id="preview-image" class="hidden w-full rounded-12 mt-3" src="" alt="Preview image" style="max-height:250px;object-fit:cover;">
+        <div id="preview-link-box" class="hidden mt-3 p-3 rounded-10" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
+          <p class="text-xs text-blue-400" id="preview-link-url"></p>
+        </div>
+        <div class="flex gap-4 mt-4 pt-3" style="border-top:1px solid rgba(255,255,255,0.08);">
+          <span class="text-xs text-gray-500 flex items-center gap-1"><i class="bi bi-hand-thumbs-up"></i> Thích</span>
+          <span class="text-xs text-gray-500 flex items-center gap-1"><i class="bi bi-chat"></i> Bình luận</span>
+          <span class="text-xs text-gray-500 flex items-center gap-1"><i class="bi bi-share"></i> Chia sẻ</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-4">
+        <button onclick="publishPost(); closePreviewModal();" class="btn-primary flex-1">
+          <i class="bi bi-send-fill"></i> Đăng bài
+        </button>
+        <button onclick="closePreviewModal()" class="btn-secondary flex-1">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script>
+    // ==================== STATE ====================
+    const state = {
+      connected: false,
+      accessToken: localStorage.getItem('gz_fb_token') || '',
+      pages: JSON.parse(localStorage.getItem('gz_pages') || '[]'),
+      selectedPage: JSON.parse(localStorage.getItem('gz_selected_page') || 'null'),
+      posts: JSON.parse(localStorage.getItem('gz_posts') || '[]'),
+      aiLength: 'short',
+      stats: { aiGen: 0, hashtags: 0 }
+    };
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      initCursor();
+      initStarfield();
+      updateStats();
+      renderScheduledList();
+      renderHistoryList('all');
+      updateAnalytics();
+
+      if (state.accessToken) {
+        verifyToken(state.accessToken);
+      }
+
+      // Set default date/time
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      document.getElementById('schedule-date').value = now.toISOString().split('T')[0];
+      document.getElementById('schedule-time').value = now.toTimeString().slice(0, 5);
+
+      // Schedule checker
+      setInterval(checkScheduledPosts, 30000);
+    });
+
+    // ==================== CURSOR ====================
+    function initCursor() {
+      const cursor = document.getElementById('custom-cursor');
+      document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursor.style.opacity = '1';
+      });
+      document.addEventListener('mouseleave', () => { cursor.style.opacity = '0'; });
+    }
+
+    // ==================== STARFIELD ====================
+    function initStarfield() {
+      const canvasFar = document.getElementById('starfield-far');
+      const canvasMid = document.getElementById('starfield-mid');
+      const ctxFar = canvasFar.getContext('2d');
+      const ctxMid = canvasMid.getContext('2d');
+
+      function resize() {
+        canvasFar.width = canvasMid.width = window.innerWidth;
+        canvasFar.height = canvasMid.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const stars = Array.from({ length: 150 }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 1.2 + 0.3,
+        o: Math.random() * 0.4 + 0.1,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15
+      }));
+
+      function animate() {
+        ctxFar.clearRect(0, 0, canvasFar.width, canvasFar.height);
+        ctxMid.clearRect(0, 0, canvasMid.width, canvasMid.height);
+
+        stars.forEach((s, i) => {
+          s.x += s.vx; s.y += s.vy;
+          if (s.x < 0) s.x = canvasFar.width;
+          if (s.x > canvasFar.width) s.x = 0;
+          if (s.y < 0) s.y = canvasFar.height;
+          if (s.y > canvasFar.height) s.y = 0;
+
+          const ctx = i < 100 ? ctxFar : ctxMid;
+          ctx.fillStyle = `rgba(255,255,255,${s.o})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // ==================== TABS ====================
+    function showTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+    }
+
+    function showAITool(tool) {
+      showTab('create');
+      if (tool === 'hashtag') {
+        document.getElementById('ai-topic').focus();
+        generateHashtags();
+      }
+    }
+
+    // ==================== CHAR COUNT ====================
+    function updateCharCount() {
+      const content = document.getElementById('post-content').value;
+      const len = content.length;
+      const counter = document.getElementById('char-counter');
+      counter.textContent = `${len.toLocaleString()} / 63,206`;
+      counter.className = 'char-counter';
+      if (len > 50000) counter.classList.add('danger');
+      else if (len > 40000) counter.classList.add('warning');
+    }
+
+    // ==================== EMOJI ====================
+    function insertEmoji(emoji) {
+      const ta = document.getElementById('post-content');
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + emoji.length;
+      ta.focus();
+      updateCharCount();
+    }
+
+    // ==================== IMAGE ====================
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('img-placeholder').classList.add('hidden');
+        const preview = document.getElementById('img-preview');
+        preview.src = e.target.result;
+        preview.classList.remove('hidden');
+        document.getElementById('remove-img-btn').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeImage() {
+      document.getElementById('img-input').value = '';
+      document.getElementById('img-preview').classList.add('hidden');
+      document.getElementById('img-placeholder').classList.remove('hidden');
+      document.getElementById('remove-img-btn').classList.add('hidden');
+    }
+
+    // ==================== SCHEDULE ====================
+    function toggleSchedule() {
+      const isOn = document.getElementById('schedule-toggle').checked;
+      const fields = document.getElementById('schedule-fields');
+      const repeatSection = document.getElementById('repeat-section');
+      const btnText = document.getElementById('publish-btn-text');
+
+      if (isOn) {
+        fields.classList.remove('hidden');
+        repeatSection.classList.remove('hidden');
+        btnText.textContent = 'Lên lịch đăng bài';
+        updateSchedulePreview();
+      } else {
+        fields.classList.add('hidden');
+        repeatSection.classList.add('hidden');
+        btnText.textContent = 'Đăng ngay';
+      }
+    }
+
+    function updateSchedulePreview() {
+      const date = document.getElementById('schedule-date').value;
+      const time = document.getElementById('schedule-time').value;
+      const preview = document.getElementById('schedule-preview-box');
+      const previewText = document.getElementById('schedule-preview-text');
+
+      if (date && time) {
+        const dt = new Date(date + 'T' + time);
+        previewText.textContent = `Sẽ đăng vào ${dt.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} lúc ${time}`;
+        preview.classList.remove('hidden');
+      }
+    }
+
+    document.addEventListener('change', (e) => {
+      if (e.target.id === 'schedule-date' || e.target.id === 'schedule-time') {
+        updateSchedulePreview();
+      }
+    });
+
+    function setBestTime(time) {
+      document.getElementById('schedule-time').value = time;
+      updateSchedulePreview();
+    }
+
+    // ==================== AI CONTENT ====================
+    function setLength(len) {
+      state.aiLength = len;
+      ['short', 'medium', 'long'].forEach(l => {
+        document.getElementById('len-' + l).classList.toggle('active', l === len);
+      });
+    }
+
+    async function generateAIContent() {
+      const topic = document.getElementById('ai-topic').value.trim();
+      if (!topic) {
+        showToast('Vui lòng nhập chủ đề bài viết', 'error');
+        return;
+      }
+
+      const tone = document.getElementById('ai-tone').value;
+      const industry = document.getElementById('ai-industry').value;
+      const length = state.aiLength;
+
+      const btn = document.getElementById('ai-gen-btn');
+      const loading = document.getElementById('ai-loading');
+      const suggestions = document.getElementById('ai-suggestions');
+
+      btn.disabled = true;
+      loading.classList.remove('hidden');
+      suggestions.classList.add('hidden');
+
+      const lengthMap = { short: '80-120 từ', medium: '180-220 từ', long: '350-420 từ' };
+      const toneMap = {
+        professional: 'chuyên nghiệp, lịch sự',
+        friendly: 'thân thiện, gần gũi',
+        exciting: 'hào hứng, năng động',
+        informative: 'thông tin, rõ ràng',
+        humorous: 'hài hước, vui vẻ',
+        urgent: 'khẩn cấp, thúc đẩy hành động'
+      };
+      const industryMap = {
+        general: 'tổng quát',
+        ecommerce: 'thương mại điện tử',
+        food: 'ẩm thực và nhà hàng',
+        fashion: 'thời trang',
+        tech: 'công nghệ',
+        beauty: 'làm đẹp và spa',
+        education: 'giáo dục',
+        realestate: 'bất động sản',
+        fitness: 'thể hình và sức khỏe'
+      };
+
+      const prompt = `Tạo 3 phiên bản bài viết Facebook cho chủ đề: "${topic}"
+Ngành: ${industryMap[industry]}
+Giọng văn: ${toneMap[tone]}
+Độ dài: ${lengthMap[length]}
+Ngôn ngữ: Tiếng Việt
+
+Yêu cầu:
+- Mỗi bài viết phải hấp dẫn, thu hút người đọc
+- Có emoji phù hợp
+- Kết thúc bằng call-to-action
+- Thêm 3-5 hashtag liên quan ở cuối
+
+Trả về JSON: {"posts": ["bài 1", "bài 2", "bài 3"]}`;
+
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getOpenAIKey()}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4.1-mini',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 1500
+          })
+        });
+
+        if (!response.ok) throw new Error('API error');
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+
+        let posts;
+        try {
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          posts = JSON.parse(jsonMatch[0]).posts;
+        } catch {
+          posts = [content];
+        }
+
+        const list = document.getElementById('suggestion-list');
+        list.innerHTML = '';
+        posts.forEach((post, i) => {
+          const div = document.createElement('div');
+          div.className = 'ai-suggestion';
+          div.innerHTML = `<div class="text-xs text-purple-400 font-semibold mb-2">Phiên bản ${i + 1}</div><div>${post.replace(/\n/g, '<br>')}</div>`;
+          div.onclick = () => {
+            document.getElementById('post-content').value = post;
+            updateCharCount();
+            showToast('Đã chọn nội dung AI', 'success');
+          };
+          list.appendChild(div);
+        });
+
+        suggestions.classList.remove('hidden');
+        state.stats.aiGen++;
+        updateAnalytics();
+        showToast('AI đã tạo 3 phiên bản nội dung!', 'success');
+      } catch (err) {
+        // Fallback: generate sample content
+        generateSampleContent(topic, tone, industry);
+      } finally {
+        btn.disabled = false;
+        loading.classList.add('hidden');
+      }
+    }
+
+    function generateSampleContent(topic, tone, industry) {
+      const samples = [
+        `🚀 ${topic}\n\nChúng tôi tự hào giới thiệu đến bạn giải pháp tốt nhất trong lĩnh vực ${industry}!\n\n✅ Chất lượng hàng đầu\n✅ Giá cả hợp lý\n✅ Dịch vụ tận tâm\n\nLiên hệ ngay để được tư vấn miễn phí! 💬\n\n#${topic.replace(/\s+/g, '')} #${industry} #GenZTech`,
+        `💡 Bạn đã biết về ${topic} chưa?\n\nĐây là xu hướng đang được rất nhiều người quan tâm trong thời gian gần đây!\n\n🎯 Tại sao bạn nên quan tâm?\n→ Tiết kiệm thời gian và chi phí\n→ Hiệu quả được chứng minh\n→ Dễ dàng áp dụng\n\nComment 🙋 nếu bạn muốn tìm hiểu thêm!\n\n#${topic.replace(/\s+/g, '')} #TipHayMoiNgay`,
+        `🔥 ĐỪng bỏ lỡ cơ hội này!\n\n${topic} - Giải pháp hoàn hảo cho bạn!\n\n📌 Ưu đãi đặc biệt chỉ trong hôm nay:\n• Giảm giá lên đến 50%\n• Tặng kèm quà hấp dẫn\n• Miễn phí vận chuyển\n\n⏰ Số lượng có hạn - Đặt ngay!\n👇 Nhắn tin hoặc gọi hotline\n\n#KhuyenMai #${topic.replace(/\s+/g, '')} #MuaNgay`
+      ];
+
+      const list = document.getElementById('suggestion-list');
+      list.innerHTML = '';
+      samples.forEach((post, i) => {
+        const div = document.createElement('div');
+        div.className = 'ai-suggestion';
+        div.innerHTML = `<div class="text-xs text-purple-400 font-semibold mb-2">Phiên bản ${i + 1}</div><div>${post.replace(/\n/g, '<br>')}</div>`;
+        div.onclick = () => {
+          document.getElementById('post-content').value = post;
+          updateCharCount();
+          showToast('Đã chọn nội dung', 'success');
+        };
+        list.appendChild(div);
+      });
+
+      document.getElementById('ai-suggestions').classList.remove('hidden');
+      state.stats.aiGen++;
+      updateAnalytics();
+      showToast('Đã tạo 3 mẫu nội dung gợi ý!', 'success');
+    }
+
+    async function generateHashtags() {
+      const topic = document.getElementById('ai-topic').value.trim() ||
+        document.getElementById('post-content').value.slice(0, 100);
+
+      if (!topic) {
+        showToast('Nhập chủ đề hoặc nội dung trước', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('hashtag-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      const hashtags = generateLocalHashtags(topic);
+      renderHashtags(hashtags);
+      state.stats.hashtags += hashtags.length;
+      updateAnalytics();
+      showToast(`Đã gợi ý ${hashtags.length} hashtag!`, 'success');
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-hash"></i> Gợi ý hashtag';
+    }
+
+    function generateLocalHashtags(topic) {
+      const words = topic.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      const base = words.map(w => '#' + w.replace(/[^a-z0-9àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỷỹỵ]/gi, ''));
+      const extras = ['#marketing', '#facebook', '#viral', '#trending', '#business', '#digital', '#online', '#success', '#growth', '#tips'];
+      return [...new Set([...base, ...extras.slice(0, 5)])].slice(0, 10);
+    }
+
+    function renderHashtags(hashtags) {
+      const area = document.getElementById('hashtag-area');
+      const chips = document.getElementById('hashtag-chips');
+      chips.innerHTML = '';
+      hashtags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'hashtag-chip';
+        chip.innerHTML = `${tag} <i class="bi bi-plus-circle"></i>`;
+        chip.onclick = () => {
+          const ta = document.getElementById('post-content');
+          ta.value += ' ' + tag;
+          updateCharCount();
+          chip.style.opacity = '0.5';
+        };
+        chips.appendChild(chip);
+      });
+      area.classList.remove('hidden');
+    }
+
+    // ==================== FACEBOOK CONNECTION ====================
+    function openConnectModal() {
+      document.getElementById('connect-modal').classList.remove('hidden');
+      if (state.accessToken) {
+        document.getElementById('fb-token-input').value = state.accessToken;
+      }
+    }
+
+    function closeConnectModal() {
+      document.getElementById('connect-modal').classList.add('hidden');
+    }
+
+    async function connectWithToken() {
+      const token = document.getElementById('fb-token-input').value.trim();
+      if (!token) {
+        showToast('Vui lòng nhập Access Token', 'error');
+        return;
+      }
+      await verifyToken(token);
+    }
+
+    async function verifyToken(token) {
+      try {
+        showToast('Đang xác thực token...', 'info');
+
+        // Verify token via Graph API
+        const res = await fetch(`https://graph.facebook.com/me?access_token=${token}&fields=id,name,picture`);
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error.message);
+
+        state.accessToken = token;
+        state.connected = true;
+        localStorage.setItem('gz_fb_token', token);
+
+        // Get pages
+        await loadPages(token);
+
+        // Update UI
+        updateConnectionUI(data);
+        closeConnectModal();
+        showToast(`Đã kết nối thành công với ${data.name}!`, 'success');
+
+      } catch (err) {
+        showToast('Token không hợp lệ hoặc đã hết hạn', 'error');
+        console.error(err);
+      }
+    }
+
+    async function loadPages(token) {
+      try {
+        const res = await fetch(`https://graph.facebook.com/me/accounts?access_token=${token}&fields=id,name,access_token,picture`);
+        const data = await res.json();
+
+        if (data.data && data.data.length > 0) {
+          state.pages = data.data;
+          localStorage.setItem('gz_pages', JSON.stringify(state.pages));
+          renderPageList();
+        }
+      } catch (err) {
+        console.error('Error loading pages:', err);
+      }
+    }
+
+    function renderPageList() {
+      const container = document.getElementById('page-list');
+      if (state.pages.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500 text-center py-3">Không tìm thấy Page nào</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      state.pages.forEach(page => {
+        const div = document.createElement('div');
+        div.className = 'page-option' + (state.selectedPage?.id === page.id ? ' selected' : '');
+        div.innerHTML = `
+          <div class="page-avatar">
+            ${page.picture ? `<img src="${page.picture.data?.url || ''}" class="w-full h-full rounded-full object-cover">` : '<i class="bi bi-flag-fill text-white"></i>'}
+          </div>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-white">${page.name}</div>
+            <div class="text-xs text-gray-500">ID: ${page.id}</div>
+          </div>
+          ${state.selectedPage?.id === page.id ? '<i class="bi bi-check-circle-fill text-blue-400"></i>' : ''}
+        `;
+        div.onclick = () => selectPage(page);
+        container.appendChild(div);
+      });
+    }
+
+    function selectPage(page) {
+      state.selectedPage = page;
+      localStorage.setItem('gz_selected_page', JSON.stringify(page));
+      renderPageList();
+      showToast(`Đã chọn trang: ${page.name}`, 'success');
+    }
+
+    function updateConnectionUI(userData) {
+      const dot = document.getElementById('conn-dot');
+      const text = document.getElementById('conn-text');
+      const status = document.getElementById('conn-status');
+      const btn = document.getElementById('connect-btn');
+
+      dot.className = 'conn-dot connected';
+      text.textContent = userData.name;
+      status.classList.remove('hidden');
+      btn.innerHTML = `<span class="relative z-10 flex items-center gap-2"><i class="bi bi-check-circle"></i> Đã kết nối</span>`;
+      btn.style.background = 'rgba(34,197,94,0.2)';
+      btn.style.border = '1px solid rgba(34,197,94,0.4)';
+
+      // Sidebar user info
+      const userInfo = document.getElementById('user-info-sidebar');
+      const userAvatar = document.getElementById('user-avatar');
+      const userName = document.getElementById('user-name');
+      userInfo.classList.remove('hidden');
+      userName.textContent = userData.name;
+      if (userData.picture) {
+        userAvatar.src = userData.picture.data?.url || '';
+      }
+    }
+
+    function initFBLogin() {
+      showToast('Vui lòng sử dụng Access Token thủ công', 'info');
+    }
+
+    // ==================== PUBLISH ====================
+    async function publishPost() {
+      const content = document.getElementById('post-content').value.trim();
+      if (!content) {
+        showToast('Vui lòng nhập nội dung bài viết', 'error');
+        return;
+      }
+
+      const isScheduled = document.getElementById('schedule-toggle').checked;
+
+      if (isScheduled) {
+        schedulePost(content);
+      } else {
+        await postNow(content);
+      }
+    }
+
+    async function postNow(content) {
+      if (!state.connected || !state.selectedPage) {
+        showToast('Vui lòng kết nối Facebook và chọn Page trước', 'error');
+        openConnectModal();
+        return;
+      }
+
+      const btn = document.getElementById('publish-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Đang đăng...';
+
+      try {
+        const pageToken = state.selectedPage.access_token;
+        const pageId = state.selectedPage.id;
+        const link = document.getElementById('post-link').value.trim();
+
+        let formData = new FormData();
+        formData.append('message', content);
+        formData.append('access_token', pageToken);
+        if (link) formData.append('link', link);
+
+        const imgFile = document.getElementById('img-input').files[0];
+        let endpoint = `https://graph.facebook.com/v25.0/${pageId}/feed`;
+
+        if (imgFile) {
+          endpoint = `https://graph.facebook.com/v25.0/${pageId}/photos`;
+          formData.append('source', imgFile);
+        }
+
+        const res = await fetch(endpoint, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error.message);
+
+        // Save to history
+        savePost({
+          id: data.id || Date.now().toString(),
+          content,
+          status: 'posted',
+          page: state.selectedPage.name,
+          postedAt: new Date().toISOString(),
+          fbPostId: data.id
+        });
+
+        showToast('🎉 Đăng bài thành công!', 'success');
+        clearForm();
+        updateStats();
+        renderHistoryList('all');
+
+      } catch (err) {
+        showToast('Lỗi khi đăng bài: ' + err.message, 'error');
+
+        savePost({
+          id: Date.now().toString(),
+          content,
+          status: 'failed',
+          page: state.selectedPage?.name || 'Unknown',
+          postedAt: new Date().toISOString(),
+          error: err.message
+        });
+        updateStats();
+        renderHistoryList('all');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-fill"></i> <span id="publish-btn-text">Đăng ngay</span>';
+      }
+    }
+
+    function schedulePost(content) {
+      const date = document.getElementById('schedule-date').value;
+      const time = document.getElementById('schedule-time').value;
+
+      if (!date || !time) {
+        showToast('Vui lòng chọn ngày và giờ đăng', 'error');
+        return;
+      }
+
+      const scheduledAt = new Date(date + 'T' + time).toISOString();
+      const now = new Date();
+
+      if (new Date(scheduledAt) <= now) {
+        showToast('Thời gian đăng phải sau thời điểm hiện tại', 'error');
+        return;
+      }
+
+      const link = document.getElementById('post-link').value.trim();
+      const imgPreview = document.getElementById('img-preview').src;
+
+      savePost({
+        id: Date.now().toString(),
+        content,
+        status: 'scheduled',
+        page: state.selectedPage?.name || 'Chưa chọn Page',
+        scheduledAt,
+        link,
+        imagePreview: imgPreview !== window.location.href ? imgPreview : null
+      });
+
+      showToast(`✅ Đã lên lịch đăng vào ${new Date(scheduledAt).toLocaleString('vi-VN')}`, 'success');
+      clearForm();
+      updateStats();
+      renderScheduledList();
+      showTab('schedule');
+    }
+
+    // ==================== DRAFT ====================
+    function saveDraft() {
+      const content = document.getElementById('post-content').value.trim();
+      if (!content) {
+        showToast('Không có nội dung để lưu', 'error');
+        return;
+      }
+
+      savePost({
+        id: Date.now().toString(),
+        content,
+        status: 'draft',
+        page: state.selectedPage?.name || 'Chưa chọn Page',
+        createdAt: new Date().toISOString()
+      });
+
+      showToast('Đã lưu nháp', 'success');
+      updateStats();
+      renderHistoryList('all');
+    }
+
+    // ==================== STORAGE ====================
+    function savePost(post) {
+      state.posts.unshift(post);
+      if (state.posts.length > 200) state.posts = state.posts.slice(0, 200);
+      localStorage.setItem('gz_posts', JSON.stringify(state.posts));
+    }
+
+    function deletePost(id) {
+      state.posts = state.posts.filter(p => p.id !== id);
+      localStorage.setItem('gz_posts', JSON.stringify(state.posts));
+      updateStats();
+      renderScheduledList();
+      renderHistoryList('all');
+      showToast('Đã xóa bài viết', 'success');
+    }
+
+    function editDraft(id) {
+      const post = state.posts.find(p => p.id === id);
+      if (!post) return;
+      document.getElementById('post-content').value = post.content;
+      updateCharCount();
+      deletePost(id);
+      showTab('create');
+      showToast('Đang chỉnh sửa nháp', 'info');
+    }
+
+    // ==================== RENDER LISTS ====================
+    function renderScheduledList() {
+      const container = document.getElementById('scheduled-list');
+      const scheduled = state.posts.filter(p => p.status === 'scheduled');
+
+      if (scheduled.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-600">
+            <i class="bi bi-calendar-x text-4xl mb-3 block"></i>
+            <p>Chưa có bài viết nào được lên lịch</p>
+            <button class="btn-primary mt-4" onclick="showTab('create')">
+              <i class="bi bi-plus-circle"></i> Tạo bài viết mới
+            </button>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = scheduled.map(post => `
+        <div class="post-item" id="post-${post.id}">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge badge-pending"><i class="bi bi-clock"></i> Chờ đăng</span>
+                <span class="text-xs text-gray-500">${post.page}</span>
+              </div>
+              <p class="text-sm text-gray-300 line-clamp-3">${escapeHtml(post.content).replace(/\n/g, '<br>')}</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-yellow-400 flex items-center gap-1">
+              <i class="bi bi-calendar-event"></i>
+              ${new Date(post.scheduledAt).toLocaleString('vi-VN')}
+            </div>
+            <div class="flex gap-2">
+              <button class="btn-success text-xs" onclick="postNowFromSchedule('${post.id}')">
+                <i class="bi bi-send"></i> Đăng ngay
+              </button>
+              <button class="btn-danger text-xs" onclick="deletePost('${post.id}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderHistoryList(filter) {
+      const container = document.getElementById('history-list');
+      ['all', 'posted', 'failed', 'draft'].forEach(f => {
+        document.getElementById('hist-' + f)?.classList.toggle('active', f === filter);
+      });
+
+      let posts = state.posts;
+      if (filter !== 'all') posts = posts.filter(p => p.status === filter);
+
+      if (posts.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-600">
+            <i class="bi bi-inbox text-4xl mb-3 block"></i>
+            <p>Không có bài viết nào</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = posts.map(post => {
+        const badgeClass = { posted: 'badge-posted', failed: 'badge-failed', draft: 'badge-draft', scheduled: 'badge-pending' }[post.status] || 'badge-draft';
+        const badgeIcon = { posted: 'bi-check-circle', failed: 'bi-x-circle', draft: 'bi-file-text', scheduled: 'bi-clock' }[post.status] || 'bi-file-text';
+        const badgeText = { posted: 'Đã đăng', failed: 'Thất bại', draft: 'Nháp', scheduled: 'Chờ đăng' }[post.status] || post.status;
+        const time = post.postedAt || post.scheduledAt || post.createdAt;
+
+        return `
+          <div class="post-item">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="badge ${badgeClass}"><i class="bi ${badgeIcon}"></i> ${badgeText}</span>
+                  <span class="text-xs text-gray-500">${post.page || ''}</span>
+                </div>
+                <p class="text-sm text-gray-300 line-clamp-2">${escapeHtml(post.content).replace(/\n/g, '<br>')}</p>
+                ${post.error ? `<p class="text-xs text-red-400 mt-1"><i class="bi bi-exclamation-triangle"></i> ${post.error}</p>` : ''}
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-600">${time ? new Date(time).toLocaleString('vi-VN') : ''}</span>
+              <div class="flex gap-2">
+                ${post.status === 'draft' ? `<button class="btn-success text-xs" onclick="editDraft('${post.id}')"><i class="bi bi-pencil"></i> Sửa</button>` : ''}
+                ${post.status === 'failed' ? `<button class="btn-success text-xs" onclick="retryPost('${post.id}')"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>` : ''}
+                <button class="btn-danger text-xs" onclick="deletePost('${post.id}')"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function filterHistory(filter) {
+      renderHistoryList(filter);
+    }
+
+    // ==================== STATS ====================
+    function updateStats() {
+      const total = state.posts.length;
+      const scheduled = state.posts.filter(p => p.status === 'scheduled').length;
+      const posted = state.posts.filter(p => p.status === 'posted').length;
+      const failed = state.posts.filter(p => p.status === 'failed').length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-scheduled').textContent = scheduled;
+      document.getElementById('stat-posted').textContent = posted;
+      document.getElementById('stat-failed').textContent = failed;
+    }
+
+    function updateAnalytics() {
+      const total = state.posts.length;
+      const posted = state.posts.filter(p => p.status === 'posted').length;
+      const scheduled = state.posts.filter(p => p.status === 'scheduled').length;
+      const failed = state.posts.filter(p => p.status === 'failed').length;
+      const rate = total > 0 ? Math.round((posted / (posted + failed || 1)) * 100) : 0;
+
+      document.getElementById('ana-total').textContent = total;
+      document.getElementById('ana-posted').textContent = posted;
+      document.getElementById('ana-scheduled').textContent = scheduled;
+      document.getElementById('ana-failed').textContent = failed;
+      document.getElementById('ana-rate').textContent = rate + '%';
+      document.getElementById('ana-ai-gen').textContent = state.stats.aiGen;
+      document.getElementById('ana-hashtags').textContent = state.stats.hashtags;
+      document.getElementById('ana-time-saved').textContent = (state.stats.aiGen * 15) + ' phút';
+    }
+
+    // ==================== SCHEDULE CHECKER ====================
+    function checkScheduledPosts() {
+      const now = new Date();
+      const toPost = state.posts.filter(p =>
+        p.status === 'scheduled' && new Date(p.scheduledAt) <= now
+      );
+
+      toPost.forEach(async post => {
+        post.status = 'posting';
+        if (state.connected && state.selectedPage) {
+          try {
+            const res = await fetch(`https://graph.facebook.com/v25.0/${state.selectedPage.id}/feed`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: post.content,
+                access_token: state.selectedPage.access_token
+              })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
+            post.status = 'posted';
+            post.postedAt = new Date().toISOString();
+            post.fbPostId = data.id;
+            showToast(`✅ Đã tự động đăng bài: "${post.content.slice(0, 30)}..."`, 'success');
+          } catch (err) {
+            post.status = 'failed';
+            post.error = err.message;
+          }
+        } else {
+          post.status = 'failed';
+          post.error = 'Chưa kết nối Facebook';
+        }
+        localStorage.setItem('gz_posts', JSON.stringify(state.posts));
+        updateStats();
+        renderScheduledList();
+        renderHistoryList('all');
+        updateAnalytics();
+      });
+    }
+
+    // ==================== UTILS ====================
+    async function postNowFromSchedule(id) {
+      const post = state.posts.find(p => p.id === id);
+      if (!post) return;
+      post.status = 'draft';
+      document.getElementById('post-content').value = post.content;
+      deletePost(id);
+      showTab('create');
+      await postNow(post.content);
+    }
+
+    async function retryPost(id) {
+      const post = state.posts.find(p => p.id === id);
+      if (!post) return;
+      post.status = 'draft';
+      document.getElementById('post-content').value = post.content;
+      deletePost(id);
+      showTab('create');
+    }
+
+    function clearForm() {
+      document.getElementById('post-content').value = '';
+      document.getElementById('post-link').value = '';
+      document.getElementById('ai-topic').value = '';
+      removeImage();
+      document.getElementById('schedule-toggle').checked = false;
+      toggleSchedule();
+      document.getElementById('hashtag-area').classList.add('hidden');
+      document.getElementById('ai-suggestions').classList.add('hidden');
+      updateCharCount();
+    }
+
+    function previewPost() {
+      const content = document.getElementById('post-content').value;
+      const link = document.getElementById('post-link').value;
+      const imgSrc = document.getElementById('img-preview').src;
+
+      document.getElementById('preview-content').textContent = content || 'Nội dung bài viết sẽ hiển thị ở đây...';
+      document.getElementById('preview-page-name').textContent = state.selectedPage?.name || 'Trang Facebook của bạn';
+      document.getElementById('preview-time').textContent = 'Vừa xong · 🌐';
+
+      const previewImg = document.getElementById('preview-image');
+      if (imgSrc && imgSrc !== window.location.href) {
+        previewImg.src = imgSrc;
+        previewImg.classList.remove('hidden');
+      } else {
+        previewImg.classList.add('hidden');
+      }
+
+      const linkBox = document.getElementById('preview-link-box');
+      if (link) {
+        document.getElementById('preview-link-url').textContent = link;
+        linkBox.classList.remove('hidden');
+      } else {
+        linkBox.classList.add('hidden');
+      }
+
+      document.getElementById('preview-modal').classList.remove('hidden');
+    }
+
+    function closePreviewModal() {
+      document.getElementById('preview-modal').classList.add('hidden');
+    }
+
+    function saveSettings() {
+      showToast('Đã lưu cài đặt', 'success');
+    }
+
+    function getOpenAIKey() {
+      return localStorage.getItem('gz_openai_key') || '';
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ==================== TOAST ====================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', info: 'bi-info-circle-fill' };
+      const colors = { success: '#4ade80', error: '#f87171', info: '#60a5fa' };
+
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <i class="bi ${icons[type]}" style="color:${colors[type]};font-size:18px;flex-shrink:0;"></i>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideInRight 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.add('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
