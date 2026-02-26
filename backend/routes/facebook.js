@@ -1,16 +1,21 @@
-const express = require('express');
-const multer  = require('multer');
-const fs      = require('fs');
+const express  = require('express');
+const multer   = require('multer');
+const fs       = require('fs');
+const axios    = require('axios');
+const FormData = require('form-data');
 
-// Multer — lưu ảnh tạm vào /tmp/gz_uploads
-const upload = multer({
+// ============================================================
+//  Multer — hỗ trợ cả ảnh và video, tối đa 10 file
+// ============================================================
+const uploadMedia = multer({
   dest: '/tmp/gz_uploads/',
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB cho video
   fileFilter: (req, file, cb) => {
-    const ok = /image\/(jpeg|png|gif|webp)/.test(file.mimetype);
-    cb(ok ? null : new Error('Chỉ chấp nhận file ảnh'), ok);
+    const ok = /^(image\/(jpeg|png|gif|webp)|video\/(mp4|quicktime|x-msvideo|x-ms-wmv|3gpp|webm))$/.test(file.mimetype);
+    cb(ok ? null : new Error('Chỉ chấp nhận ảnh (JPG/PNG/GIF/WEBP) hoặc video (MP4/MOV/AVI/WMV)'), ok);
   },
 });
+
 const auth    = require('../middleware/auth');
 const { tokenStmt, pageStmt, logStmt } = require('../database');
 const { fullConnect, inspectToken, refreshLongToken, getPages, postToPage } = require('../tokenManager');
@@ -20,12 +25,10 @@ router.use(auth);
 
 // ============================================================
 //  POST /api/facebook/connect
-//  Nhận short-lived token → đổi long-lived → lưu page tokens
 // ============================================================
 router.post('/connect', async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(400).json({ error: 'Token là bắt buộc' });
-
   try {
     const result = await fullConnect(req.userId, token);
     res.json({
@@ -43,18 +46,15 @@ router.post('/connect', async (req, res) => {
 
 // ============================================================
 //  GET /api/facebook/status
-//  Kiểm tra trạng thái kết nối và thông tin token hiện tại
 // ============================================================
 router.get('/status', (req, res) => {
   const fbToken = tokenStmt.findByUser.get(req.userId);
   if (!fbToken) return res.json({ connected: false });
-
   const pages = pageStmt.findByUser.all(req.userId);
   const expiresAt = fbToken.long_token_expires;
   const daysLeft = expiresAt
     ? Math.ceil((new Date(expiresAt) - Date.now()) / (1000 * 3600 * 24))
     : null;
-
   res.json({
     connected:  true,
     fbUser: {
@@ -71,19 +71,14 @@ router.get('/status', (req, res) => {
 
 // ============================================================
 //  POST /api/facebook/refresh
-//  Gia hạn token thủ công (user nhấn nút refresh)
 // ============================================================
 router.post('/refresh', async (req, res) => {
   const fbToken = tokenStmt.findByUser.get(req.userId);
   if (!fbToken) return res.status(404).json({ error: 'Chưa kết nối Facebook' });
-
   try {
     const { longToken, expiresAt, success, error } = await refreshLongToken(fbToken.long_token);
     if (!success) throw new Error(error);
-
     tokenStmt.updateLong.run(longToken, expiresAt, req.userId, fbToken.fb_user_id);
-
-    // Cập nhật lại page tokens
     const pages = await getPages(longToken);
     for (const page of pages) {
       pageStmt.upsert.run({
@@ -96,9 +91,7 @@ router.post('/refresh', async (req, res) => {
         category:     page.category || null,
       });
     }
-
     logStmt.create.run(req.userId, fbToken.fb_user_id, 'refresh', 1, `Manual refresh, new expiry: ${expiresAt}`);
-
     res.json({
       success:   true,
       expiresAt,
@@ -113,7 +106,6 @@ router.post('/refresh', async (req, res) => {
 
 // ============================================================
 //  POST /api/facebook/inspect
-//  Kiểm tra chi tiết token (debug)
 // ============================================================
 router.post('/inspect', async (req, res) => {
   const { token } = req.body;
@@ -128,7 +120,6 @@ router.post('/inspect', async (req, res) => {
 
 // ============================================================
 //  GET /api/facebook/pages
-//  Lấy danh sách Pages đã lưu
 // ============================================================
 router.get('/pages', (req, res) => {
   const pages = pageStmt.findByUser.all(req.userId);
@@ -143,18 +134,117 @@ router.get('/pages', (req, res) => {
 });
 
 // ============================================================
+//  POST /api/facebook/upload-media
+//  Upload nhiều ảnh HOẶC 1 video → Facebook Graph API
+//  Body: multipart/form-data
+//    - files[]: ảnh (tối đa 10) HOẶC 1 video
+//    - pageId: string
+//  Response: { photoIds: [...] } hoặc { videoId, videoUrl }
+// ============================================================
+router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) => {
+  const files = req.files;
+  if (!files || files.length === 0) return res.status(400).json({ error: 'Không có file nào được gửi lên' });
+
+  const { pageId } = req.body;
+  if (!pageId) {
+    files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
+    return res.status(400).json({ error: 'pageId là bắt buộc' });
+  }
+
+  const pageRow = pageStmt.findByPageId.get(req.userId, pageId);
+  if (!pageRow) {
+    files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
+    return res.status(404).json({ error: 'Không tìm thấy Page' });
+  }
+
+  // Kiểm tra có video không
+  const videoFile = files.find(f => f.mimetype.startsWith('video/'));
+  const imageFiles = files.filter(f => f.mimetype.startsWith('image/'));
+
+  try {
+    // ── TRƯỜNG HỢP 1: Upload VIDEO ──
+    if (videoFile) {
+      // Chỉ cho phép 1 video tại một thời điểm
+      if (files.length > 1) {
+        files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
+        return res.status(400).json({ error: 'Chỉ được upload 1 video tại một lần. Không thể kết hợp video với ảnh.' });
+      }
+
+      const form = new FormData();
+      form.append('source', fs.createReadStream(videoFile.path), {
+        filename: videoFile.originalname || 'video.mp4',
+        contentType: videoFile.mimetype,
+      });
+      form.append('description', ''); // Sẽ được cập nhật khi đăng bài
+      form.append('published', 'false');
+      form.append('access_token', pageRow.page_token);
+
+      const fbRes = await axios.post(
+        `https://graph.facebook.com/v19.0/${pageId}/videos`,
+        form,
+        {
+          headers: form.getHeaders(),
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 120000, // 2 phút cho video lớn
+        }
+      );
+
+      try { fs.unlinkSync(videoFile.path); } catch {}
+      return res.json({
+        success:   true,
+        mediaType: 'video',
+        videoId:   fbRes.data.id,
+      });
+    }
+
+    // ── TRƯỜNG HỢP 2: Upload NHIỀU ẢNH ──
+    const photoIds = [];
+    for (const imgFile of imageFiles) {
+      const form = new FormData();
+      form.append('source', fs.createReadStream(imgFile.path), {
+        filename: imgFile.originalname || 'image.jpg',
+        contentType: imgFile.mimetype,
+      });
+      form.append('published', 'false');
+      form.append('access_token', pageRow.page_token);
+
+      const fbRes = await axios.post(
+        `https://graph.facebook.com/v19.0/${pageId}/photos`,
+        form,
+        { headers: form.getHeaders() }
+      );
+      photoIds.push(fbRes.data.id);
+      try { fs.unlinkSync(imgFile.path); } catch {}
+    }
+
+    return res.json({
+      success:   true,
+      mediaType: 'photos',
+      photoIds,
+    });
+
+  } catch (err) {
+    files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
+    const msg = err.response?.data?.error?.message || err.message;
+    res.status(400).json({ error: 'Upload media thất bại: ' + msg });
+  }
+});
+
+// ============================================================
 //  POST /api/facebook/post
-//  Đăng bài ngay lập tức qua server (token bảo mật ở backend)
+//  Đăng bài ngay lập tức
+//  Body: { pageId, content, linkUrl?, photoIds?: [...], videoId? }
 // ============================================================
 router.post('/post', async (req, res) => {
-  const { pageId, content, linkUrl, imageUrl, photoId } = req.body;
+  const { pageId, content, linkUrl, photoIds, videoId } = req.body;
   if (!pageId || !content) return res.status(400).json({ error: 'pageId và content là bắt buộc' });
 
   const pageRow = pageStmt.findByPageId.get(req.userId, pageId);
   if (!pageRow) return res.status(404).json({ error: 'Không tìm thấy Page hoặc bạn không có quyền' });
 
   try {
-    const result = await postToPage(pageId, pageRow.page_token, content, linkUrl, imageUrl, photoId);
+    const result = await postToPage(pageId, pageRow.page_token, content, linkUrl, photoIds, videoId);
     const { histStmt } = require('../database');
     histStmt.create.run({
       user_id:    req.userId,
@@ -183,54 +273,7 @@ router.post('/post', async (req, res) => {
 });
 
 // ============================================================
-//  POST /api/facebook/upload-image
-//  Upload ảnh từ frontend → gửi thẳng lên Facebook Graph API
-//  Trả về { imageUrl } để dùng khi đăng bài
-// ============================================================
-router.post('/upload-image', upload.single('image'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Không có file ảnh' });
-
-  const { pageId } = req.body;
-  if (!pageId) {
-    fs.unlinkSync(req.file.path);
-    return res.status(400).json({ error: 'pageId là bắt buộc' });
-  }
-
-  const pageRow = pageStmt.findByPageId.get(req.userId, pageId);
-  if (!pageRow) {
-    fs.unlinkSync(req.file.path);
-    return res.status(404).json({ error: 'Không tìm thấy Page' });
-  }
-
-  try {
-    const axios = require('axios');
-    const FormData = require('form-data');
-    const form = new FormData();
-    form.append('source', fs.createReadStream(req.file.path), {
-      filename: req.file.originalname || 'image.jpg',
-      contentType: req.file.mimetype,
-    });
-    form.append('published', 'false'); // Đăng ảnh không public — chỉ dùng để attach vào bài viết
-    form.append('access_token', pageRow.page_token);
-
-    const fbRes = await axios.post(
-      `https://graph.facebook.com/v19.0/${pageId}/photos`,
-      form,
-      { headers: form.getHeaders() }
-    );
-    fs.unlinkSync(req.file.path);
-    // Trả về photo_id để attach vào bài feed
-    res.json({ success: true, photoId: fbRes.data.id });
-  } catch (err) {
-    try { fs.unlinkSync(req.file.path); } catch {}
-    const msg = err.response?.data?.error?.message || err.message;
-    res.status(400).json({ error: 'Upload ảnh thất bại: ' + msg });
-  }
-});
-
-// ============================================================
 //  DELETE /api/facebook/disconnect
-//  Ngắt kết nối Facebook
 // ============================================================
 router.delete('/disconnect', (req, res) => {
   const fbToken = tokenStmt.findByUser.get(req.userId);

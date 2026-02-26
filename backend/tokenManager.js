@@ -176,19 +176,35 @@ async function autoRefreshExpiring() {
 // ============================================================
 //  8. Đăng bài lên Facebook Page qua server (bảo mật token)
 // ============================================================
-async function postToPage(pageId, pageToken, content, linkUrl = null, imageUrl = null, photoId = null) {
+// postToPage: hỗ trợ text-only, nhiều ảnh, hoặc video
+async function postToPage(pageId, pageToken, content, linkUrl = null, photoIds = null, videoId = null) {
   const endpoint = `${FB_GRAPH}/${pageId}/feed`;
   const params = { message: content, access_token: pageToken };
 
   if (linkUrl) params.link = linkUrl;
 
-  // Nếu có photo_id (đã upload lên Facebook trước) — attach vào bài feed
-  if (photoId) {
-    params.attached_media = JSON.stringify([{ media_fbid: photoId }]);
+  // Nhiều ảnh — attach tất cả vào bài feed
+  if (photoIds && photoIds.length > 0) {
+    params.attached_media = JSON.stringify(
+      photoIds.map(id => ({ media_fbid: id }))
+    );
+  }
+
+  // Video — cập nhật description rồi publish
+  if (videoId) {
+    // Cập nhật description cho video
+    await axios.post(`${FB_GRAPH}/${videoId}`, null, {
+      params: {
+        description:  content,
+        published:    'true',
+        access_token: pageToken,
+      },
+    });
+    return { id: videoId };
   }
 
   const res = await axios.post(endpoint, null, { params });
-  return res.data; // { id: "page_id_post_id" }
+  return res.data;
 }
 
 module.exports = {
