@@ -1,47 +1,26 @@
 /**
  * GenZTech Backend Server
- * Node.js + Express + SQLite + node-cron
- *
- * Chạy: node server.js
- * Production: pm2 start server.js --name genztech-api
+ * Node.js + Express + PostgreSQL + node-cron
  */
-
 require('dotenv').config();
 
-// ============================================================
-//  Restore DB từ GitHub backup trước khi khởi động
-// ============================================================
-const { restoreFromGitHub, ensureBackupBranch, startAutoBackup } = require('./dbBackup');
-
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const morgan     = require('morgan');
-const rateLimit  = require('express-rate-limit');
-const path       = require('path');
-
-// ============================================================
-//  Khởi tạo database (tạo bảng nếu chưa có)
-//  Restore từ GitHub backup nếu có
-// ============================================================
-async function initDatabase() {
-  await restoreFromGitHub();
-  require('./database');
-}
-initDatabase().catch(console.error);
+const express   = require('express');
+const cors      = require('cors');
+const helmet    = require('helmet');
+const morgan    = require('morgan');
+const rateLimit = require('express-rate-limit');
 
 // ============================================================
 //  Khởi tạo Express app
 // ============================================================
 const app = express();
 
-// Trust proxy — cần thiết khi deploy trên Railway/Heroku/Render
 app.set('trust proxy', 1);
 
 // Security headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-// CORS — cho phép frontend GitHub Pages
+// CORS
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://toilahung1.github.io',
   'http://localhost:3000',
@@ -68,24 +47,16 @@ if (process.env.NODE_ENV !== 'test') {
 // ============================================================
 //  Rate Limiting
 // ============================================================
-// Giới hạn chung: 100 req/phút
 app.use('/api/', rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
+  windowMs: 60 * 1000, max: 100,
   message: { error: 'Quá nhiều request, vui lòng thử lại sau' },
 }));
-
-// Giới hạn auth: 10 req/phút (chống brute force)
 app.use('/api/auth/', rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
+  windowMs: 60 * 1000, max: 10,
   message: { error: 'Quá nhiều lần đăng nhập, vui lòng thử lại sau 1 phút' },
 }));
-
-// Giới hạn AI: 20 req/phút (tránh lạm dụng OpenAI)
 app.use('/api/ai/', rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
+  windowMs: 60 * 1000, max: 20,
   message: { error: 'Giới hạn AI: tối đa 20 request/phút' },
 }));
 
@@ -103,24 +74,12 @@ app.use('/api/ai',       require('./routes/ai'));
 app.get('/health', (req, res) => {
   res.json({
     status:    'ok',
-    version:   '1.0.1',
+    version:   '2.0.0',
+    db:        'postgresql',
     service:   'GenZTech API',
     timestamp: new Date().toISOString(),
     uptime:    Math.floor(process.uptime()) + 's',
   });
-});
-
-// GET /api/token-status — public endpoint kiểm tra token sắp hết hạn
-app.get('/api/token-status', (req, res) => {
-  const { db } = require('./database');
-  const expiring = db.prepare(`
-    SELECT fb_user_name, long_token_expires,
-           CAST((julianday(long_token_expires) - julianday('now')) AS INTEGER) as days_left
-    FROM facebook_tokens
-    WHERE long_token_expires IS NOT NULL
-      AND long_token_expires < datetime('now', '+15 days')
-  `).all();
-  res.json({ expiring_soon: expiring.length, tokens: expiring });
 });
 
 // ============================================================
@@ -139,27 +98,38 @@ app.use((err, req, res, next) => {
 });
 
 // ============================================================
-//  Khởi động Server + Scheduler
+//  Khởi động Server
 // ============================================================
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
-  console.log('');
-  console.log('╔══════════════════════════════════════════╗');
-  console.log('║     GenZTech Backend Server v1.0.0       ║');
-  console.log('╠══════════════════════════════════════════╣');
-  console.log(`║  Port:    ${PORT}                              ║`);
-  console.log(`║  Mode:    ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
-  console.log(`║  DB:      ${(process.env.DB_PATH || './data/genztech.db').padEnd(32)}║`);
-  console.log('╚══════════════════════════════════════════╝');
-  console.log('');
+async function startServer() {
+  try {
+    // Khởi tạo database (tạo bảng nếu chưa có)
+    const { initSchema } = require('./database');
+    await initSchema();
+    console.log('[DB] PostgreSQL connected and tables ready');
 
-  // Khởi động scheduler
-  const { startScheduler } = require('./scheduler');
-  startScheduler();
+    app.listen(PORT, () => {
+      console.log('');
+      console.log('╔══════════════════════════════════════════╗');
+      console.log('║     GenZTech Backend Server v2.0.0       ║');
+      console.log('╠══════════════════════════════════════════╣');
+      console.log(`║  Port:    ${PORT}                              ║`);
+      console.log(`║  Mode:    ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
+      console.log(`║  DB:      PostgreSQL                         ║`);
+      console.log('╚══════════════════════════════════════════╝');
+      console.log('');
 
-  // Khởi động auto-backup DB lên GitHub mỗi 5 phút
-  ensureBackupBranch().then(() => startAutoBackup(5 * 60 * 1000));
-});
+      // Khởi động scheduler
+      const { startScheduler } = require('./scheduler');
+      startScheduler();
+    });
+  } catch (err) {
+    console.error('[FATAL] Cannot start server:', err.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app;
