@@ -3,6 +3,7 @@ const multer   = require('multer');
 const fs       = require('fs');
 const axios    = require('axios');
 const FormData = require('form-data');
+const crypto   = require('crypto');
 
 // ============================================================
 //  Multer — hỗ trợ cả ảnh và video, tối đa 10 file
@@ -21,10 +22,99 @@ const { tokenStmt, pageStmt, logStmt } = require('../database');
 const { fullConnect, inspectToken, refreshLongToken, getPages, postToPage } = require('../tokenManager');
 
 const router = express.Router();
+
+const FB_GRAPH    = 'https://graph.facebook.com/v19.0';
+const APP_ID      = process.env.FB_APP_ID;
+const APP_SECRET  = process.env.FB_APP_SECRET;
+const BACKEND_URL = process.env.BACKEND_URL || 'https://genztech-production.up.railway.app';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://toilahung1.github.io';
+
+// Lưu tạm state OAuth (trong production nên dùng Redis, ở đây dùng Map trong memory)
+const oauthStates = new Map();
+
+// ============================================================
+//  GET /api/facebook/oauth/url
+//  Tạo URL đăng nhập Facebook OAuth — KHÔNG cần auth JWT
+//  Query: ?jwt=<token> (để biết user nào đang kết nối)
+// ============================================================
+router.get('/oauth/url', require('../middleware/auth'), (req, res) => {
+  if (!APP_ID) return res.status(500).json({ error: 'FB_APP_ID chưa được cấu hình trên server' });
+
+  // Tạo state ngẫu nhiên để chống CSRF
+  const state = crypto.randomBytes(16).toString('hex');
+  // Lưu state kèm userId, hết hạn sau 10 phút
+  oauthStates.set(state, { userId: req.userId, expires: Date.now() + 10 * 60 * 1000 });
+
+  const redirectUri = `${BACKEND_URL}/api/facebook/oauth/callback`;
+  const scope = 'pages_show_list,pages_manage_posts,pages_read_engagement,pages_manage_metadata,public_profile';
+
+  const url = `https://www.facebook.com/v19.0/dialog/oauth?` +
+    `client_id=${APP_ID}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&state=${state}` +
+    `&response_type=code`;
+
+  res.json({ success: true, url, state });
+});
+
+// ============================================================
+//  GET /api/facebook/oauth/callback
+//  Facebook redirect về đây sau khi user đăng nhập
+//  KHÔNG cần auth JWT — dùng state để xác định user
+// ============================================================
+router.get('/oauth/callback', async (req, res) => {
+  const { code, state, error: fbError, error_description } = req.query;
+
+  // Xử lý lỗi từ Facebook (user từ chối cấp quyền)
+  if (fbError) {
+    const msg = error_description || fbError;
+    return res.redirect(`${FRONTEND_URL}/genztech/auto-post.html?fb_error=${encodeURIComponent(msg)}`);
+  }
+
+  // Kiểm tra state hợp lệ
+  const stateData = oauthStates.get(state);
+  if (!stateData || stateData.expires < Date.now()) {
+    oauthStates.delete(state);
+    return res.redirect(`${FRONTEND_URL}/genztech/auto-post.html?fb_error=${encodeURIComponent('Phiên đăng nhập hết hạn. Vui lòng thử lại.')}`);
+  }
+  oauthStates.delete(state); // Dùng 1 lần
+
+  const { userId } = stateData;
+  const redirectUri = `${BACKEND_URL}/api/facebook/oauth/callback`;
+
+  try {
+    // 1. Đổi code → short-lived access token
+    const tokenRes = await axios.get(`${FB_GRAPH}/oauth/access_token`, {
+      params: {
+        client_id:     APP_ID,
+        client_secret: APP_SECRET,
+        redirect_uri:  redirectUri,
+        code,
+      },
+    });
+    const shortToken = tokenRes.data.access_token;
+
+    // 2. fullConnect: exchange → long-lived, lấy pages, lưu DB
+    const result = await fullConnect(userId, shortToken);
+
+    // 3. Redirect về frontend với thông báo thành công
+    const successMsg = encodeURIComponent(`Kết nối thành công! ${result.pages.length} Page. Token hết hạn: ${new Date(result.expiresAt).toLocaleDateString('vi-VN')}`);
+    return res.redirect(`${FRONTEND_URL}/genztech/auto-post.html?fb_success=1&fb_msg=${successMsg}`);
+
+  } catch (err) {
+    const msg = err.response?.data?.error?.message || err.message;
+    console.error('[OAuth Callback Error]', msg);
+    return res.redirect(`${FRONTEND_URL}/genztech/auto-post.html?fb_error=${encodeURIComponent('Kết nối thất bại: ' + msg)}`);
+  }
+});
+
+// Áp dụng auth JWT cho tất cả routes còn lại
 router.use(auth);
 
 // ============================================================
 //  POST /api/facebook/connect
+//  Kết nối thủ công bằng token (vẫn giữ để backward compatible)
 // ============================================================
 router.post('/connect', async (req, res) => {
   const { token } = req.body;
@@ -135,11 +225,6 @@ router.get('/pages', (req, res) => {
 
 // ============================================================
 //  POST /api/facebook/upload-media
-//  Upload nhiều ảnh HOẶC 1 video → Facebook Graph API
-//  Body: multipart/form-data
-//    - files[]: ảnh (tối đa 10) HOẶC 1 video
-//    - pageId: string
-//  Response: { photoIds: [...] } hoặc { videoId, videoUrl }
 // ============================================================
 router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) => {
   const files = req.files;
@@ -157,48 +242,32 @@ router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) =>
     return res.status(404).json({ error: 'Không tìm thấy Page' });
   }
 
-  // Kiểm tra có video không
   const videoFile = files.find(f => f.mimetype.startsWith('video/'));
   const imageFiles = files.filter(f => f.mimetype.startsWith('image/'));
 
   try {
-    // ── TRƯỜNG HỢP 1: Upload VIDEO ──
     if (videoFile) {
-      // Chỉ cho phép 1 video tại một thời điểm
       if (files.length > 1) {
         files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
-        return res.status(400).json({ error: 'Chỉ được upload 1 video tại một lần. Không thể kết hợp video với ảnh.' });
+        return res.status(400).json({ error: 'Chỉ được upload 1 video tại một lần.' });
       }
-
       const form = new FormData();
       form.append('source', fs.createReadStream(videoFile.path), {
         filename: videoFile.originalname || 'video.mp4',
         contentType: videoFile.mimetype,
       });
-      form.append('description', ''); // Sẽ được cập nhật khi đăng bài
+      form.append('description', '');
       form.append('published', 'false');
       form.append('access_token', pageRow.page_token);
-
       const fbRes = await axios.post(
-        `https://graph.facebook.com/v19.0/${pageId}/videos`,
+        `${FB_GRAPH}/${pageId}/videos`,
         form,
-        {
-          headers: form.getHeaders(),
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
-          timeout: 120000, // 2 phút cho video lớn
-        }
+        { headers: form.getHeaders(), maxContentLength: Infinity, maxBodyLength: Infinity, timeout: 120000 }
       );
-
       try { fs.unlinkSync(videoFile.path); } catch {}
-      return res.json({
-        success:   true,
-        mediaType: 'video',
-        videoId:   fbRes.data.id,
-      });
+      return res.json({ success: true, mediaType: 'video', videoId: fbRes.data.id });
     }
 
-    // ── TRƯỜNG HỢP 2: Upload NHIỀU ẢNH ──
     const photoIds = [];
     for (const imgFile of imageFiles) {
       const form = new FormData();
@@ -208,21 +277,11 @@ router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) =>
       });
       form.append('published', 'false');
       form.append('access_token', pageRow.page_token);
-
-      const fbRes = await axios.post(
-        `https://graph.facebook.com/v19.0/${pageId}/photos`,
-        form,
-        { headers: form.getHeaders() }
-      );
+      const fbRes = await axios.post(`${FB_GRAPH}/${pageId}/photos`, form, { headers: form.getHeaders() });
       photoIds.push(fbRes.data.id);
       try { fs.unlinkSync(imgFile.path); } catch {}
     }
-
-    return res.json({
-      success:   true,
-      mediaType: 'photos',
-      photoIds,
-    });
+    return res.json({ success: true, mediaType: 'photos', photoIds });
 
   } catch (err) {
     files.forEach(f => { try { fs.unlinkSync(f.path); } catch {} });
@@ -231,7 +290,6 @@ router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) =>
     const code = fbErr?.code;
     const subcode = fbErr?.error_subcode;
     const type = fbErr?.type;
-    // Phân loại lỗi Facebook để hiển thị rõ hơn
     let userMsg = 'Upload media thất bại: ' + msg;
     if (code === 32 || code === 613 || subcode === 1487742) {
       userMsg = 'Facebook đang giới hạn tần suất gọi API (rate limit). Vui lòng chờ 15-60 phút rồi thử lại.';
@@ -243,20 +301,12 @@ router.post('/upload-media', uploadMedia.array('files', 10), async (req, res) =>
       userMsg = 'Tài khoản Facebook bị tạm khóa hoặc bị cấm gọi API. Vui lòng đợi vài ngày rồi thử lại.';
     }
     console.error(`[Upload] FB Error code=${code} subcode=${subcode} type=${type}: ${msg}`);
-    res.status(400).json({
-      error: userMsg,
-      fbCode: code,
-      fbSubcode: subcode,
-      fbType: type,
-      fbMessage: msg,
-    });
+    res.status(400).json({ error: userMsg, fbCode: code, fbSubcode: subcode, fbType: type, fbMessage: msg });
   }
 });
 
 // ============================================================
 //  POST /api/facebook/post
-//  Đăng bài ngay lập tức
-//  Body: { pageId, content, linkUrl?, photoIds?: [...], videoId? }
 // ============================================================
 router.post('/post', async (req, res) => {
   const { pageId, content, linkUrl, photoIds, videoId } = req.body;
@@ -283,7 +333,6 @@ router.post('/post', async (req, res) => {
     const msg = fbErr?.message || err.message;
     const code = fbErr?.code;
     const subcode = fbErr?.error_subcode;
-    // Phân loại lỗi Facebook
     let userMsg = 'Đăng bài thất bại: ' + msg;
     if (code === 32 || code === 613) {
       userMsg = 'Facebook đang giới hạn tần suất gọi API. Vui lòng chờ 15-60 phút rồi thử lại.';
@@ -321,7 +370,6 @@ router.delete('/disconnect', (req, res) => {
 
 // ============================================================
 //  GET /api/facebook/token-log
-//  Lịch sử refresh token của user (tối đa 20 mục gần nhất)
 // ============================================================
 router.get('/token-log', (req, res) => {
   const { db } = require('../database');

@@ -960,22 +960,19 @@
           </button>
         </div>
 
-        <!-- Facebook Token (shown after login) -->
+        <!-- Facebook OAuth Login (shown after login) -->
         <div id="fbTokenSection" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
-          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#60a5fa">
+          <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:#60a5fa">
             <i class="bi bi-facebook"></i> Kết Nối Facebook Page
           </div>
-          <div class="form-group">
-            <label class="form-label">Facebook Access Token</label>
-            <input type="text" class="form-control" id="fbTokenInput" placeholder="Dán Access Token từ Graph API Explorer">
-          </div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:10px">
-            Lấy token tại: <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:#60a5fa">Graph API Explorer</a>
-            — Cần quyền: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px">pages_manage_posts</code>
-          </div>
-          <button class="btn-sm btn-primary" style="width:100%" id="fbConnectBtn" onclick="doConnectFB()">
-            <i class="bi bi-facebook"></i> Kết Nối Facebook
+          <!-- Nút OAuth chính -->
+          <button class="btn-sm" id="fbConnectBtn" onclick="doFBLogin()" style="width:100%;background:#1877f2;color:#fff;border:none;font-size:14px;font-weight:600;padding:12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Đăng nhập với Facebook
           </button>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center">
+            Sẽ yêu cầu quyền quản lý Facebook Page của bạn
+          </div>
           <!-- Token status (hiển sau khi đã kết nối) -->
           <div id="tokenStatusBox" style="display:none;margin-top:14px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;border:1px solid rgba(255,255,255,0.08)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -1097,6 +1094,20 @@
   //  INIT
   // ============================================================
   function init() {
+    // Xử lý OAuth callback params từ Facebook
+    const urlParams = new URLSearchParams(window.location.search);
+    const fbSuccess = urlParams.get('fb_success');
+    const fbError = urlParams.get('fb_error');
+    const fbMsg = urlParams.get('fb_msg');
+    if (fbSuccess) {
+      // Xóa params khỏi URL
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => toast('✅ ' + (fbMsg ? decodeURIComponent(fbMsg) : 'Kết nối Facebook thành công!'), 'success'), 500);
+    } else if (fbError) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => toast('❌ ' + decodeURIComponent(fbError), 'error'), 500);
+    }
+
     // Set min datetime
     const now = new Date();
     now.setMinutes(now.getMinutes() + 5);
@@ -1225,34 +1236,53 @@
     }
   }
 
-  async function doConnectFB() {
-    const token = document.getElementById('fbTokenInput').value.trim();
-    if (!token) return toast('Vui lòng nhập Access Token', 'error');
-    if (!S.loggedIn) return toast('Vui lòng đăng nhập trước', 'error');
+  // Đăng nhập Facebook qua OAuth 2.0 — mở popup của Facebook
+  async function doFBLogin() {
+    if (!S.loggedIn) return toast('Vui lòng đăng nhập GenZTech trước', 'error');
     const btn = document.getElementById('fbConnectBtn');
-    btn.innerHTML = '<span class="spinner"></span> Đang kết nối...';
+    btn.innerHTML = '<span class="spinner"></span> Đang tải...';
     btn.disabled = true;
     try {
-      const data = await api('POST', '/api/facebook/connect', { token: token });
-      S.connected = true;
-      S.fbUser = data.fbUser || data.user;
-      S.pages = data.pages || [];
-      S.tokenExpiresAt = data.expiresAt;
-      S.tokenDaysLeft = data.expiresAt
-        ? Math.ceil((new Date(data.expiresAt) - Date.now()) / (1000 * 3600 * 24))
-        : null;
-      localStorage.setItem('gz_pages', JSON.stringify(S.pages));
-      renderPageSelect(S.pages);
-      updateConnUI();
-      closeModal('connectModal');
-      toast('Kết nối Facebook thành công! ' + S.pages.length + ' Page. Token hết hạn: ' + (S.tokenDaysLeft ? S.tokenDaysLeft + ' ngày nữa' : 'Không rõ'), 'success');
+      // Lấy URL OAuth từ backend
+      const data = await api('GET', '/api/facebook/oauth/url');
+      if (!data.url) throw new Error('Không lấy được URL đăng nhập');
+      // Mở popup Facebook Login
+      const w = 600, h = 700;
+      const left = (screen.width - w) / 2;
+      const top = (screen.height - h) / 2;
+      const popup = window.open(data.url, 'fb_login', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`);
+      // Theo dõi popup đóng lại
+      const timer = setInterval(async () => {
+        if (!popup || popup.closed) {
+          clearInterval(timer);
+          btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Đăng nhập với Facebook';
+          btn.disabled = false;
+          // Kiểm tra xem đã kết nối chưa
+          try {
+            const status = await api('GET', '/api/facebook/status');
+            if (status.connected) {
+              S.connected = true;
+              S.fbUser = status.fbUser;
+              S.pages = status.pages || [];
+              S.tokenExpiresAt = status.expiresAt;
+              S.tokenDaysLeft = status.daysLeft;
+              renderPageSelect(S.pages);
+              updateConnUI();
+              closeModal('connectModal');
+              toast('✅ Kết nối Facebook thành công! ' + S.pages.length + ' Page', 'success');
+            }
+          } catch(e) {}
+        }
+      }, 1000);
     } catch(e) {
       toast(e.message, 'error');
-    } finally {
-      btn.innerHTML = '<i class="bi bi-facebook"></i> Kết Nối Facebook';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Đăng nhập với Facebook';
       btn.disabled = false;
     }
   }
+
+  // Giữ lại doConnectFB cho backward compatible (không dùng nữa)
+  async function doConnectFB() { doFBLogin(); }
 
   // ============================================================
   //  REFRESH TOKEN
