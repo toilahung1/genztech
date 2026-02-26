@@ -1,0 +1,38 @@
+# ============================================================
+# .gitignore — GenZTech
+# Không bao giờ commit các file chứa secrets lên GitHub
+# ============================================================
+
+# Environment variables (chứa API keys, secrets)
+.env
+.env.local
+.env.production
+.env.development
+backend/.env
+backend/.env.local
+
+# Database (chứa dữ liệu người dùng và tokens)
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules
+node_modules/
+backend/node_modules/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Build output
+dist/
+build/

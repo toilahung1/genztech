@@ -1023,10 +1023,9 @@
         <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">OpenAI API Key (cho AI tạo nội dung thật)</label>
-          <input type="password" class="form-control" id="oaiKeyInput" placeholder="sk-...">
-          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px">Lưu trong trình duyệt, không gửi lên server</div>
+        <div class="form-group" style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:12px">
+          <div style="font-size:12px;color:#60a5fa;font-weight:600;margin-bottom:6px"><i class="bi bi-shield-check"></i> AI được bảo mật ở server</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5)">OpenAI API key được lưu an toàn trên server Railway, không bao giờ lộ ra trình duyệt hay GitHub. Bạn không cần nhập key.</div>
         </div>
         <div class="form-group">
           <label class="form-label">Ngôn ngữ AI mặc định</label>
@@ -1105,8 +1104,8 @@
     if (dt) dt.min = now.toISOString().slice(0,16);
 
     // Load settings
-    const oaiKey = localStorage.getItem('gz_oai_key');
-    if (oaiKey) document.getElementById('oaiKeyInput').value = oaiKey;
+    // API key bảo mật ở backend — không lưu ở localStorage
+    localStorage.removeItem('gz_oai_key'); // Xóa key cũ nếu có
 
     // Restore pages
     if (S.pages.length) renderPageSelect(S.pages);
@@ -1947,26 +1946,8 @@
 
     try {
       let versions = [];
-      const oaiKey = localStorage.getItem('gz_oai_key') || '';
-
-      if (oaiKey) {
-        // Gọi AI trực tiếp từ frontend với key người dùng
-        const toneMap = { professional:'chuyên nghiệp, lịch sự', friendly:'thân thiện, gần gũi', excited:'hào hứng, năng động', informative:'thông tin, giáo dục', humorous:'hài hước, vui vẻ' };
-        const industryMap = { general:'tổng quát', ecommerce:'thương mại điện tử', food:'ẩm thực & nhà hàng', fashion:'thời trang', tech:'công nghệ', beauty:'làm đẹp & spa', education:'giáo dục', realestate:'bất động sản', fitness:'thể thao & sức khỏe', travel:'du lịch' };
-        const lengthMap = { short:'ngắn gọn khoảng 80-120 từ', medium:'vừa phải khoảng 180-220 từ', long:'chi tiết khoảng 350-420 từ' };
-        const prompt = 'Bạn là chuyên gia marketing Facebook người Việt Nam.\nTạo 3 phiên bản bài đăng Facebook KHÁC NHAU cho chủ đề: "' + topic + '"\n- Ngành: ' + (industryMap[industry]||'tổng quát') + '\n- Giọng văn: ' + (toneMap[tone]||'thân thiện') + '\n- Độ dài: ' + (lengthMap[length]||'vừa phải') + '\n- Ngôn ngữ: Tiếng Việt tự nhiên\n- Mỗi bài phải có: emoji phù hợp, nội dung hấp dẫn, call-to-action rõ ràng, 3-5 hashtag cuối bài\n- 3 phiên bản phải khác nhau về cách tiếp cận\n\nTrả về JSON hợp lệ: {"posts":["bài 1 đầy đủ","bài 2 đầy đủ","bài 3 đầy đủ"]}';
-        const aiResp = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + oaiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.8, max_tokens: 1800 })
-        });
-        const aiData = await aiResp.json();
-        if (aiData.choices && aiData.choices[0]) {
-          const raw = aiData.choices[0].message.content;
-          try { versions = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]).posts; } catch { versions = [raw]; }
-        }
-      } else if (S.loggedIn) {
-        // Fallback: gọi qua backend
+      // Luôn gọi qua backend — API key được bảo mật ở server, không lộ ra frontend
+      if (S.loggedIn) {
         try {
           const data = await api('POST', '/api/ai/generate', { topic, tone, industry, length });
           versions = data.posts || data.versions || [];
@@ -2072,8 +2053,7 @@
   //  SETTINGS
   // ============================================================
   function saveSettings() {
-    const key = document.getElementById('oaiKeyInput').value.trim();
-    if (key) localStorage.setItem('gz_oai_key', key);
+    // API key bảo mật ở backend
     closeModal('settingsModal');
     toast('Đã lưu cài đặt', 'success');
   }
