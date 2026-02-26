@@ -436,6 +436,9 @@
       transition: all .2s;
     }
     .auth-tab.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+    #fbTab.active { color: #1877f2 !important; border-bottom-color: #1877f2 !important; }
+    #fbTab { transition: all .2s; }
+    #fbTab:hover { color: #4a9eff; }
     .auth-pane { display: none; }
     .auth-pane.active { display: block; }
 
@@ -447,6 +450,10 @@
       animation: spin .6s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(24,119,242,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(24,119,242,0); }
+    }
 
     /* ── Toast ── */
     .toast-container {
@@ -921,6 +928,7 @@
         <div class="auth-tabs" id="authTabBar">
           <div class="auth-tab active" onclick="switchAuthTab('authLogin')">Đăng Nhập</div>
           <div class="auth-tab" onclick="switchAuthTab('authRegister')">Đăng Ký</div>
+          <div class="auth-tab" id="fbTab" onclick="switchAuthTab('authFacebook')" style="color:#1877f2"><i class="bi bi-facebook"></i> Facebook</div>
         </div>
 
         <!-- Login -->
@@ -964,17 +972,30 @@
           </form>
         </div>
 
-        <!-- Facebook OAuth Login (shown after login) -->
-        <div id="fbTokenSection" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
-          <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:#60a5fa">
-            <i class="bi bi-facebook"></i> Kết Nối Facebook Page
+        <!-- Facebook OAuth Login Tab -->
+        <div class="auth-pane" id="authFacebook">
+          <!-- Thông báo khi chưa đăng nhập GenZTech -->
+          <div id="fbNeedLoginMsg" style="display:none;text-align:center;padding:20px 0">
+            <div style="font-size:40px;margin-bottom:12px">🔐</div>
+            <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:8px">Vui lòng đăng nhập trước</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px">Bạn cần đăng nhập tài khoản GenZTech để kết nối Facebook</div>
+            <button class="btn-sm btn-primary" onclick="switchAuthTab('authLogin')" style="font-size:13px">
+              <i class="bi bi-box-arrow-in-right"></i> Đăng Nhập Ngay
+            </button>
+          </div>
+          <!-- Nội dung khi đã đăng nhập -->
+          <div id="fbConnectContent" style="display:none">
+          <div style="text-align:center;margin-bottom:20px">
+            <div style="font-size:48px;margin-bottom:8px">📘</div>
+            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px">Kết Nối Facebook Page</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">Kết nối để đăng bài tự động lên Facebook Page của bạn</div>
           </div>
           <!-- Nút OAuth chính -->
-          <button class="btn-sm" id="fbConnectBtn" onclick="doFBLogin()" style="width:100%;background:#1877f2;color:#fff;border:none;font-size:14px;font-weight:600;padding:12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          <button class="btn-sm" id="fbConnectBtn" onclick="doFBLogin()" style="width:100%;background:#1877f2;color:#fff;border:none;font-size:15px;font-weight:700;padding:14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 20px rgba(24,119,242,0.4)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             Đăng nhập với Facebook
           </button>
-          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center">
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:10px;text-align:center">
             Sẽ yêu cầu quyền quản lý Facebook Page của bạn
           </div>
           <!-- Token status (hiển sau khi đã kết nối) -->
@@ -996,7 +1017,8 @@
             </div>
             <div id="tokenRefreshMsg" style="font-size:11px;margin-top:8px;text-align:center"></div>
           </div>
-        </div>
+          </div><!-- end fbConnectContent -->
+        </div><!-- end authFacebook pane -->
       </div>
     </div>
   </div>
@@ -1139,6 +1161,17 @@
     if (!S.loggedIn) {
       setTimeout(function() { openModal('connectModal'); }, 300);
     }
+    // Nếu đã đăng nhập nhưng chưa kết nối Facebook, hiển thị gợi ý
+    if (S.loggedIn && !S.connected) {
+      // Hiển thị badge nhắc nhở kết nối Facebook
+      const connectBtn = document.getElementById('connectBtn');
+      if (connectBtn) {
+        connectBtn.style.animation = 'pulse 2s infinite';
+        setTimeout(function() {
+          if (connectBtn) connectBtn.style.animation = '';
+        }, 6000);
+      }
+    }
     // Auto-check Facebook status nếu đã đăng nhập
     if (S.loggedIn && S.jwtToken) {
       setTimeout(async function() {
@@ -1180,8 +1213,9 @@
       localStorage.setItem('gz_jwt', data.token);
       localStorage.setItem('gz_username', S.username);
       toast('Đăng nhập thành công! Chào ' + S.username, 'success');
-      document.getElementById('fbTokenSection').style.display = 'block';
       updateConnUI();
+      // Tự động chuyển sang tab Facebook sau khi đăng nhập
+      setTimeout(function() { switchAuthTabDirect('authFacebook'); }, 300);
     } catch(e) {
       toast(e.message, 'error');
     } finally {
@@ -1233,8 +1267,9 @@
       localStorage.setItem('gz_jwt', data.token);
       localStorage.setItem('gz_username', S.username);
       toast('Đăng ký thành công! Chào mừng ' + S.username, 'success');
-      document.getElementById('fbTokenSection').style.display = 'block';
       updateConnUI();
+      // Tự động chuyển sang tab Facebook sau khi đăng ký
+      setTimeout(function() { switchAuthTabDirect('authFacebook'); }, 300);
     } catch(e) {
       toast(e.message, 'error');
     } finally {
@@ -1262,7 +1297,7 @@
       const timer = setInterval(async () => {
         if (!popup || popup.closed) {
           clearInterval(timer);
-          btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Đăng nhập với Facebook';
+          resetFBBtn(btn);
           btn.disabled = false;
           // Kiểm tra xem đã kết nối chưa
           try {
@@ -1275,6 +1310,7 @@
               S.tokenDaysLeft = status.daysLeft;
               renderPageSelect(S.pages);
               updateConnUI();
+              updateFBTabContent();
               closeModal('connectModal');
               toast('✅ Kết nối Facebook thành công! ' + S.pages.length + ' Page', 'success');
             }
@@ -1283,9 +1319,14 @@
       }, 1000);
     } catch(e) {
       toast(e.message, 'error');
-      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Đăng nhập với Facebook';
+      resetFBBtn(btn);
       btn.disabled = false;
     }
+  }
+
+  function resetFBBtn(btn) {
+    if (!btn) return;
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Đăng nhập với Facebook';
   }
 
   // Giữ lại doConnectFB cho backward compatible (không dùng nữa)
@@ -1350,22 +1391,17 @@
       label.textContent = S.fbUser.name || S.username;
       btnLabel.textContent = 'Đã Kết Nối';
       btn.className = 'btn-sm btn-success';
-      // Hiển thị token status box
-      document.getElementById('fbTokenSection').style.display = 'block';
       updateTokenStatusUI(S.tokenDaysLeft);
     } else if (S.loggedIn) {
       dot.classList.add('online');
       label.textContent = S.username;
       btnLabel.textContent = 'Kết Nối FB';
       btn.className = 'btn-sm btn-outline';
-      document.getElementById('fbTokenSection').style.display = 'block';
-      document.getElementById('tokenStatusBox').style.display = 'none';
     } else {
       dot.classList.remove('online');
       label.textContent = 'Chưa kết nối';
       btnLabel.textContent = 'Kết Nối';
       btn.className = 'btn-sm btn-outline';
-      document.getElementById('tokenStatusBox').style.display = 'none';
     }
   }
   // Cập nhật UI hiển thị số ngày còn lại của token
@@ -2110,7 +2146,35 @@
     document.querySelectorAll('.auth-pane').forEach(function(p) { p.classList.remove('active'); });
     document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.remove('active'); });
     document.getElementById(paneId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    // Highlight tab tương ứng
+    const tabMap = { 'authLogin': 0, 'authRegister': 1, 'authFacebook': 2 };
+    const tabs = document.querySelectorAll('.auth-tab');
+    if (tabMap[paneId] !== undefined && tabs[tabMap[paneId]]) {
+      tabs[tabMap[paneId]].classList.add('active');
+    } else if (event && event.currentTarget) {
+      event.currentTarget.classList.add('active');
+    }
+    // Nếu chuyển sang tab Facebook, cập nhật nội dung
+    if (paneId === 'authFacebook') {
+      updateFBTabContent();
+    }
+  }
+
+  function updateFBTabContent() {
+    const needLogin = document.getElementById('fbNeedLoginMsg');
+    const content = document.getElementById('fbConnectContent');
+    if (!needLogin || !content) return;
+    if (S.loggedIn) {
+      needLogin.style.display = 'none';
+      content.style.display = 'block';
+      // Nếu đã kết nối Facebook, hiển thị token status
+      if (S.connected && S.fbUser) {
+        updateTokenStatusUI(S.tokenDaysLeft);
+      }
+    } else {
+      needLogin.style.display = 'block';
+      content.style.display = 'none';
+    }
   }
 
   // ============================================================
@@ -2118,8 +2182,30 @@
   // ============================================================
   function openModal(id) {
     document.getElementById(id).classList.remove('hidden');
-    if (id === 'connectModal' && S.loggedIn) {
-      document.getElementById('fbTokenSection').style.display = 'block';
+    if (id === 'connectModal') {
+      if (S.loggedIn) {
+        // Nếu đã đăng nhập GenZTech, tự động chuyển sang tab Facebook
+        switchAuthTabDirect('authFacebook');
+      } else {
+        // Nếu chưa đăng nhập, hiển thị tab đăng nhập
+        switchAuthTabDirect('authLogin');
+      }
+    }
+  }
+
+  // Chuyển tab không cần event
+  function switchAuthTabDirect(paneId) {
+    document.querySelectorAll('.auth-pane').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.remove('active'); });
+    const el = document.getElementById(paneId);
+    if (el) el.classList.add('active');
+    const tabMap = { 'authLogin': 0, 'authRegister': 1, 'authFacebook': 2 };
+    const tabs = document.querySelectorAll('.auth-tab');
+    if (tabMap[paneId] !== undefined && tabs[tabMap[paneId]]) {
+      tabs[tabMap[paneId]].classList.add('active');
+    }
+    if (paneId === 'authFacebook') {
+      updateFBTabContent();
     }
   }
 
