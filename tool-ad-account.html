@@ -815,7 +815,7 @@
       // Store account data in a global map to avoid HTML escaping issues
       window._accMap = window._accMap || {};
       window._accMap[acc.id] = acc;
-      return `<tr data-accid="${acc.id}" class="acc-row" style="cursor:pointer">
+      return `<tr data-accid="${acc.id}" data-accname="${(acc.name||acc.id).replace(/"/g,'&quot;')}" class="acc-row" style="cursor:pointer">
         <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${acc.id}"></td>
         <td>
           <div class="td-name">${acc.name || acc.id}</div>
@@ -1391,15 +1391,15 @@
       if (btn) {
         e.stopPropagation();
         const id = btn.dataset.accid;
-        const acc = window._accMap && window._accMap[id];
-        if (acc) openEditTzModal(id, acc.name || id, acc.timezone_name || '', acc.country || '');
+        const acc = (window._accMap && window._accMap[id]) || {};
+        openEditTzModal(id, acc.name || id, acc.timezone_name || '', acc.country || '');
         return;
       }
       const row = e.target.closest('.acc-row');
       if (row) {
         const id = row.dataset.accid;
-        const acc = window._accMap && window._accMap[id];
-        if (acc) selectAccount(id, acc.name || id);
+        const name = row.dataset.accname || id;
+        selectAccount(id, name);
       }
     });
   }
