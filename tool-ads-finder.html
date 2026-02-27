@@ -22,111 +22,127 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{padding:14px 28px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;background:rgba(10,14,39,.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:30}
 .breadcrumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(255,255,255,.4)}
-.btn-sm{padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn-sm{padding:6px 12px;font-size:12px}
 .btn-primary{background:linear-gradient(135deg,#1877f2,#0a5dc2);color:#fff}
 .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
 .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
 .btn-outline:hover{border-color:#1877f2;color:#60a5fa}
-.page-body{flex:1;display:flex;flex-direction:column}
-.adlib-header{background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.07);padding:14px 28px}
-.adlib-topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.adlib-logo{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#1877f2;margin-right:6px;white-space:nowrap}
-.adlib-logo i{font-size:18px}
-.adlib-search-wrap{flex:1;min-width:240px;position:relative}
-.adlib-search-input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:9px 16px 9px 40px;color:#fff;font-size:13.5px;transition:all .2s}
-.adlib-search-input:focus{outline:none;border-color:#1877f2;background:rgba(24,119,242,.08)}
-.adlib-search-input::placeholder{color:rgba(255,255,255,.3)}
-.adlib-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.4);font-size:15px;pointer-events:none}
-.adlib-select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:7px 28px 7px 14px;color:#fff;font-size:12.5px;cursor:pointer;transition:all .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='white' opacity='0.4'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-color:rgba(255,255,255,.06)}
-.adlib-select:focus{outline:none;border-color:#1877f2}
-.adlib-select option{background:#1a2035;color:#fff}
-.adlib-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 28px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.06)}
-.adlib-content{padding:20px 28px;flex:1}
-.ads-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:1400px){.ads-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:960px){.ads-grid{grid-template-columns:1fr}}
-.ad-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;transition:all .2s;display:flex;flex-direction:column}
-.ad-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35);border-color:rgba(255,255,255,.15)}
-.ad-card-header{padding:10px 14px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05)}
-.ad-status{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
-.ad-status.active{color:#4ade80}
-.ad-status.active::before{content:'';width:6px;height:6px;border-radius:50%;background:#4ade80;display:inline-block}
-.ad-status.inactive{color:rgba(255,255,255,.4)}
-.ad-status.inactive::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block}
-.ad-lib-id{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px}
-.ad-start-date{font-size:10px;color:rgba(255,255,255,.3);margin-top:1px}
-.ad-platforms{display:flex;gap:4px;margin-top:4px}
-.ad-platform-icon{font-size:12px;color:rgba(255,255,255,.4)}
-.ad-platform-icon.facebook{color:#1877f2}
-.ad-platform-icon.instagram{color:#e1306c}
-.ad-platform-icon.whatsapp{color:#25d366}
-.ad-platform-icon.messenger{color:#0084ff}
-.ad-media{width:100%;height:175px;background:rgba(0,0,0,.3);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.ad-media:hover .ad-media-overlay{opacity:1}
-.ad-media-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
-.ad-media-overlay i{font-size:32px;color:#fff}
-.ad-media-placeholder{color:rgba(255,255,255,.12);font-size:32px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.ad-media-placeholder span{font-size:11px;color:rgba(255,255,255,.18)}
-.ad-body{padding:12px 14px;flex:1}
-.ad-page-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.ad-page-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#1877f2,#0a5dc2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
-.ad-page-info{flex:1;min-width:0}
-.ad-page-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ad-page-name a{color:#fff;text-decoration:none}
-.ad-page-name a:hover{color:#60a5fa}
-.ad-page-type{font-size:11px;color:rgba(255,255,255,.4)}
-.ad-text{font-size:12.5px;color:rgba(255,255,255,.65);line-height:1.55;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-.ad-link-preview{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:9px 11px;margin-bottom:10px}
-.ad-link-domain{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:2px}
-.ad-link-title{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:2px}
-.ad-link-desc{font-size:11px;color:rgba(255,255,255,.4)}
-.ad-footer{display:flex;gap:5px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.05)}
-.ad-btn{flex:1;padding:6px;border-radius:7px;border:none;cursor:pointer;font-size:11.5px;font-weight:600;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;text-decoration:none}
-.ad-btn-detail{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
-.ad-btn-detail:hover{background:rgba(255,255,255,.12);color:#fff}
-.ad-btn-save{background:rgba(234,88,12,.1);color:#fb923c}
-.ad-btn-save:hover{background:rgba(234,88,12,.2)}
-.ad-btn-save.saved{background:rgba(34,197,94,.1);color:#4ade80}
-.ad-btn-open{background:rgba(24,119,242,.1);color:#60a5fa}
-.ad-btn-open:hover{background:rgba(24,119,242,.2)}
-.tab-bar{display:flex;gap:4px;padding:4px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:20px;width:fit-content}
-.tab-btn{padding:7px 16px;border:none;border-radius:7px;background:transparent;color:rgba(255,255,255,.5);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn-danger{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+/* Search */
+.search-section{padding:16px 28px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.06)}
+.search-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.adlib-badge{display:flex;align-items:center;gap:6px;background:rgba(24,119,242,.1);border:1px solid rgba(24,119,242,.25);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:#60a5fa;white-space:nowrap;flex-shrink:0}
+.search-wrap{flex:1;min-width:240px;position:relative}
+.search-input{width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:24px;padding:10px 18px 10px 44px;color:#fff;font-size:14px;transition:all .2s}
+.search-input:focus{outline:none;border-color:#1877f2;background:rgba(24,119,242,.08);box-shadow:0 0 0 3px rgba(24,119,242,.1)}
+.search-input::placeholder{color:rgba(255,255,255,.3)}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.35);font-size:16px;pointer-events:none}
+.sel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:8px 28px 8px 14px;color:#fff;font-size:12.5px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='white' opacity='0.4'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-color:rgba(255,255,255,.06)}
+.sel:focus{outline:none;border-color:#1877f2}
+.sel option{background:#1a2035;color:#fff}
+/* Filter */
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 28px;border-bottom:1px solid rgba(255,255,255,.05)}
+/* Token banner */
+.token-banner{margin:14px 28px;background:rgba(234,179,8,.07);border:1px solid rgba(234,179,8,.2);border-radius:10px;padding:11px 15px;display:flex;align-items:center;gap:10px;font-size:12.5px}
+.token-banner i{color:#eab308;font-size:16px;flex-shrink:0}
+.token-banner a{color:#fbbf24;text-decoration:underline;cursor:pointer}
+/* Content */
+.content-area{padding:20px 28px;flex:1}
+.tab-bar{display:flex;gap:3px;padding:3px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:20px;width:fit-content}
+.tab-btn{padding:7px 16px;border:none;border-radius:8px;background:transparent;color:rgba(255,255,255,.45);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
 .tab-btn.active{background:rgba(24,119,242,.15);color:#60a5fa}
 .tab-pane{display:none}
 .tab-pane.active{display:block}
-.saved-list{display:flex;flex-direction:column;gap:10px}
-.saved-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px}
-.saved-item-info{flex:1;min-width:0}
-.saved-item-page{font-size:13px;font-weight:700;color:#fff}
-.saved-item-text{font-size:12px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.saved-item-actions{display:flex;gap:6px}
+/* Ad Grid */
+.ads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.ad-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;transition:all .2s;display:flex;flex-direction:column}
+.ad-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.4);border-color:rgba(255,255,255,.14)}
+.ad-card-top{padding:10px 13px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05)}
+.status-dot{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700}
+.status-dot::before{content:'';width:6px;height:6px;border-radius:50%;display:inline-block}
+.status-dot.active{color:#4ade80}.status-dot.active::before{background:#4ade80}
+.status-dot.inactive{color:rgba(255,255,255,.35)}.status-dot.inactive::before{background:rgba(255,255,255,.25)}
+.ad-meta{font-size:10px;color:rgba(255,255,255,.28);margin-top:2px}
+.platforms{display:flex;gap:4px;margin-top:3px}
+.pfi{font-size:12px}.pfi.fb{color:#1877f2}.pfi.ig{color:#e1306c}.pfi.wa{color:#25d366}.pfi.ms{color:#0084ff}
+.ad-preview{width:100%;height:170px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer}
+.ad-preview:hover .preview-ov{opacity:1}
+.preview-ov{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s}
+.preview-ov i{font-size:30px;color:#fff}
+.preview-ph{color:rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;gap:5px;font-size:28px}
+.preview-ph span{font-size:11px;color:rgba(255,255,255,.15)}
+.ad-body{padding:11px 13px;flex:1}
+.page-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.page-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1877f2,#0a5dc2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.page-nm{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.page-nm a{color:#fff;text-decoration:none}
+.page-nm a:hover{color:#60a5fa}
+.page-sub{font-size:10.5px;color:rgba(255,255,255,.35)}
+.ad-text{font-size:12.5px;color:rgba(255,255,255,.6);line-height:1.55;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.link-box{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:7px;padding:8px 10px;margin-bottom:9px}
+.link-domain{font-size:10px;color:rgba(255,255,255,.28);text-transform:uppercase;margin-bottom:1px}
+.link-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.75)}
+.link-desc{font-size:11px;color:rgba(255,255,255,.38);margin-top:1px}
+.ad-stats{display:flex;gap:8px;margin-bottom:8px}
+.stat-chip{background:rgba(255,255,255,.05);border-radius:6px;padding:4px 8px;font-size:10.5px;color:rgba(255,255,255,.5)}
+.stat-chip strong{color:rgba(255,255,255,.8);font-size:11px}
+.ad-footer{display:flex;gap:5px;padding:8px 13px;border-top:1px solid rgba(255,255,255,.05)}
+.adbtn{flex:1;padding:6px;border-radius:7px;border:none;cursor:pointer;font-size:11px;font-weight:600;transition:.2s;display:flex;align-items:center;justify-content:center;gap:3px;text-decoration:none}
+.adbtn-save{background:rgba(251,146,60,.08);color:#fb923c}.adbtn-save:hover{background:rgba(251,146,60,.18)}
+.adbtn-save.saved{background:rgba(74,222,128,.08);color:#4ade80}
+.adbtn-view{background:rgba(24,119,242,.08);color:#60a5fa}.adbtn-view:hover{background:rgba(24,119,242,.18)}
+.adbtn-lib{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6)}.adbtn-lib:hover{background:rgba(255,255,255,.1);color:#fff}
+/* States */
 .spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px;color:rgba(255,255,255,.4)}
-.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:#1877f2;border-radius:50%;animation:spin .7s linear infinite}
-.spinner-sm{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#1877f2;border-radius:50%;animation:spin .6s linear infinite}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.08);border-top-color:#1877f2;border-radius:50%;animation:spin .7s linear infinite}
+.spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.15);border-top-color:#1877f2;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty-state{text-align:center;padding:60px 20px;color:rgba(255,255,255,.3)}
-.empty-state i{font-size:48px;margin-bottom:14px;display:block;color:rgba(255,255,255,.15)}
+.empty-state i{font-size:48px;margin-bottom:14px;display:block;color:rgba(255,255,255,.12)}
 .empty-state h3{font-size:15px;font-weight:600;margin-bottom:6px;color:rgba(255,255,255,.5)}
-.empty-state p{font-size:12.5px;line-height:1.6}
-.hidden{display:none!important}
-.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
-.toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
-.modal-overlay.hidden{display:none}
-.modal{background:#0f1630;border:1px solid rgba(255,255,255,.1);border-radius:16px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto}
-.modal-header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#0f1630;z-index:1}
+.empty-state p{font-size:12.5px;line-height:1.65}
+.quick-tags{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.quick-tag{padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.55);font-size:12px;cursor:pointer;transition:.2s}
+.quick-tag:hover{background:rgba(24,119,242,.12);border-color:rgba(24,119,242,.3);color:#60a5fa}
+/* Saved */
+.saved-list{display:flex;flex-direction:column;gap:8px}
+.saved-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:11px}
+.saved-info{flex:1;min-width:0}
+.saved-page{font-size:13px;font-weight:700}
+.saved-text{font-size:11.5px;color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.saved-actions{display:flex;gap:5px}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
+.modal-bg.hidden{display:none}
+.modal-box{background:#0f1630;border:1px solid rgba(255,255,255,.1);border-radius:16px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-head{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#0f1630;z-index:1}
 .modal-title{font-size:15px;font-weight:700}
-.modal-close{background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:4px;border-radius:6px}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:20px;cursor:pointer;border-radius:6px;padding:3px}
 .modal-close:hover{color:#fff;background:rgba(255,255,255,.08)}
-.modal-body{padding:22px}
-.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.detail-chip{background:rgba(255,255,255,.05);border-radius:8px;padding:10px 14px}
-.detail-chip .label{font-size:10.5px;color:rgba(255,255,255,.35);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
-.detail-chip .value{font-size:13px;font-weight:600;color:#fff}
-.detail-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;margin-top:16px}
-.detail-value{font-size:13.5px;color:rgba(255,255,255,.8);line-height:1.6;background:rgba(255,255,255,.04);border-radius:8px;padding:12px;margin-bottom:8px}
+.modal-body{padding:20px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.info-chip{background:rgba(255,255,255,.05);border-radius:8px;padding:9px 12px}
+.info-chip .lbl{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.info-chip .val{font-size:13px;font-weight:600}
+.section-lbl{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 7px}
+.content-box{font-size:13px;color:rgba(255,255,255,.75);line-height:1.65;background:rgba(255,255,255,.04);border-radius:8px;padding:11px;margin-bottom:7px}
+/* Token modal */
+.perm-steps{counter-reset:step;text-align:left;background:rgba(0,0,0,.2);border-radius:8px;padding:12px 16px;margin-bottom:14px}
+.perm-steps li{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:6px;list-style:none;display:flex;align-items:flex-start;gap:7px}
+.perm-steps li::before{content:counter(step);counter-increment:step;background:#1877f2;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+/* Permission notice */
+.perm-notice{background:rgba(24,119,242,.06);border:1px solid rgba(24,119,242,.2);border-radius:12px;padding:24px;text-align:center;max-width:560px;margin:0 auto}
+.perm-notice i{font-size:36px;color:#60a5fa;margin-bottom:12px;display:block}
+.perm-notice h3{font-size:15px;font-weight:700;margin-bottom:8px;color:rgba(255,255,255,.85)}
+.perm-notice p{font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.65;margin-bottom:14px}
+/* Toast */
+.toast-wrap{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:7px}
+.toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 15px;font-size:13px;display:flex;align-items:center;gap:9px;min-width:250px;animation:slideIn .3s;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -154,329 +170,360 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="main-content">
   <header class="topbar">
-    <div class="breadcrumb">
-      <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
-      <span style="color:rgba(255,255,255,.4)">Công cụ</span>
-      <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Ads Finder</span>
-    </div>
+    <div class="breadcrumb"><i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i><span>Ads Finder</span></div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn-sm btn-outline" onclick="switchTab('saved')"><i class="bi bi-bookmark-fill"></i> Đã lưu (<span id="savedCount">0</span>)</button>
-      <a href="https://www.facebook.com/ads/library" target="_blank" class="btn-sm btn-primary"><i class="bi bi-box-arrow-up-right"></i> Mở Ad Library</a>
+      <button class="btn btn-sm btn-outline" onclick="switchTab('saved')"><i class="bi bi-bookmark-fill"></i> Đã lưu (<span id="savedCount">0</span>)</button>
+      <a href="https://www.facebook.com/ads/library" target="_blank" class="btn btn-sm btn-primary"><i class="bi bi-box-arrow-up-right"></i> Mở Ads Library</a>
     </div>
   </header>
 
-  <main class="page-body">
-    <div class="adlib-header">
-      <div class="adlib-topbar">
-        <div class="adlib-logo"><i class="bi bi-meta"></i> Ad Library</div>
-        <div class="adlib-search-wrap">
-          <i class="bi bi-search adlib-search-icon"></i>
-          <input type="text" class="adlib-search-input" id="searchInput" placeholder="Tìm kiếm theo từ khóa hoặc tên trang..." onkeydown="if(event.key==='Enter')doSearch()">
-        </div>
-        <select class="adlib-select" id="countrySelect">
-          <option value="VN">Vietnam</option>
-          <option value="ALL">All countries</option>
-          <option value="US">United States</option>
-          <option value="TH">Thailand</option>
-          <option value="SG">Singapore</option>
-          <option value="MY">Malaysia</option>
-          <option value="ID">Indonesia</option>
-          <option value="PH">Philippines</option>
-          <option value="GB">United Kingdom</option>
-          <option value="AU">Australia</option>
-        </select>
-        <select class="adlib-select" id="adTypeSelect">
-          <option value="all">All ads</option>
-          <option value="political_and_issue_ads">Political &amp; Issue ads</option>
-          <option value="housing_ads">Housing ads</option>
-          <option value="employment_ads">Employment ads</option>
-          <option value="credit_ads">Credit ads</option>
-        </select>
-        <button class="btn-sm btn-primary" onclick="doSearch()"><i class="bi bi-search"></i> Search</button>
+  <div class="search-section">
+    <div class="search-row">
+      <div class="adlib-badge"><i class="bi bi-meta"></i> Ad Library</div>
+      <div class="search-wrap">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Tìm theo từ khóa, tên trang, sản phẩm..." onkeydown="if(event.key==='Enter')doSearch()">
       </div>
-    </div>
-
-    <div class="adlib-filters">
-      <select class="adlib-select" id="statusSelect">
-        <option value="active">Active ads</option>
-        <option value="inactive">Inactive ads</option>
-        <option value="all">All status</option>
+      <select class="sel" id="countrySelect">
+        <option value="VN">🇻🇳 Vietnam</option>
+        <option value="ALL">🌍 All countries</option>
+        <option value="US">🇺🇸 United States</option>
+        <option value="TH">🇹🇭 Thailand</option>
+        <option value="SG">🇸🇬 Singapore</option>
+        <option value="MY">🇲🇾 Malaysia</option>
+        <option value="ID">🇮🇩 Indonesia</option>
+        <option value="PH">🇵🇭 Philippines</option>
+        <option value="GB">🇬🇧 United Kingdom</option>
+        <option value="AU">🇦🇺 Australia</option>
       </select>
-      <select class="adlib-select" id="mediaTypeSelect">
-        <option value="all">All formats</option>
-        <option value="image">Image</option>
-        <option value="video">Video</option>
-        <option value="meme">Text only</option>
+      <select class="sel" id="adTypeSelect">
+        <option value="all">All ads</option>
+        <option value="political_and_issue_ads">Political &amp; Issue</option>
+        <option value="housing_ads">Housing</option>
+        <option value="employment_ads">Employment</option>
+        <option value="credit_ads">Credit</option>
       </select>
-      <select class="adlib-select" id="sortSelect">
-        <option value="total_impressions">Sort by: Impressions</option>
-        <option value="relevance_score">Sort by: Relevance</option>
-        <option value="start_date">Sort by: Start date</option>
-      </select>
+      <button class="btn btn-primary" onclick="doSearch()" id="searchBtn"><i class="bi bi-search"></i> Tìm kiếm</button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <select class="sel" id="statusSelect">
+      <option value="active">✅ Active ads</option>
+      <option value="inactive">⏸ Inactive ads</option>
+      <option value="all">All status</option>
+    </select>
+    <select class="sel" id="mediaTypeSelect">
+      <option value="all">All formats</option>
+      <option value="image">🖼 Image</option>
+      <option value="video">🎬 Video</option>
+      <option value="meme">📝 Text only</option>
+    </select>
+    <div style="flex:1"></div>
+    <span id="resultsInfo" style="font-size:12px;color:rgba(255,255,255,.35)"></span>
+    <a id="libLink" href="https://www.facebook.com/ads/library" target="_blank" style="font-size:12px;color:#60a5fa;text-decoration:none;display:flex;align-items:center;gap:4px"><i class="bi bi-box-arrow-up-right"></i> Xem trên Ads Library</a>
+  </div>
+
+  <div class="token-banner" id="tokenBanner">
+    <i class="bi bi-key-fill"></i>
+    <span>Cần Access Token để tìm kiếm trong app. <a onclick="showTokenModal()">Nhập token</a> hoặc <a href="https://www.facebook.com/ads/library" target="_blank">mở Ads Library trực tiếp</a>.</span>
+  </div>
+
+  <div class="content-area">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('results')" id="tab-results"><i class="bi bi-grid-3x3-gap"></i> Kết quả</button>
+      <button class="tab-btn" onclick="switchTab('saved')" id="tab-saved"><i class="bi bi-bookmark-fill"></i> Đã lưu (<span id="savedCountTab">0</span>)</button>
     </div>
 
-    <div class="adlib-content">
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('results')" id="tab-results"><i class="bi bi-grid-3x3-gap"></i> Kết quả</button>
-        <button class="tab-btn" onclick="switchTab('saved')" id="tab-saved"><i class="bi bi-bookmark-fill"></i> Đã lưu (<span id="savedCountTab">0</span>)</button>
-      </div>
-
-      <div class="tab-pane active" id="pane-results">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06)">
-          <span id="resultsCount" style="color:rgba(255,255,255,.5);font-size:12.5px"></span>
-          <a id="openLibraryLink" href="https://www.facebook.com/ads/library" target="_blank" style="font-size:12px;color:#60a5fa;text-decoration:none;display:flex;align-items:center;gap:4px"><i class="bi bi-box-arrow-up-right"></i> Xem trên Facebook Ads Library</a>
-        </div>
-
-        <div class="empty-state" id="emptyState">
-          <i class="bi bi-binoculars"></i>
-          <h3>Tìm kiếm quảng cáo</h3>
-          <p>Nhập từ khóa hoặc tên trang để tìm quảng cáo đang chạy.<br>Dữ liệu từ <strong style="color:#60a5fa">Facebook Ads Library</strong> — công khai, không cần đăng nhập.</p>
-          <div style="margin-top:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-            <button class="btn-sm btn-outline" onclick="quickSearch('Shopee')"><i class="bi bi-lightning-fill"></i> Shopee</button>
-            <button class="btn-sm btn-outline" onclick="quickSearch('thoi trang')"><i class="bi bi-lightning-fill"></i> Thời trang</button>
-            <button class="btn-sm btn-outline" onclick="quickSearch('my pham')"><i class="bi bi-lightning-fill"></i> Mỹ phẩm</button>
-            <button class="btn-sm btn-outline" onclick="quickSearch('bat dong san')"><i class="bi bi-lightning-fill"></i> Bất động sản</button>
-            <button class="btn-sm btn-outline" onclick="quickSearch('khoa hoc online')"><i class="bi bi-lightning-fill"></i> Khóa học</button>
-          </div>
-        </div>
-
-        <div class="spinner-wrap hidden" id="loadingState">
-          <div class="spinner"></div>
-          <span>Đang tải dữ liệu từ Facebook Ads Library...</span>
-        </div>
-
-        <div class="ads-grid" id="adsGrid"></div>
-
-        <div id="loadMoreWrap" style="text-align:center;margin-top:24px;display:none">
-          <button class="btn-sm btn-outline" onclick="loadMore()" id="loadMoreBtn" style="padding:10px 28px"><i class="bi bi-arrow-down-circle"></i> Tải thêm quảng cáo</button>
+    <div class="tab-pane active" id="pane-results">
+      <div class="empty-state" id="emptyState">
+        <i class="bi bi-binoculars"></i>
+        <h3>Khám phá quảng cáo đối thủ</h3>
+        <p>Tìm kiếm quảng cáo đang chạy từ bất kỳ thương hiệu nào.<br>Dữ liệu thật từ <strong style="color:#60a5fa">Facebook Ads Library API</strong>.</p>
+        <div class="quick-tags">
+          <span class="quick-tag" onclick="quickSearch('Shopee')">Shopee</span>
+          <span class="quick-tag" onclick="quickSearch('Lazada')">Lazada</span>
+          <span class="quick-tag" onclick="quickSearch('thoi trang')">Thời trang</span>
+          <span class="quick-tag" onclick="quickSearch('my pham')">Mỹ phẩm</span>
+          <span class="quick-tag" onclick="quickSearch('bat dong san')">Bất động sản</span>
+          <span class="quick-tag" onclick="quickSearch('khoa hoc online')">Khóa học</span>
+          <span class="quick-tag" onclick="quickSearch('nha hang')">Nhà hàng</span>
+          <span class="quick-tag" onclick="quickSearch('xe may')">Xe máy</span>
         </div>
       </div>
-
-      <div class="tab-pane" id="pane-saved">
-        <div id="savedEmpty" class="empty-state">
-          <i class="bi bi-bookmark"></i>
-          <h3>Chưa có quảng cáo nào được lưu</h3>
-          <p>Nhấn nút <strong>Lưu</strong> trên mỗi quảng cáo để lưu vào đây.</p>
-        </div>
-        <div class="saved-list" id="savedList"></div>
-        <div id="savedActions" style="margin-top:16px;gap:8px;display:none">
-          <button class="btn-sm btn-outline" onclick="exportSaved()"><i class="bi bi-download"></i> Xuất CSV</button>
-          <button class="btn-sm btn-outline" style="color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="clearSaved()"><i class="bi bi-trash"></i> Xóa tất cả</button>
-        </div>
+      <div class="spinner-wrap hidden" id="loadingState">
+        <div class="spinner"></div>
+        <span>Đang tải từ Facebook Ads Library API...</span>
+      </div>
+      <div class="ads-grid" id="adsGrid"></div>
+      <div id="loadMoreWrap" style="text-align:center;margin-top:24px;display:none">
+        <button class="btn btn-outline" onclick="loadMore()" id="loadMoreBtn"><i class="bi bi-arrow-down-circle"></i> Tải thêm</button>
       </div>
     </div>
-  </main>
-</div>
 
-<div class="modal-overlay hidden" id="modalOverlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="modalTitle">Chi tiết quảng cáo</span>
-      <button class="modal-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+    <div class="tab-pane" id="pane-saved">
+      <div class="empty-state" id="savedEmpty">
+        <i class="bi bi-bookmark"></i>
+        <h3>Chưa có quảng cáo nào được lưu</h3>
+        <p>Nhấn nút <strong>Lưu</strong> trên mỗi quảng cáo để lưu vào đây.</p>
+      </div>
+      <div class="saved-list" id="savedList"></div>
+      <div id="savedActions" style="margin-top:14px;gap:8px;display:none">
+        <button class="btn btn-sm btn-outline" onclick="exportSaved()"><i class="bi bi-download"></i> Xuất CSV</button>
+        <button class="btn btn-sm btn-danger" onclick="clearSaved()"><i class="bi bi-trash"></i> Xóa tất cả</button>
+      </div>
     </div>
-    <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
+<!-- Token Modal -->
+<div class="modal-bg hidden" id="tokenModal" onclick="if(event.target===this)closeTokenModal()">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-title"><i class="bi bi-key-fill" style="color:#eab308"></i> Nhập Access Token</span>
+      <button class="modal-close" onclick="closeTokenModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:14px;line-height:1.6">Cần User Access Token có quyền <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px">ads_read</code> để tìm kiếm trong app.</p>
+      <ol class="perm-steps">
+        <li>Vào <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:#60a5fa">Graph API Explorer</a></li>
+        <li>Chọn App của bạn, thêm permission <strong>ads_read</strong></li>
+        <li>Click <strong>Generate Access Token</strong> và copy token</li>
+        <li>Dán vào ô bên dưới và nhấn Lưu</li>
+      </ol>
+      <input type="password" id="tokenInput" placeholder="Dán Access Token vào đây..." style="width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 14px;color:#fff;font-size:13px;margin-bottom:12px">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveToken()" style="flex:1"><i class="bi bi-check-lg"></i> Lưu Token</button>
+        <button class="btn btn-outline" onclick="closeTokenModal()">Hủy</button>
+      </div>
+      <p style="font-size:11px;color:rgba(255,255,255,.25);margin-top:10px;text-align:center">Token lưu local trong trình duyệt, không gửi lên server.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-bg hidden" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title" id="detailTitle">Chi tiết quảng cáo</span>
+      <button class="modal-close" onclick="closeDetail()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-const BACKEND = 'https://genztech-production.up.railway.app';
-let currentAds = [], savedAds = JSON.parse(localStorage.getItem('gz_saved_ads')||'[]');
-let currentCursor = null, currentQuery = '', isLoading = false;
+const BACKEND='https://genztech-production.up.railway.app';
+const TOKEN_KEY='gz_ads_finder_token';
+let allAds=[],savedAds=JSON.parse(localStorage.getItem('gz_saved_ads')||'[]');
+let cursor=null,lastQuery='',loading=false;
 
+function getToken(){return localStorage.getItem(TOKEN_KEY)||localStorage.getItem('gz_manual_fb_token')||'';}
+function checkBanner(){document.getElementById('tokenBanner').classList.toggle('hidden',!!getToken());}
+function showTokenModal(){document.getElementById('tokenModal').classList.remove('hidden');}
+function closeTokenModal(){document.getElementById('tokenModal').classList.add('hidden');}
+function saveToken(){
+  const v=document.getElementById('tokenInput').value.trim();
+  if(!v){toast('Vui lòng nhập token','error');return;}
+  localStorage.setItem(TOKEN_KEY,v);closeTokenModal();checkBanner();toast('Đã lưu token','success');
+}
 function toast(msg,type='info'){
-  const c=document.getElementById('toastContainer'),t=document.createElement('div');
+  const c=document.getElementById('toastWrap'),t=document.createElement('div');
   t.className='toast '+type;
   const ic={success:'check-circle-fill',error:'x-circle-fill',info:'info-circle-fill'};
   t.innerHTML='<i class="bi bi-'+(ic[type]||'info-circle-fill')+'"></i><span>'+msg+'</span>';
-  c.appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3000);
+  c.appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3500);
 }
-function getInitials(n){if(!n)return'?';return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function initials(n){return n?n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';}
 function isSaved(id){return savedAds.some(a=>a.id===id);}
-function updateSavedCount(){const n=savedAds.length;document.getElementById('savedCount').textContent=n;document.getElementById('savedCountTab').textContent=n;}
-function buildLibraryURL(q){
-  const c=document.getElementById('countrySelect').value,at=document.getElementById('adTypeSelect').value,
-    st=document.getElementById('statusSelect').value,mt=document.getElementById('mediaTypeSelect').value,
-    so=document.getElementById('sortSelect').value;
-  const p=new URLSearchParams({active_status:st==='all'?'all':st,ad_type:at||'all',country:c||'VN',q:q||'',search_type:'keyword_unordered',media_type:mt||'all'});
-  if(so){p.set('sort_data[mode]',so);p.set('sort_data[direction]','desc');}
-  return 'https://www.facebook.com/ads/library/?'+p.toString();
+function updateCounts(){const n=savedAds.length;document.getElementById('savedCount').textContent=n;document.getElementById('savedCountTab').textContent=n;}
+function buildLibURL(q){
+  const c=document.getElementById('countrySelect').value;
+  const at=document.getElementById('adTypeSelect').value;
+  const st=document.getElementById('statusSelect').value;
+  return 'https://www.facebook.com/ads/library/?active_status='+(st==='all'?'all':st)+'&ad_type='+(at||'all')+'&country='+(c||'VN')+'&q='+encodeURIComponent(q||'')+'&search_type=keyword_unordered';
 }
 function quickSearch(kw){document.getElementById('searchInput').value=kw;doSearch();}
 function doSearch(){
   const q=document.getElementById('searchInput').value.trim();
   if(!q){toast('Vui lòng nhập từ khóa','error');return;}
-  currentQuery=q;currentCursor=null;currentAds=[];
-  document.getElementById('adsGrid').innerHTML='';fetchAds(q,true);
+  const token=getToken();
+  if(!token){showTokenModal();return;}
+  lastQuery=q;cursor=null;allAds=[];
+  document.getElementById('adsGrid').innerHTML='';
+  fetchAds(q,true);
 }
-function loadMore(){if(!currentQuery||isLoading)return;fetchAds(currentQuery,false);}
-
+function loadMore(){if(!lastQuery||loading)return;fetchAds(lastQuery,false);}
 async function fetchAds(q,isNew){
-  if(isLoading)return;isLoading=true;
-  const libURL=buildLibraryURL(q);
-  document.getElementById('openLibraryLink').href=libURL;
+  if(loading)return;loading=true;
+  const token=getToken();
+  const libURL=buildLibURL(q);
+  document.getElementById('libLink').href=libURL;
   if(isNew){
     document.getElementById('emptyState').classList.add('hidden');
     document.getElementById('loadingState').classList.remove('hidden');
     document.getElementById('loadMoreWrap').style.display='none';
-    document.getElementById('resultsCount').textContent='';
-  } else {
+    document.getElementById('resultsInfo').textContent='';
+    document.getElementById('searchBtn').innerHTML='<span class="spinner-sm"></span> Đang tìm...';
+  }else{
     document.getElementById('loadMoreBtn').innerHTML='<span class="spinner-sm"></span> Đang tải...';
   }
   try{
-    const resp=await fetch(BACKEND+'/api/facebook/scrape-ads-library',{
+    const resp=await fetch(BACKEND+'/api/facebook/ads-library',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({q,country:document.getElementById('countrySelect').value,adType:document.getElementById('adTypeSelect').value,status:document.getElementById('statusSelect').value,mediaType:document.getElementById('mediaTypeSelect').value,sort:document.getElementById('sortSelect').value,cursor:currentCursor}),
+      body:JSON.stringify({q,token,country:document.getElementById('countrySelect').value,adType:document.getElementById('adTypeSelect').value,status:document.getElementById('statusSelect').value,mediaType:document.getElementById('mediaTypeSelect').value,cursor}),
       signal:AbortSignal.timeout(25000)
     });
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
     const data=await resp.json();
-    if(data.error)throw new Error(data.error);
+    if(resp.status===403&&data.error==='ads_library_permission'){showPermNotice(q,libURL);return;}
+    if(!resp.ok)throw new Error(data.error||'Lỗi server');
     const ads=data.ads||[];
-    currentCursor=data.next_cursor||null;
-    if(isNew)currentAds=ads;else currentAds=[...currentAds,...ads];
+    cursor=data.next_cursor||null;
+    if(isNew)allAds=ads;else allAds=[...allAds,...ads];
     renderAds(ads,isNew);
-    const total=data.total_count?'>'+Number(data.total_count).toLocaleString('vi')+' ket qua':currentAds.length+' quang cao';
-    document.getElementById('resultsCount').textContent=total;
-    document.getElementById('loadMoreWrap').style.display=(currentCursor&&ads.length>0)?'block':'none';
+    document.getElementById('resultsInfo').textContent=allAds.length+' quảng cáo';
+    document.getElementById('loadMoreWrap').style.display=(cursor&&ads.length>0)?'block':'none';
     if(isNew&&ads.length===0)showNoResult(q,libURL);
   }catch(err){
     console.error(err);showFallback(q,libURL);
-    toast('Khong the tai du lieu. Da chuyen sang link truc tiep.','info');
+    toast('Không thể tải. Đang chuyển sang link trực tiếp.','info');
   }finally{
-    isLoading=false;
+    loading=false;
     document.getElementById('loadingState').classList.add('hidden');
-    document.getElementById('loadMoreBtn').innerHTML='<i class="bi bi-arrow-down-circle"></i> Tai them quang cao';
+    document.getElementById('searchBtn').innerHTML='<i class="bi bi-search"></i> Tìm kiếm';
+    document.getElementById('loadMoreBtn').innerHTML='<i class="bi bi-arrow-down-circle"></i> Tải thêm';
   }
 }
-
+function showPermNotice(q,libURL){
+  document.getElementById('loadingState').classList.add('hidden');
+  const el=document.getElementById('emptyState');el.classList.remove('hidden');
+  el.innerHTML='<div class="perm-notice"><i class="bi bi-shield-lock-fill"></i><h3>App cần đăng ký quyền Ads Library API</h3><p>Facebook yêu cầu App phải đăng ký tại <strong>facebook.com/ads/library/api</strong>. Trong thời gian chờ, bạn có thể xem trực tiếp trên Facebook.</p><ol class="perm-steps" style="text-align:left;margin:0 auto 16px;max-width:360px"><li>Vào <a href="https://www.facebook.com/ads/library/api" target="_blank" style="color:#60a5fa">facebook.com/ads/library/api</a></li><li>Đăng nhập và điền form đăng ký</li><li>Sau khi được duyệt (1-3 ngày), tool hoạt động hoàn toàn</li></ol><a href="'+libURL+'" target="_blank" class="btn btn-primary" style="margin:0 auto"><i class="bi bi-facebook"></i> Xem "'+q+'" trên Ads Library</a></div>';
+}
 function showNoResult(q,libURL){
   const el=document.getElementById('emptyState');el.classList.remove('hidden');
-  el.innerHTML='<i class="bi bi-search"></i><h3>Khong tim thay ket qua</h3><p>Khong co quang cao nao khop voi "<strong>'+q+'</strong>".</p><div style="margin-top:16px"><a href="'+libURL+'" target="_blank" class="btn-sm btn-primary"><i class="bi bi-box-arrow-up-right"></i> Tim tren Facebook Ads Library</a></div>';
+  el.innerHTML='<i class="bi bi-search"></i><h3>Không tìm thấy kết quả</h3><p>Không có quảng cáo nào khớp với "<strong>'+q+'</strong>".</p><div style="margin-top:14px"><a href="'+libURL+'" target="_blank" class="btn btn-primary"><i class="bi bi-box-arrow-up-right"></i> Tìm trên Facebook Ads Library</a></div>';
 }
 function showFallback(q,libURL){
   const el=document.getElementById('emptyState');el.classList.remove('hidden');
-  const country=document.getElementById('countrySelect').value;
+  const c=document.getElementById('countrySelect').value;
   const brands=['Shopee','Lazada','Tiki','Grab','VinFast','Vinamilk'];
-  el.innerHTML='<i class="bi bi-box-arrow-up-right" style="color:#1877f2"></i><h3 style="color:rgba(255,255,255,.7)">Mo truc tiep tren Facebook Ads Library</h3><p>Nhan nut ben duoi de xem ket qua tim kiem "<strong>'+q+'</strong>" truc tiep tren Facebook.</p><div style="margin-top:20px"><a href="'+libURL+'" target="_blank" class="btn-sm btn-primary" style="padding:10px 24px;margin:0 auto"><i class="bi bi-facebook"></i> Xem "'+q+'" tren Ads Library</a></div><div style="margin-top:20px;font-size:12px;color:rgba(255,255,255,.25)">Tim kiem nhanh:</div><div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+brands.map(p=>'<a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country='+country+'&q='+encodeURIComponent(p)+'&search_type=keyword_unordered" target="_blank" class="btn-sm btn-outline">'+p+'</a>').join('')+'</div>';
+  el.innerHTML='<i class="bi bi-box-arrow-up-right" style="color:#1877f2"></i><h3 style="color:rgba(255,255,255,.7)">Mở trực tiếp trên Facebook Ads Library</h3><p>Nhấn bên dưới để xem "<strong>'+q+'</strong>" trực tiếp trên Facebook.</p><div style="margin-top:16px"><a href="'+libURL+'" target="_blank" class="btn btn-primary"><i class="bi bi-facebook"></i> Xem trên Ads Library</a></div><div class="quick-tags" style="margin-top:16px">'+brands.map(b=>'<a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country='+c+'&q='+encodeURIComponent(b)+'&search_type=keyword_unordered" target="_blank" class="quick-tag">'+b+'</a>').join('')+'</div>';
 }
-
 function renderAds(ads,isNew){
   const grid=document.getElementById('adsGrid');
   if(isNew)grid.innerHTML='';
-  if(!ads.length)return;
   ads.forEach(ad=>{
     const saved=isSaved(ad.id);
-    const platforms=(ad.publisher_platforms||['facebook']).map(p=>{
-      const map={facebook:'bi-facebook facebook',instagram:'bi-instagram instagram',whatsapp:'bi-whatsapp whatsapp',messenger:'bi-messenger messenger'};
-      return '<i class="bi '+(map[p]||'bi-globe')+' ad-platform-icon '+p+'"></i>';
-    }).join('');
-    const bodyText=(ad.ad_creative_bodies||[ad.body||'']).filter(Boolean)[0]||'';
-    const linkTitle=(ad.ad_creative_link_titles||[])[0]||'';
-    const linkDesc=(ad.ad_creative_link_descriptions||[])[0]||'';
-    const linkCaption=(ad.ad_creative_link_captions||[])[0]||'';
-    const startDate=ad.ad_delivery_start_time?new Date(ad.ad_delivery_start_time).toLocaleDateString('vi-VN'):'N/A';
     const isActive=ad.is_active!==false;
+    const bodies=ad.ad_creative_bodies||[];
+    const titles=ad.ad_creative_link_titles||[];
+    const descs=ad.ad_creative_link_descriptions||[];
+    const captions=ad.ad_creative_link_captions||[];
+    const pfMap={facebook:'bi-facebook fb',instagram:'bi-instagram ig',whatsapp:'bi-whatsapp wa',messenger:'bi-messenger ms'};
+    const platforms=(ad.publisher_platforms||['facebook']).map(p=>'<i class="bi '+(pfMap[p]||'bi-globe')+' pfi"></i>').join('');
+    const startDate=ad.ad_delivery_start_time?new Date(ad.ad_delivery_start_time).toLocaleDateString('vi-VN'):'';
+    const impr=ad.impressions?.lower_bound?Number(ad.impressions.lower_bound).toLocaleString('vi')+'+':'';
+    const spend=ad.spend?.lower_bound?Number(ad.spend.lower_bound).toLocaleString('vi')+' '+(ad.currency||'USD')+'+':'';
     const card=document.createElement('div');
     card.className='ad-card';card.dataset.id=ad.id;
     card.innerHTML=
-      '<div class="ad-card-header"><div>'+
-        '<div class="ad-status '+(isActive?'active':'inactive')+'">'+(isActive?'Active':'Inactive')+'</div>'+
-        '<div class="ad-lib-id">Library ID: '+(ad.id||'N/A')+'</div>'+
-        '<div class="ad-start-date">Bat dau: '+startDate+'</div>'+
-        '<div class="ad-platforms">'+platforms+'</div>'+
+      '<div class="ad-card-top">'+
+        '<div>'+
+          '<span class="status-dot '+(isActive?'active':'inactive')+'">'+(isActive?'Active':'Inactive')+'</span>'+
+          '<div class="ad-meta">ID: '+ad.id+(startDate?' · '+startDate:'')+'</div>'+
+          '<div class="platforms">'+platforms+'</div>'+
+        '</div>'+
+        '<button class="btn btn-sm btn-outline" style="padding:4px 9px;font-size:11px" onclick="openDetail(\''+ad.id+'\')"><i class="bi bi-info-circle"></i></button>'+
       '</div>'+
-      '<button class="btn-sm btn-outline" style="padding:5px 10px;font-size:11px" onclick="openDetail(\''+ad.id+'\')"><i class="bi bi-info-circle"></i> Chi tiet</button>'+
-      '</div>'+
-      (ad.snapshot_url
-        ?'<a href="'+ad.snapshot_url+'" target="_blank"><div class="ad-media"><div class="ad-media-placeholder"><i class="bi bi-play-circle"></i><span>Xem quang cao</span></div><div class="ad-media-overlay"><i class="bi bi-play-circle-fill"></i></div></div></a>'
-        :'<div class="ad-media"><div class="ad-media-placeholder"><i class="bi bi-image"></i><span>Khong co anh</span></div></div>')+
+      (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank"><div class="ad-preview"><div class="preview-ph"><i class="bi bi-play-circle"></i><span>Xem quảng cáo</span></div><div class="preview-ov"><i class="bi bi-play-circle-fill"></i></div></div></a>':'<div class="ad-preview"><div class="preview-ph"><i class="bi bi-image"></i><span>Không có ảnh</span></div></div>')+
       '<div class="ad-body">'+
-        '<div class="ad-page-row">'+
-          '<div class="ad-page-avatar">'+getInitials(ad.page_name)+'</div>'+
-          '<div class="ad-page-info">'+
-            '<div class="ad-page-name"><a href="https://www.facebook.com/'+(ad.page_id||'')+'" target="_blank">'+(ad.page_name||'Trang an danh')+'</a></div>'+
-            '<div class="ad-page-type">Sponsored</div>'+
+        '<div class="page-row">'+
+          '<div class="page-av">'+initials(ad.page_name)+'</div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<div class="page-nm"><a href="https://www.facebook.com/'+(ad.page_id||'')+'" target="_blank">'+(ad.page_name||'Trang ẩn danh')+'</a></div>'+
+            '<div class="page-sub">Sponsored</div>'+
           '</div>'+
         '</div>'+
-        (bodyText?'<div class="ad-text">'+bodyText.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>':'')+
-        (linkTitle?'<div class="ad-link-preview">'+(linkCaption?'<div class="ad-link-domain">'+linkCaption+'</div>':'')+'<div class="ad-link-title">'+linkTitle+'</div>'+(linkDesc?'<div class="ad-link-desc">'+linkDesc+'</div>':'')+'</div>':'')+
+        (bodies[0]?'<div class="ad-text">'+bodies[0].replace(/</g,'&lt;')+'</div>':'')+
+        (titles[0]?'<div class="link-box">'+(captions[0]?'<div class="link-domain">'+captions[0]+'</div>':'')+'<div class="link-title">'+titles[0]+'</div>'+(descs[0]?'<div class="link-desc">'+descs[0]+'</div>':'')+'</div>':'')+
+        ((impr||spend)?'<div class="ad-stats">'+(impr?'<span class="stat-chip"><strong>'+impr+'</strong> hiển thị</span>':'')+(spend?'<span class="stat-chip"><strong>'+spend+'</strong> chi phí</span>':'')+'</div>':'')+
       '</div>'+
       '<div class="ad-footer">'+
-        '<button class="ad-btn ad-btn-save '+(saved?'saved':'')+'" onclick="toggleSave(\''+ad.id+'\')"><i class="bi bi-bookmark'+(saved?'-fill':'')+'"></i> '+(saved?'Da luu':'Luu')+'</button>'+
-        (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank" class="ad-btn ad-btn-open"><i class="bi bi-eye"></i> Xem QC</a>':'')+
-        '<a href="https://www.facebook.com/ads/library/?id='+ad.id+'" target="_blank" class="ad-btn ad-btn-detail"><i class="bi bi-box-arrow-up-right"></i> Ads Lib</a>'+
+        '<button class="adbtn adbtn-save'+(saved?' saved':'')+'" onclick="toggleSave(\''+ad.id+'\')"><i class="bi bi-bookmark'+(saved?'-fill':'')+'"></i> '+(saved?'Đã lưu':'Lưu')+'</button>'+
+        (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank" class="adbtn adbtn-view"><i class="bi bi-eye"></i> Xem QC</a>':'')+
+        '<a href="https://www.facebook.com/ads/library/?id='+ad.id+'" target="_blank" class="adbtn adbtn-lib"><i class="bi bi-box-arrow-up-right"></i> Ads Lib</a>'+
       '</div>';
     grid.appendChild(card);
   });
 }
-
 function toggleSave(id){
-  const ad=currentAds.find(a=>a.id===id)||savedAds.find(a=>a.id===id);if(!ad)return;
+  const ad=allAds.find(a=>a.id===id)||savedAds.find(a=>a.id===id);
+  if(!ad)return;
   const idx=savedAds.findIndex(a=>a.id===id);
-  if(idx>=0){savedAds.splice(idx,1);toast('Da bo luu','info');}
-  else{savedAds.push({...ad,savedAt:new Date().toISOString()});toast('Da luu quang cao','success');}
-  localStorage.setItem('gz_saved_ads',JSON.stringify(savedAds));updateSavedCount();
-  const btn=document.querySelector('.ad-card[data-id="'+id+'"] .ad-btn-save');
-  if(btn){const s=isSaved(id);btn.className='ad-btn ad-btn-save '+(s?'saved':'');btn.innerHTML='<i class="bi bi-bookmark'+(s?'-fill':'')+'"></i> '+(s?'Da luu':'Luu');}
+  if(idx>=0){savedAds.splice(idx,1);toast('Đã bỏ lưu','info');}
+  else{savedAds.push({...ad,savedAt:new Date().toISOString()});toast('Đã lưu quảng cáo','success');}
+  localStorage.setItem('gz_saved_ads',JSON.stringify(savedAds));
+  updateCounts();
+  const btn=document.querySelector('.ad-card[data-id="'+id+'"] .adbtn-save');
+  if(btn){const s=isSaved(id);btn.className='adbtn adbtn-save'+(s?' saved':'');btn.innerHTML='<i class="bi bi-bookmark'+(s?'-fill':'')+'"></i> '+(s?'Đã lưu':'Lưu');}
   renderSavedList();
 }
-
 function renderSavedList(){
   const list=document.getElementById('savedList'),empty=document.getElementById('savedEmpty'),actions=document.getElementById('savedActions');
   if(!savedAds.length){empty.style.display='block';list.innerHTML='';actions.style.display='none';return;}
   empty.style.display='none';actions.style.display='flex';
   list.innerHTML=savedAds.map(ad=>
-    '<div class="saved-item">'+
-      '<div class="ad-page-avatar" style="width:36px;height:36px;font-size:13px">'+getInitials(ad.page_name)+'</div>'+
-      '<div class="saved-item-info">'+
-        '<div class="saved-item-page">'+(ad.page_name||'Trang an danh')+'</div>'+
-        '<div class="saved-item-text">'+((ad.ad_creative_bodies||[''])[0]||'Khong co noi dung')+'</div>'+
-      '</div>'+
-      '<div class="saved-item-actions">'+
-        (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank" class="btn-sm btn-outline" style="padding:5px 10px"><i class="bi bi-eye"></i></a>':'')+
-        '<a href="https://www.facebook.com/ads/library/?id='+ad.id+'" target="_blank" class="btn-sm btn-outline" style="padding:5px 10px"><i class="bi bi-box-arrow-up-right"></i></a>'+
-        '<button class="btn-sm btn-outline" style="padding:5px 10px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="toggleSave(\''+ad.id+'\')"><i class="bi bi-trash"></i></button>'+
+    '<div class="saved-row">'+
+      '<div class="page-av" style="width:34px;height:34px;font-size:12px">'+initials(ad.page_name)+'</div>'+
+      '<div class="saved-info"><div class="saved-page">'+(ad.page_name||'Trang ẩn danh')+'</div><div class="saved-text">'+((ad.ad_creative_bodies||[''])[0]||'Không có nội dung')+'</div></div>'+
+      '<div class="saved-actions">'+
+        (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank" class="btn btn-sm btn-outline" style="padding:5px 9px"><i class="bi bi-eye"></i></a>':'')+
+        '<a href="https://www.facebook.com/ads/library/?id='+ad.id+'" target="_blank" class="btn btn-sm btn-outline" style="padding:5px 9px"><i class="bi bi-box-arrow-up-right"></i></a>'+
+        '<button class="btn btn-sm btn-danger" style="padding:5px 9px" onclick="toggleSave(\''+ad.id+'\')"><i class="bi bi-trash"></i></button>'+
       '</div>'+
     '</div>'
   ).join('');
 }
-
-function clearSaved(){if(!confirm('Xoa tat ca quang cao da luu?'))return;savedAds=[];localStorage.removeItem('gz_saved_ads');updateSavedCount();renderSavedList();toast('Da xoa tat ca','info');}
+function clearSaved(){if(!confirm('Xóa tất cả quảng cáo đã lưu?'))return;savedAds=[];localStorage.removeItem('gz_saved_ads');updateCounts();renderSavedList();toast('Đã xóa tất cả','info');}
 function exportSaved(){
   if(!savedAds.length)return;
-  const rows=[['ID','Trang','Noi dung','Ngay bat dau','Link Ads Library','Ngay luu']];
+  const rows=[['ID','Trang','Nội dung','Ngày bắt đầu','Link Ads Library','Ngày lưu']];
   savedAds.forEach(ad=>rows.push([ad.id,ad.page_name||'',((ad.ad_creative_bodies||[''])[0]||'').replace(/"/g,'""'),ad.ad_delivery_start_time||'','https://www.facebook.com/ads/library/?id='+ad.id,ad.savedAt||'']));
   const csv=rows.map(r=>r.map(c=>'"'+c+'"').join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download='saved_ads_'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('Da xuat CSV','success');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='saved_ads_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();toast('Đã xuất CSV','success');
 }
-
 function openDetail(id){
-  const ad=currentAds.find(a=>a.id===id)||savedAds.find(a=>a.id===id);if(!ad)return;
-  document.getElementById('modalTitle').textContent=ad.page_name||'Quang cao';
+  const ad=allAds.find(a=>a.id===id)||savedAds.find(a=>a.id===id);
+  if(!ad)return;
+  document.getElementById('detailTitle').textContent=ad.page_name||'Quảng cáo';
   const bodies=ad.ad_creative_bodies||[],titles=ad.ad_creative_link_titles||[],descs=ad.ad_creative_link_descriptions||[];
-  document.getElementById('modalBody').innerHTML=
-    '<div class="detail-grid">'+
-      '<div class="detail-chip"><div class="label">Library ID</div><div class="value">'+ad.id+'</div></div>'+
-      '<div class="detail-chip"><div class="label">Trang</div><div class="value">'+(ad.page_name||'N/A')+'</div></div>'+
-      '<div class="detail-chip"><div class="label">Trang thai</div><div class="value" style="color:'+(ad.is_active!==false?'#4ade80':'rgba(255,255,255,.5)')+'">'+(ad.is_active!==false?'Dang chay':'Da dung')+'</div></div>'+
-      '<div class="detail-chip"><div class="label">Bat dau</div><div class="value">'+(ad.ad_delivery_start_time?new Date(ad.ad_delivery_start_time).toLocaleDateString('vi-VN'):'N/A')+'</div></div>'+
-      (ad.impressions&&ad.impressions.lower_bound?'<div class="detail-chip"><div class="label">Luot hien thi</div><div class="value">'+Number(ad.impressions.lower_bound).toLocaleString('vi')+'+ </div></div>':'')+
-      (ad.spend&&ad.spend.lower_bound?'<div class="detail-chip"><div class="label">Chi phi</div><div class="value">'+Number(ad.spend.lower_bound).toLocaleString('vi')+' '+(ad.currency||'USD')+'+ </div></div>':'')+
+  const impr=ad.impressions?.lower_bound?Number(ad.impressions.lower_bound).toLocaleString('vi')+'+':'N/A';
+  const spend=ad.spend?.lower_bound?Number(ad.spend.lower_bound).toLocaleString('vi')+' '+(ad.currency||'USD')+'+':'N/A';
+  document.getElementById('detailBody').innerHTML=
+    '<div class="info-grid">'+
+      '<div class="info-chip"><div class="lbl">Library ID</div><div class="val">'+ad.id+'</div></div>'+
+      '<div class="info-chip"><div class="lbl">Trang</div><div class="val">'+(ad.page_name||'N/A')+'</div></div>'+
+      '<div class="info-chip"><div class="lbl">Trạng thái</div><div class="val" style="color:'+(ad.is_active!==false?'#4ade80':'rgba(255,255,255,.4)')+'">'+(ad.is_active!==false?'Đang chạy':'Đã dừng')+'</div></div>'+
+      '<div class="info-chip"><div class="lbl">Bắt đầu</div><div class="val">'+(ad.ad_delivery_start_time?new Date(ad.ad_delivery_start_time).toLocaleDateString('vi-VN'):'N/A')+'</div></div>'+
+      '<div class="info-chip"><div class="lbl">Lượt hiển thị</div><div class="val">'+impr+'</div></div>'+
+      '<div class="info-chip"><div class="lbl">Chi phí</div><div class="val">'+spend+'</div></div>'+
     '</div>'+
-    (bodies.length?'<div class="detail-label">Noi dung quang cao</div>'+bodies.map(b=>'<div class="detail-value">'+b.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div>').join(''):'')+
-    (titles.length?'<div class="detail-label">Tieu de link</div><div class="detail-value">'+titles.join('<br>')+'</div>':'')+
-    (descs.length?'<div class="detail-label">Mo ta</div><div class="detail-value" style="color:rgba(255,255,255,.6)">'+descs.join('<br>')+'</div>':'')+
+    (bodies.length?'<div class="section-lbl">Nội dung quảng cáo</div>'+bodies.map(b=>'<div class="content-box">'+b.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div>').join(''):'')+
+    (titles.length?'<div class="section-lbl">Tiêu đề link</div><div class="content-box">'+titles.join('<br>')+'</div>':'')+
+    (descs.length?'<div class="section-lbl">Mô tả</div><div class="content-box" style="color:rgba(255,255,255,.55)">'+descs.join('<br>')+'</div>':'')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">'+
-      (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank" class="btn-sm btn-primary"><i class="bi bi-eye"></i> Xem quang cao goc</a>':'')+
-      '<a href="https://www.facebook.com/ads/library/?id='+ad.id+'" target="_blank" class="btn-sm btn-outline"><i class="bi bi-box-arrow-up-right"></i> Mo trong Ads Library</a>'+
-      '<button class="btn-sm btn-outline" onclick="toggleSave(\''+ad.id+'\');closeModal()"><i class="bi bi-bookmark'+(isSaved(ad.id)?'-fill':'')+'"></i> '+(isSaved(ad.id)?'Bo luu':'Luu')+'</button>'+
+      (ad.snapshot_url?'<a href="'+ad.snapshot_url+'" target="_blank" class="btn btn-primary"><i class="bi bi-eye"></i> Xem quảng cáo gốc</a>':'')+
+      '<a href="https://www.facebook.com/ads/library/?id='+ad.id+'" target="_blank" class="btn btn-outline"><i class="bi bi-box-arrow-up-right"></i> Mở trong Ads Library</a>'+
+      '<button class="btn btn-outline" onclick="toggleSave(\''+ad.id+'\');closeDetail()"><i class="bi bi-bookmark'+(isSaved(ad.id)?'-fill':'')+'"></i> '+(isSaved(ad.id)?'Bỏ lưu':'Lưu')+'</button>'+
     '</div>';
-  document.getElementById('modalOverlay').classList.remove('hidden');
+  document.getElementById('detailModal').classList.remove('hidden');
 }
-function closeModal(){document.getElementById('modalOverlay').classList.add('hidden');}
+function closeDetail(){document.getElementById('detailModal').classList.add('hidden');}
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
@@ -484,7 +531,7 @@ function switchTab(tab){
   if(tb)tb.classList.add('active');if(pb)pb.classList.add('active');
   if(tab==='saved')renderSavedList();
 }
-updateSavedCount();
+checkBanner();updateCounts();
 </script>
 </body>
 </html>

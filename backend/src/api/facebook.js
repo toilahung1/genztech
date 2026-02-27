@@ -347,4 +347,51 @@ router.get('/scrape-id', async (req, res) => {
   }
 });
 
+// POST /api/facebook/ads-library — Tìm kiếm quảng cáo qua Ads Archive API
+router.post('/ads-library', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  try {
+    const { q, country = 'VN', adType = 'all', status = 'active', mediaType = 'all', cursor, token } = req.body;
+    if (!q) return res.status(400).json({ error: 'Thiếu từ khóa tìm kiếm' });
+    if (!token) return res.status(400).json({ error: 'no_token', message: 'Cần access token để tìm kiếm' });
+
+    const params = {
+      search_terms: q,
+      ad_reached_countries: country === 'ALL' ? undefined : JSON.stringify([country]),
+      ad_active_status: status === 'active' ? 'ACTIVE' : status === 'inactive' ? 'INACTIVE' : 'ALL',
+      limit: 20,
+      fields: 'id,ad_creation_time,ad_delivery_start_time,ad_delivery_stop_time,ad_creative_bodies,ad_creative_link_titles,ad_creative_link_descriptions,ad_creative_link_captions,page_name,page_id,publisher_platforms,is_active,snapshot_url,impressions,spend,currency',
+      access_token: token
+    };
+    if (adType && adType !== 'all') params.ad_type = adType.toUpperCase();
+    if (mediaType && mediaType !== 'all') params.media_type = mediaType.toUpperCase();
+    if (cursor) params.after = cursor;
+    // Remove undefined
+    Object.keys(params).forEach(k => params[k] === undefined && delete params[k]);
+
+    const r = await axios.get('https://graph.facebook.com/v25.0/ads_archive', { params, timeout: 20000 });
+    res.json({
+      ads: r.data.data || [],
+      next_cursor: r.data.paging?.cursors?.after || null
+    });
+  } catch (e) {
+    res.set('Access-Control-Allow-Origin', '*');
+    const fbErr = e.response?.data?.error;
+    if (fbErr?.error_subcode === 2332002) {
+      return res.status(403).json({
+        error: 'ads_library_permission',
+        message: 'App chưa được cấp quyền Ads Library API'
+      });
+    }
+    res.status(500).json({ error: fbErr?.message || e.message });
+  }
+});
+
+router.options('/ads-library', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(204);
+});
+
 module.exports = router;
