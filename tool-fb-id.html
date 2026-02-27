@@ -265,37 +265,20 @@
   }
 
   async function lookupId(link) {
-    const username = extractUsername(link);
-    if (!username) throw new Error('Link không hợp lệ');
+    if (!link) throw new Error('Link không hợp lệ');
 
-    if (GZ.isFbConnected()) {
-      const data = await GZ.fbApi(username, {
-        fields: 'id,name,category,fan_count,username,link'
-      });
-      return {
-        id: data.id,
-        name: data.name || username,
-        type: data.category ? 'Page' : 'Tài khoản / Group',
-        username: data.username || username,
-        category: data.category || null,
-        likes: data.fan_count || null,
-        link: data.link || `https://facebook.com/${username}`
-      };
-    } else {
-      // Demo
-      await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
-      const isPage = link.includes('page') || Math.random() > 0.5;
-      return {
-        id: Math.floor(Math.random() * 9e14 + 1e14).toString(),
-        name: username.replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),
-        type: isPage ? 'Page' : 'Tài khoản cá nhân',
-        username: username,
-        category: isPage ? 'Dịch vụ & Sản phẩm' : null,
-        likes: isPage ? Math.floor(Math.random() * 50000 + 1000) : null,
-        link: `https://facebook.com/${username}`,
-        demo: true
-      };
-    }
+    // Gọi qua backend proxy — backend dùng token đã lưu trong DB
+    const resp = await GZ.api(`/api/facebook/proxy/find-id?query=${encodeURIComponent(link)}`);
+    const data = resp.result;
+    return {
+      id: data.id,
+      name: data.name || link,
+      type: data.category ? 'Page' : 'Tài khoản / Group',
+      username: data.username || link,
+      category: data.category || null,
+      likes: data.fan_count || null,
+      link: data.link || `https://facebook.com/${data.id}`
+    };
   }
 
   async function doFind() {
