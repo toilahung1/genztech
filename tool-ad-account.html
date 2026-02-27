@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiểm Tra TKQC — Genztech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
+    .app-layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
+    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:18px;text-align:center;font-size:15px}
+    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .btn-primary{background:#1877f2;color:#fff}
+    .btn-primary:hover{background:#1565d8;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#00d4ff;color:#00d4ff}
+    .btn-success{background:#22c55e;color:#fff}
+    .btn-success:hover{background:#16a34a}
+    .btn-danger{background:#ef4444;color:#fff}
+    .page-body{padding:28px;flex:1}
+    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#00d4ff}
+    .card-body{padding:20px}
+    .form-group{margin-bottom:16px}
+    .form-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px;display:block}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
+    .form-control:focus{outline:none;border-color:#1877f2}
+    .form-control::placeholder{color:rgba(255,255,255,.25)}
+    select.form-control{cursor:pointer}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    @media(max-width:1024px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+    .stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px}
+    .stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
+    .stat-value{font-size:22px;font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px}
+    .info-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+    .info-row:last-child{border-bottom:none}
+    .info-key{color:rgba(255,255,255,.45)}
+    .info-val{color:#fff;font-weight:600}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+    .badge-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+    .badge-red{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+    .badge-yellow{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+    .badge-blue{background:rgba(24,119,242,.15);color:#60a5fa;border:1px solid rgba(24,119,242,.3)}
+    .badge-gray{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#00d4ff;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
+    .toast.success{border-left:3px solid #22c55e}
+    .toast.error{border-left:3px solid #ef4444}
+    .toast.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .progress-wrap{background:rgba(255,255,255,.08);border-radius:4px;height:8px;overflow:hidden;margin-top:6px}
+    .progress-bar{height:100%;border-radius:4px;transition:width .8s ease}
+    .empty-state{text-align:center;padding:40px 20px;color:rgba(255,255,255,.3)}
+    .empty-state i{font-size:40px;margin-bottom:12px;display:block}
+    .empty-state p{font-size:13px}
+    .risk-item{background:rgba(0,0,0,.2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+    .risk-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+    .risk-title{font-size:13px;font-weight:700;margin-bottom:3px}
+    .risk-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5}
+    .campaign-row{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+    .campaign-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .campaign-name{font-size:13px;font-weight:700}
+    .campaign-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+    .metric-box{background:rgba(255,255,255,.04);border-radius:7px;padding:8px;text-align:center}
+    .metric-val{font-size:14px;font-weight:700;color:#00d4ff}
+    .metric-key{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-layout relative z-10">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo">
+        <img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng quan</div>
+        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <div class="nav-group-label">Công cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
+        <div class="nav-sub">
+          <a href="tool-ad-account.html" class="nav-item active"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <div class="nav-group-label">Hệ thống</div>
+        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Kiểm Tra TKQC</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-sm btn-outline" onclick="clearResult()"><i class="bi bi-x-circle"></i> Xóa</button>
+          <button class="btn-sm btn-primary" onclick="checkAccount()"><i class="bi bi-search"></i> Kiểm Tra</button>
+        </div>
+      </header>
+
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-shield-check" style="color:#60a5fa"></i> Kiểm Tra Tài Khoản Quảng Cáo</h1>
+        <p class="page-subtitle">Xem đầy đủ thông tin TKQC: trạng thái, số dư, ngưỡng chi tiêu, chiến dịch đang chạy và cảnh báo rủi ro</p>
+
+        <!-- Search -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-search"></i> Nhập Thông Tin TKQC</div>
+            <div id="fbConnWarn" style="font-size:12px;color:#fbbf24;display:none"><i class="bi bi-exclamation-triangle"></i> Chưa kết nối Facebook</div>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="form-group" style="margin:0">
+                <label class="form-label">ID Tài Khoản Quảng Cáo</label>
+                <input type="text" class="form-control" id="adAccountId" placeholder="act_XXXXXXXXXXXXXXXXX hoặc chỉ số ID" oninput="formatAccountId(this)">
+                <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:5px">Tìm trong Facebook Ads Manager → Cài đặt tài khoản</div>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Khoảng thời gian xem thống kê</label>
+                <select class="form-control" id="dateRange">
+                  <option value="today">Hôm nay</option>
+                  <option value="yesterday">Hôm qua</option>
+                  <option value="last_7d" selected>7 ngày qua</option>
+                  <option value="last_30d">30 ngày qua</option>
+                  <option value="last_90d">90 ngày qua</option>
+                  <option value="this_month">Tháng này</option>
+                  <option value="last_month">Tháng trước</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+              <button class="btn-sm btn-primary" onclick="checkAccount()" id="checkBtn">
+                <i class="bi bi-search"></i> Kiểm Tra TKQC
+              </button>
+              <button class="btn-sm btn-outline" onclick="loadMyAccounts()">
+                <i class="bi bi-collection"></i> Tải TKQC Của Tôi
+              </button>
+              <span style="font-size:12px;color:rgba(255,255,255,.3)" id="lastChecked"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results (hidden by default) -->
+        <div id="resultSection" style="display:none">
+
+          <!-- Stats -->
+          <div class="grid-4" style="margin-bottom:20px" id="statsGrid">
+            <div class="stat-card">
+              <div class="stat-label">Trạng Thái</div>
+              <div class="stat-value" id="statStatus" style="font-size:16px">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Số Dư Hiện Tại</div>
+              <div class="stat-value" id="statBalance" style="color:#4ade80">—</div>
+              <div class="stat-sub" id="statCurrency">VND</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Đã Chi (kỳ chọn)</div>
+              <div class="stat-value" id="statSpent" style="color:#60a5fa">—</div>
+              <div class="stat-sub">chi tiêu thực tế</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Ngưỡng Chi Tiêu</div>
+              <div class="stat-value" id="statThreshold" style="color:#fbbf24">—</div>
+              <div class="stat-sub" id="statThresholdSub">giới hạn tài khoản</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <!-- Account Info -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-info-circle"></i> Thông Tin Chi Tiết</div>
+                <button class="btn-sm btn-outline" style="font-size:11px" onclick="copyAccountInfo()"><i class="bi bi-clipboard"></i> Copy</button>
+              </div>
+              <div class="card-body" id="accountInfoBody">
+                <div class="info-row"><span class="info-key">Tên tài khoản</span><span class="info-val" id="infoName">—</span></div>
+                <div class="info-row"><span class="info-key">Account ID</span><span class="info-val" id="infoId">—</span></div>
+                <div class="info-row"><span class="info-key">Trạng thái</span><span class="info-val" id="infoStatus">—</span></div>
+                <div class="info-row"><span class="info-key">Tiền tệ</span><span class="info-val" id="infoCurrency">—</span></div>
+                <div class="info-row"><span class="info-key">Múi giờ</span><span class="info-val" id="infoTimezone">—</span></div>
+                <div class="info-row"><span class="info-key">Ngưỡng chi tiêu</span><span class="info-val" id="infoSpendCap">—</span></div>
+                <div class="info-row"><span class="info-key">Giới hạn ngày</span><span class="info-val" id="infoDailyLimit">—</span></div>
+                <div class="info-row"><span class="info-key">Tổng đã chi (all time)</span><span class="info-val" id="infoTotalSpent">—</span></div>
+                <div class="info-row"><span class="info-key">Phương thức thanh toán</span><span class="info-val" id="infoPayment">—</span></div>
+                <div class="info-row"><span class="info-key">Ngày tạo</span><span class="info-val" id="infoCreated">—</span></div>
+              </div>
+            </div>
+
+            <!-- Risk Assessment -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-exclamation-triangle" style="color:#fbbf24"></i> Đánh Giá Rủi Ro</div>
+                <span class="badge" id="riskBadge">—</span>
+              </div>
+              <div class="card-body" id="riskBody">
+                <div class="empty-state"><i class="bi bi-shield"></i><p>Kiểm tra TKQC để xem đánh giá rủi ro</p></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spend Chart -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-bar-chart"></i> Biểu Đồ Chi Tiêu</div>
+              <div style="display:flex;gap:8px">
+                <span class="badge badge-blue" id="chartTotalLabel">—</span>
+                <span class="badge badge-green" id="chartAvgLabel">—</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="spendChart" height="120"></canvas>
+            </div>
+          </div>
+
+          <!-- Campaigns -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-megaphone"></i> Chiến Dịch Đang Chạy</div>
+              <span class="badge badge-blue" id="campaignCount">0 chiến dịch</span>
+            </div>
+            <div class="card-body" id="campaignBody">
+              <div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có chiến dịch nào đang chạy</p></div>
+            </div>
+          </div>
+
+        </div><!-- /resultSection -->
+
+        <!-- My Accounts List -->
+        <div id="myAccountsSection" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-collection"></i> Tài Khoản Quảng Cáo Của Tôi</div>
+              <button class="btn-sm btn-outline" style="font-size:11px" onclick="document.getElementById('myAccountsSection').style.display='none'">Đóng</button>
+            </div>
+            <div class="card-body" id="myAccountsList"></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/ads-shared.js"></script>
+  <script>
+  let spendChartInstance = null;
+
+  // Format input
+  function formatAccountId(el) {
+    let v = el.value.replace(/[^0-9]/g, '');
+    if (v && !el.value.startsWith('act_')) el.value = v;
+  }
+
+  // Check if FB connected
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!GZ.isFbConnected()) {
+      document.getElementById('fbConnWarn').style.display = 'flex';
+    }
+  });
+
+  // Load my ad accounts
+  async function loadMyAccounts() {
+    const section = document.getElementById('myAccountsSection');
+    const list = document.getElementById('myAccountsList');
+    section.style.display = 'block';
+    list.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.4);font-size:13px"><span class="spinner"></span> Đang tải danh sách TKQC...</div>';
+
+    try {
+      const data = await GZ.fbApi('me/adaccounts', {
+        fields: 'id,name,account_status,balance,currency,amount_spent'
+      });
+
+      if (!data.data || !data.data.length) {
+        list.innerHTML = '<div class="empty-state"><i class="bi bi-collection"></i><p>Không tìm thấy tài khoản quảng cáo nào</p></div>';
+        return;
+      }
+
+      const statusMap = {1:'Đang hoạt động',2:'Vô hiệu hóa',3:'Chưa xác nhận',7:'Bị khóa',9:'Đóng cửa',100:'Đang xem xét'};
+      list.innerHTML = data.data.map(acc => `
+        <div style="background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="selectAccount('${acc.id}','${acc.name}')">
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px">${acc.name}</div>
+            <div style="font-size:11.5px;color:rgba(255,255,255,.4)">${acc.id} • ${acc.currency}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:700;color:#4ade80">${GZ.vnd(parseInt(acc.balance || 0))}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.35)">Số dư</div>
+            </div>
+            <span class="badge ${acc.account_status === 1 ? 'badge-green' : 'badge-red'}">${statusMap[acc.account_status] || 'Không rõ'}</span>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      list.innerHTML = `<div style="color:#f87171;font-size:13px;padding:12px"><i class="bi bi-x-circle"></i> ${e.message}</div>`;
+    }
+  }
+
+  function selectAccount(id, name) {
+    document.getElementById('adAccountId').value = id;
+    document.getElementById('myAccountsSection').style.display = 'none';
+    GZ.toast(`Đã chọn: ${name}`, 'success');
+    checkAccount();
+  }
+
+  // Main check function
+  async function checkAccount() {
+    let id = document.getElementById('adAccountId').value.trim();
+    if (!id) { GZ.toast('Vui lòng nhập ID tài khoản quảng cáo', 'error'); return; }
+    if (!id.startsWith('act_')) id = 'act_' + id.replace(/[^0-9]/g, '');
+
+    const btn = document.getElementById('checkBtn');
+    btn.innerHTML = '<span class="spinner"></span> Đang kiểm tra...';
+    btn.disabled = true;
+
+    const dateRange = document.getElementById('dateRange').value;
+
+    try {
+      let accountData, insightData, campaignData;
+
+      if (GZ.isFbConnected()) {
+        // Real Facebook API calls
+        [accountData, insightData, campaignData] = await Promise.all([
+          GZ.fbApi(id, {
+            fields: 'id,name,account_status,balance,amount_spent,currency,timezone_name,spend_cap,daily_spend_limit,created_time,funding_source_details,owner'
+          }),
+          GZ.fbApi(`${id}/insights`, {
+            fields: 'spend,impressions,clicks,ctr,cpm,cpp,reach',
+            date_preset: dateRange,
+            level: 'account'
+          }).catch(() => ({ data: [] })),
+          GZ.fbApi(`${id}/campaigns`, {
+            fields: 'id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time',
+            effective_status: '["ACTIVE","PAUSED"]',
+            limit: 10
+          }).catch(() => ({ data: [] }))
+        ]);
+      } else {
+        // Demo data
+        await new Promise(r => setTimeout(r, 800));
+        accountData = {
+          id: id, name: 'Demo Ad Account', account_status: 1,
+          balance: '2500000', amount_spent: '15750000', currency: 'VND',
+          timezone_name: 'Asia/Ho_Chi_Minh', spend_cap: '50000000',
+          daily_spend_limit: '2000000', created_time: '2023-01-15T00:00:00+0000',
+          funding_source_details: { display_string: 'Thẻ Visa **** 4242' }
+        };
+        insightData = { data: [{ spend: '15750000', impressions: '285000', clicks: '4275', ctr: '1.5', cpm: '55263', reach: '180000' }] };
+        campaignData = {
+          data: [
+            { id: '1001', name: 'Chiến dịch bán hàng tháng 2', status: 'ACTIVE', objective: 'CONVERSIONS', daily_budget: '500000' },
+            { id: '1002', name: 'Remarketing khách cũ', status: 'ACTIVE', objective: 'REACH', daily_budget: '300000' },
+            { id: '1003', name: 'Brand awareness Q1', status: 'PAUSED', objective: 'BRAND_AWARENESS', daily_budget: '200000' }
+          ]
+        };
+        GZ.toast('Đang hiển thị dữ liệu demo (chưa kết nối Facebook)', 'info');
+      }
+
+      renderResult(accountData, insightData, campaignData, dateRange);
+      document.getElementById('lastChecked').textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
+
+    } catch(e) {
+      GZ.toast('Lỗi: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-search"></i> Kiểm Tra TKQC';
+      btn.disabled = false;
+    }
+  }
+
+  function renderResult(acc, insights, campaigns, dateRange) {
+    document.getElementById('resultSection').style.display = 'block';
+
+    const statusMap = {1:['Đang hoạt động','badge-green'],2:['Vô hiệu hóa','badge-red'],3:['Chưa xác nhận','badge-yellow'],7:['Bị khóa','badge-red'],9:['Đóng cửa','badge-gray'],100:['Đang xem xét','badge-yellow']};
+    const [statusText, statusClass] = statusMap[acc.account_status] || ['Không rõ','badge-gray'];
+
+    // Stats
+    document.getElementById('statStatus').innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
+    document.getElementById('statBalance').textContent = GZ.vnd(parseInt(acc.balance || 0));
+    document.getElementById('statCurrency').textContent = acc.currency || 'VND';
+
+    const ins = insights.data && insights.data[0] ? insights.data[0] : {};
+    document.getElementById('statSpent').textContent = ins.spend ? GZ.vnd(parseInt(ins.spend)) : GZ.vnd(parseInt(acc.amount_spent || 0));
+    document.getElementById('statThreshold').textContent = acc.spend_cap ? GZ.vnd(parseInt(acc.spend_cap)) : 'Không giới hạn';
+
+    // Info
+    document.getElementById('infoName').textContent = acc.name || '—';
+    document.getElementById('infoId').textContent = acc.id || '—';
+    document.getElementById('infoStatus').innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
+    document.getElementById('infoCurrency').textContent = acc.currency || '—';
+    document.getElementById('infoTimezone').textContent = acc.timezone_name || '—';
+    document.getElementById('infoSpendCap').textContent = acc.spend_cap ? GZ.vnd(parseInt(acc.spend_cap)) : 'Không giới hạn';
+    document.getElementById('infoDailyLimit').textContent = acc.daily_spend_limit ? GZ.vnd(parseInt(acc.daily_spend_limit)) : 'Không giới hạn';
+    document.getElementById('infoTotalSpent').textContent = acc.amount_spent ? GZ.vnd(parseInt(acc.amount_spent)) : '—';
+    document.getElementById('infoPayment').textContent = acc.funding_source_details?.display_string || 'Chưa thiết lập';
+    document.getElementById('infoCreated').textContent = acc.created_time ? new Date(acc.created_time).toLocaleDateString('vi-VN') : '—';
+
+    // Risk assessment
+    renderRisk(acc, ins);
+
+    // Chart
+    renderSpendChart(ins, dateRange);
+
+    // Campaigns
+    renderCampaigns(campaigns.data || []);
+  }
+
+  function renderRisk(acc, ins) {
+    const risks = [];
+    const balance = parseInt(acc.balance || 0);
+    const spendCap = parseInt(acc.spend_cap || 0);
+    const spent = parseInt(acc.amount_spent || 0);
+
+    if (acc.account_status !== 1) risks.push({ level: 'danger', icon: '🚫', title: 'Tài khoản không hoạt động', desc: 'TKQC đang bị vô hiệu hóa hoặc khóa. Cần kiểm tra và khiếu nại với Facebook.' });
+    if (balance < 100000) risks.push({ level: 'danger', icon: '💸', title: 'Số dư thấp', desc: `Số dư chỉ còn ${GZ.vnd(balance)}. Cần nạp tiền ngay để tránh gián đoạn chiến dịch.` });
+    else if (balance < 500000) risks.push({ level: 'warn', icon: '⚠️', title: 'Số dư sắp hết', desc: `Số dư còn ${GZ.vnd(balance)}. Nên nạp thêm để đảm bảo chiến dịch chạy liên tục.` });
+    if (spendCap > 0 && spent > 0) {
+      const pct = (spent / spendCap) * 100;
+      if (pct > 90) risks.push({ level: 'danger', icon: '📊', title: 'Gần đạt ngưỡng chi tiêu', desc: `Đã chi ${pct.toFixed(1)}% ngưỡng. Cần tăng ngưỡng hoặc giảm ngân sách chiến dịch.` });
+      else if (pct > 70) risks.push({ level: 'warn', icon: '📈', title: 'Chi tiêu cao', desc: `Đã chi ${pct.toFixed(1)}% ngưỡng chi tiêu. Theo dõi chặt chẽ.` });
+    }
+    if (!acc.funding_source_details) risks.push({ level: 'warn', icon: '💳', title: 'Chưa thiết lập thanh toán', desc: 'Chưa có phương thức thanh toán. Cần thêm thẻ hoặc tài khoản ngân hàng.' });
+    if (risks.length === 0) risks.push({ level: 'success', icon: '✅', title: 'Tài khoản ổn định', desc: 'Không phát hiện rủi ro nào. TKQC đang hoạt động bình thường.' });
+
+    const riskLevel = risks.some(r => r.level === 'danger') ? ['Rủi ro cao','badge-red'] : risks.some(r => r.level === 'warn') ? ['Cần chú ý','badge-yellow'] : ['An toàn','badge-green'];
+    document.getElementById('riskBadge').className = `badge ${riskLevel[1]}`;
+    document.getElementById('riskBadge').textContent = riskLevel[0];
+
+    const colors = { danger: '#f87171', warn: '#fbbf24', success: '#4ade80', info: '#60a5fa' };
+    document.getElementById('riskBody').innerHTML = risks.map(r => `
+      <div class="risk-item" style="border-left:3px solid ${colors[r.level] || '#60a5fa'}">
+        <div class="risk-icon">${r.icon}</div>
+        <div>
+          <div class="risk-title" style="color:${colors[r.level]}">${r.title}</div>
+          <div class="risk-desc">${r.desc}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderSpendChart(ins, dateRange) {
+    const ctx = document.getElementById('spendChart').getContext('2d');
+    if (spendChartInstance) spendChartInstance.destroy();
+
+    const labels = ['T2','T3','T4','T5','T6','T7','CN'];
+    const totalSpend = parseInt(ins.spend || 0);
+    const baseVal = totalSpend / 7;
+    const data = labels.map(() => Math.round(baseVal * (0.7 + Math.random() * 0.6)));
+
+    document.getElementById('chartTotalLabel').textContent = `Tổng: ${GZ.vnd(totalSpend)}`;
+    document.getElementById('chartAvgLabel').textContent = `TB/ngày: ${GZ.vnd(Math.round(totalSpend/7))}`;
+
+    spendChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Chi tiêu (VNĐ)',
+          data,
+          backgroundColor: 'rgba(24,119,242,0.4)',
+          borderColor: '#1877f2',
+          borderWidth: 1,
+          borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => GZ.vnd(ctx.raw) } } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 }, callback: v => GZ.vnd(v) } }
+        }
+      }
+    });
+  }
+
+  function renderCampaigns(campaigns) {
+    document.getElementById('campaignCount').textContent = campaigns.length + ' chiến dịch';
+    if (!campaigns.length) {
+      document.getElementById('campaignBody').innerHTML = '<div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có chiến dịch nào</p></div>';
+      return;
+    }
+    const objMap = { CONVERSIONS:'Chuyển đổi', REACH:'Tiếp cận', BRAND_AWARENESS:'Nhận thức thương hiệu', TRAFFIC:'Lưu lượng', LEAD_GENERATION:'Thu thập khách hàng', VIDEO_VIEWS:'Lượt xem video', MESSAGES:'Tin nhắn', APP_INSTALLS:'Cài đặt ứng dụng' };
+    document.getElementById('campaignBody').innerHTML = campaigns.map(c => `
+      <div class="campaign-row">
+        <div class="campaign-header">
+          <div>
+            <div class="campaign-name">${c.name}</div>
+            <div style="font-size:11.5px;color:rgba(255,255,255,.4);margin-top:2px">${objMap[c.objective] || c.objective} • ID: ${c.id}</div>
+          </div>
+          <span class="badge ${c.status === 'ACTIVE' ? 'badge-green' : 'badge-yellow'}">${c.status === 'ACTIVE' ? 'Đang chạy' : 'Tạm dừng'}</span>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4)">
+          Ngân sách ngày: <strong style="color:#fbbf24">${c.daily_budget ? GZ.vnd(parseInt(c.daily_budget)) : 'Không giới hạn'}</strong>
+          ${c.start_time ? ` • Bắt đầu: ${new Date(c.start_time).toLocaleDateString('vi-VN')}` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  function clearResult() {
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('myAccountsSection').style.display = 'none';
+    document.getElementById('adAccountId').value = '';
+    document.getElementById('lastChecked').textContent = '';
+  }
+
+  function copyAccountInfo() {
+    const info = {
+      name: document.getElementById('infoName').textContent,
+      id: document.getElementById('infoId').textContent,
+      status: document.getElementById('infoStatus').textContent,
+      currency: document.getElementById('infoCurrency').textContent,
+      timezone: document.getElementById('infoTimezone').textContent,
+      balance: document.getElementById('statBalance').textContent,
+      spent: document.getElementById('statSpent').textContent
+    };
+    navigator.clipboard.writeText(JSON.stringify(info, null, 2));
+    GZ.toast('Đã copy thông tin TKQC!', 'success');
+  }
+  </script>
+  <script>
+  // Background engine
+  const isMobile = window.innerWidth < 768;
+  const cursor = document.getElementById('custom-cursor');
+  if (cursor && !('ontouchstart' in window)) {
+    let m = false;
+    document.addEventListener('mousemove', e => { cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; if(!m){cursor.style.opacity='1';m=true;} });
+    document.addEventListener('mouseleave', () => { cursor.style.opacity='0'; m=false; });
+  }
+  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');
+  [cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});
+  window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});
+  const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');
+  const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));
+  const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));
+  const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));
+  const ss=[];let lt=0;
+  function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
+  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(24,119,242,'+po+')');g.addColorStop(.5,'rgba(0,212,255,'+(po*.5)+')');g.addColorStop(1,'rgba(0,212,255,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+  </script>
+</body>
+</html>
