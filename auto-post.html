@@ -1103,8 +1103,8 @@
     jwtToken:  localStorage.getItem('gz_jwt') || '',
     username:  localStorage.getItem('gz_username') || '',
     loggedIn:  !!localStorage.getItem('gz_jwt'),
-    connected: false,
-    fbUser:    null,
+    connected: !!localStorage.getItem('gz_connected'),
+    fbUser:    JSON.parse(localStorage.getItem('gz_fb_user') || 'null'),
     pages:     JSON.parse(localStorage.getItem('gz_pages') || '[]'),
     page:      JSON.parse(localStorage.getItem('gz_page') || 'null'),       // page đầu tiên được chọn (backward compat)
     selectedPages: JSON.parse(localStorage.getItem('gz_selected_pages') || '[]'), // danh sách các page được chọn
@@ -1195,6 +1195,8 @@
             S.tokenDaysLeft = data.daysLeft;
             S.tokenExpiresAt = data.expiresAt;
             S.pages = data.pages || [];
+            localStorage.setItem('gz_connected', '1');
+            localStorage.setItem('gz_fb_user', JSON.stringify(data.fbUser || null));
             localStorage.setItem('gz_pages', JSON.stringify(S.pages));
             renderPageSelect(S.pages);
             updateConnUI();
@@ -1320,6 +1322,9 @@
               S.pages = status.pages || [];
               S.tokenExpiresAt = status.expiresAt;
               S.tokenDaysLeft = status.daysLeft;
+              localStorage.setItem('gz_connected', '1');
+              localStorage.setItem('gz_fb_user', JSON.stringify(status.fbUser || null));
+              localStorage.setItem('gz_pages', JSON.stringify(S.pages));
               renderPageSelect(S.pages);
               updateConnUI();
               updateFBTabContent();
@@ -1384,6 +1389,8 @@
       S.selectedPages = [];
       S.tokenDaysLeft = null;
       S.tokenExpiresAt = null;
+      localStorage.removeItem('gz_connected');
+      localStorage.removeItem('gz_fb_user');
       localStorage.removeItem('gz_pages');
       localStorage.removeItem('gz_page');
       localStorage.removeItem('gz_selected_pages');
