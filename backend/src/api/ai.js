@@ -23,7 +23,7 @@ async function callOpenAI(systemPrompt, userPrompt, maxTokens = 2000, jsonMode =
 
   const r = await axios.post(`${baseUrl}/chat/completions`, body, {
     headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
-    timeout: 90000
+    timeout: 25000
   });
   return r.data.choices[0].message.content;
 }
@@ -379,7 +379,7 @@ ${JSON.stringify(metrics, null, 2)}
 
 QUAN TRỌNG: Phân tích phải THỰC TẾ, THẲNG THẮN, KHÔNG CHUNG CHUNG. Nếu chiến dịch đang lỗ, hãy nói thẳng. Mỗi nhận xét phải có số liệu chứng minh.`;
 
-    const raw = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, userPrompt, 4000, true);
+    const raw = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, userPrompt, 3000, true);
     let analysis;
     try {
       analysis = JSON.parse(raw);
@@ -464,13 +464,179 @@ ${pageContent}
 
 QUAN TRỌNG: Phân tích phải dựa trên bằng chứng từ nội dung HTML. Nếu không có dữ liệu, ghi rõ thay vì bịa đặt.`;
 
-    const raw = await callOpenAI(COMPETITOR_SYSTEM_PROMPT_V3, userPrompt, 4000, true);
+    const raw = await callOpenAI(COMPETITOR_SYSTEM_PROMPT_V3, userPrompt, 3000, true);
     let analysis;
     try { analysis = JSON.parse(raw); } catch { analysis = { raw }; }
     res.json({ success: true, analysis, url: competitorUrl });
   } catch (e) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     console.error('[AI Error]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// ─── Endpoint: Kiểm tra vi phạm chính sách Facebook Ads ─────────────────────
+const FB_POLICY_KNOWLEDGE = `
+## DANH SÁCH VI PHẠM CHÍNH SÁCH FACEBOOK ADS
+
+### NỘI DUNG BỊ CẤM HOÀN TOÀN (CRITICAL - bị từ chối ngay, có thể khóa tài khoản):
+- Khai thác tình dục trẻ em, nội dung nguy hiểm cho trẻ em
+- Ma túy, chất kích thích bất hợp pháp (cần sa, cocaine, heroin, MDMA, thuốc lắc)
+- Vũ khí: súng, đạn, chất nổ, vũ khí cải tiến
+- Sơ đồ Ponzi, đa cấp lừa đảo, cờ bạc trái phép
+- Phần mềm gián điệp, hack, crack, bypass bảo mật
+- Bán followers/likes/views giả, tài khoản mạng xã hội giả
+- Hàng giả, hàng nhái thương hiệu nổi tiếng
+- Nội dung khủng bố, tổ chức nguy hiểm
+- Hình ảnh khỏa thân, nội dung tình dục, khiêu dâm
+- Hình ảnh bạo lực, máu me, thi thể
+- Sử dụng logo/thương hiệu không có phép (vi phạm bản quyền)
+
+### NỘI DUNG HẠN CHẾ CAO (HIGH - rất có thể bị từ chối):
+- Tuyên bố chữa bệnh không có bằng chứng: "chữa khỏi", "điều trị", "khỏi bệnh", "tiêu diệt vi khuẩn"
+- Hình ảnh trước/sau (before & after) trong lĩnh vực sức khỏe, làm đẹp, giảm cân
+- Cam kết lợi nhuận đầu tư: "lợi nhuận đảm bảo", "không rủi ro", "làm giàu nhanh"
+- Quảng cáo thuốc kê đơn, dược phẩm không được phê duyệt
+- Nội dung phân biệt đối xử: chủng tộc, tôn giáo, giới tính, xu hướng tình dục
+- Ngôn ngữ thù địch, kỳ thị
+- Hình ảnh gợi cảm quá mức (ngực, mông lộ nhiều)
+- Screenshot giao diện Facebook/Instagram (vi phạm brand)
+- Giả mạo người nổi tiếng không có phép
+
+### NỘI DUNG HẠN CHẾ TRUNG BÌNH (MEDIUM - vùng xám, nên chỉnh sửa):
+- Tuyên bố giảm cân không thực tế: "giảm X kg trong Y ngày", "không cần tập thể dục"
+- Hình ảnh cơ thể gầy/béo để quảng cáo giảm cân gây cảm giác tiêu cực
+- "100% tự nhiên", "không tác dụng phụ" - cần chứng minh
+- "Được bác sĩ khuyên dùng" - cần xác minh
+- Hình ảnh tiền mặt, séc để quảng cáo tài chính
+- Hình ảnh thuốc lá, rượu bia (cần điều kiện)
+- Nội dung clickbait quá mức, giật gân
+- Ám chỉ tình trạng sức khỏe/đặc điểm cá nhân của người xem: "Bạn đang béo...", "Nếu bạn bị tiểu đường..."
+- Hình ảnh có mũi tên, vòng tròn highlight giả tạo
+- Hình ảnh có nút play giả, khung giả giống giao diện Facebook
+- Hình ảnh quá nhiều chữ (>20% diện tích)
+
+### CẢNH BÁO NHẸ (LOW - không vi phạm nhưng ảnh hưởng hiệu suất):
+- Viết hoa toàn bộ (ALL CAPS) quá nhiều
+- Quá nhiều dấu chấm than (!!!!) hoặc ký tự đặc biệt spam (★★★, $$$$)
+- Lỗi chính tả cố ý để tránh filter
+- Hình ảnh bị mờ, vỡ pixel, chất lượng thấp
+- Nội dung quảng cáo không khớp với trang đích
+- Thiếu CTA rõ ràng
+
+### CÁC NGÀNH ĐẶC BIỆT TẠI VIỆT NAM:
+- Thực phẩm chức năng: Không được dùng từ "chữa bệnh", "điều trị", "hỗ trợ điều trị"
+- Mỹ phẩm: Không được tuyên bố hiệu quả y tế, không dùng hình ảnh trước/sau
+- Bất động sản: Không được hứa hẹn lợi nhuận đầu tư cụ thể
+- Giáo dục: Không được cam kết đỗ đại học, đảm bảo việc làm
+- Tài chính: Không được quảng cáo lãi suất cao bất thường, cho vay nặng lãi
+- Thuốc: Chỉ được quảng cáo OTC (không kê đơn), phải có số đăng ký
+`;
+
+const FB_POLICY_CHECKER_SYSTEM_PROMPT = `Bạn là chuyên gia kiểm duyệt quảng cáo Facebook với 10 năm kinh nghiệm, cực kỳ am hiểu chính sách Meta. Nhiệm vụ là phân tích nội dung quảng cáo, xác định vi phạm tiềm ẩn, đánh giá mức độ rủi ro và đưa ra đề xuất chỉnh sửa CỰC KỲ CỤ THỂ.
+
+KNOWLEDGE BASE:
+${FB_POLICY_KNOWLEDGE}
+
+YÊU CẦU PHÂN TÍCH:
+1. Phân tích TỪNG TỪ trong nội dung văn bản - không bỏ sót bất kỳ từ ngữ nhạy cảm nào
+2. Nếu có hình ảnh, phân tích kỹ: khỏa thân, bạo lực, trước/sau, chất lượng hình ảnh, chữ trong ảnh, logo thương hiệu khác
+3. Đánh giá theo ngành hàng cụ thể - mỗi ngành có quy tắc riêng
+4. Mỗi vi phạm phải có: loại vi phạm, mức độ (CRITICAL/HIGH/MEDIUM/LOW), trích dẫn phần vi phạm, lý do vi phạm, và đề xuất chỉnh sửa CỤ THỂ (không chung chung)
+5. Điểm an toàn: 90-100 (rất an toàn), 70-89 (an toàn), 50-69 (trung bình), 30-49 (rủi ro cao), 0-29 (sẽ bị từ chối)
+
+TRẢ VỀ JSON với cấu trúc:
+{
+  "overall_score": <0-100>,
+  "overall_verdict": "<Rất an toàn|An toàn|Trung bình|Rủi ro cao|Sẽ bị từ chối>",
+  "overall_summary": "<Tóm tắt 2-3 câu về tình trạng tổng thể>",
+  "text_analysis": {
+    "score": <0-100>,
+    "violations": [
+      {
+        "type": "<Loại vi phạm>",
+        "severity": "<CRITICAL|HIGH|MEDIUM|LOW>",
+        "excerpt": "<Trích dẫn phần vi phạm>",
+        "reason": "<Lý do vi phạm theo chính sách>",
+        "recommendation": "<Đề xuất chỉnh sửa cụ thể, ví dụ: thay 'X' bằng 'Y'>"
+      }
+    ]
+  },
+  "image_analysis": {
+    "score": <0-100>,
+    "has_image": <true|false>,
+    "violations": [
+      {
+        "type": "<Loại vi phạm>",
+        "severity": "<CRITICAL|HIGH|MEDIUM|LOW>",
+        "details": "<Mô tả chi tiết vi phạm trong hình ảnh>",
+        "recommendation": "<Đề xuất chỉnh sửa cụ thể>"
+      }
+    ]
+  },
+  "industry_specific": {
+    "industry": "<Ngành hàng>",
+    "special_rules": "<Quy tắc đặc biệt của ngành này>",
+    "violations": []
+  },
+  "recommendations": [
+    {
+      "priority": "<HIGH|MEDIUM|LOW>",
+      "action": "<Hành động cụ thể cần làm>",
+      "impact": "<Tác động nếu không sửa>"
+    }
+  ]
+}`;
+
+router.post('/check-policy', async (req, res) => {
+  try {
+    const { text, image_url, industry, landing_page_url, notes } = req.body;
+    if (!text && !image_url) {
+      return res.status(400).json({ error: 'Cần cung cấp ít nhất nội dung văn bản hoặc URL hình ảnh' });
+    }
+    let userPrompt = `Hãy kiểm tra vi phạm chính sách Facebook Ads cho quảng cáo sau:\n\n`;
+    if (industry) userPrompt += `NGÀNH HÀNG: ${industry}\n`;
+    if (text) userPrompt += `\nNỘI DUNG VĂN BẢN:\n"""\n${text}\n"""\n`;
+    if (image_url) userPrompt += `\nURL HÌNH ẢNH: ${image_url}\n(Hãy phân tích hình ảnh này nếu bạn có khả năng nhìn hình ảnh)`;
+    if (landing_page_url) userPrompt += `\nURL TRANG ĐÍCH: ${landing_page_url}`;
+    if (notes) userPrompt += `\nGHI CHÚ THÊM: ${notes}`;
+    userPrompt += `\n\nHãy phân tích cực kỳ chi tiết, không bỏ sót bất kỳ vi phạm tiềm ẩn nào. Trả về JSON.`;
+
+    let raw;
+    if (image_url) {
+      const openaiKey = process.env.OPENAI_API_KEY;
+      const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+      const body = {
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: FB_POLICY_CHECKER_SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: userPrompt },
+              { type: 'image_url', image_url: { url: image_url, detail: 'high' } }
+            ]
+          }
+        ],
+        max_tokens: 3000,
+        temperature: 0.2,
+        response_format: { type: 'json_object' }
+      };
+      const r = await axios.post(`${baseUrl}/chat/completions`, body, {
+        headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+        timeout: 30000
+      });
+      raw = r.data.choices[0].message.content;
+    } else {
+      raw = await callOpenAI(FB_POLICY_CHECKER_SYSTEM_PROMPT, userPrompt, 3000, true);
+    }
+    let analysis;
+    try { analysis = JSON.parse(raw); } catch { analysis = { raw, parse_error: true }; }
+    res.json({ success: true, analysis });
+  } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.error('[Policy Check Error]', e.message);
     res.status(500).json({ error: e.message });
   }
 });

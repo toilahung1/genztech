@@ -81,6 +81,78 @@
     .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
     .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
     @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    /* AI Checker styles */
+    .ai-checker-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:900px){.ai-checker-grid{grid-template-columns:1fr}}
+    .form-label-ai{display:block;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+    .form-label-ai span{font-size:11px;font-weight:400;color:rgba(255,255,255,.25);text-transform:none;letter-spacing:0;margin-left:6px}
+    .form-ctrl{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;color:#fff;font-size:13px;outline:none;transition:border .2s;font-family:inherit;box-sizing:border-box}
+    .form-ctrl:focus{border-color:#38bdf8}
+    .form-ctrl::placeholder{color:rgba(255,255,255,.2)}
+    textarea.form-ctrl{resize:vertical;min-height:140px;line-height:1.6}
+    select.form-ctrl option{background:#1a1f3a;color:#fff}
+    .upload-zone{border:2px dashed rgba(255,255,255,.12);border-radius:10px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-top:8px}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:#38bdf8;background:rgba(56,189,248,.04)}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .upload-zone i{font-size:28px;color:rgba(255,255,255,.2);display:block;margin-bottom:6px}
+    .upload-zone p{font-size:12.5px;color:rgba(255,255,255,.35)}
+    .img-prev{width:100%;max-height:220px;object-fit:contain;border-radius:8px;margin-top:8px;display:none}
+    /* Score */
+    .ai-score-wrap{text-align:center;margin-bottom:16px}
+    .ai-score-ring{width:100px;height:100px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;margin:0 auto 10px;border:4px solid}
+    .ai-score-ring .snum{font-size:30px;line-height:1}
+    .ai-score-ring .slbl{font-size:10px;opacity:.6;margin-top:2px}
+    .ring-safe{border-color:#4ade80;color:#4ade80;background:rgba(74,222,128,.08)}
+    .ring-ok{border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,.08)}
+    .ring-warn{border-color:#fbbf24;color:#fbbf24;background:rgba(251,191,36,.08)}
+    .ring-danger{border-color:#f87171;color:#f87171;background:rgba(248,113,113,.08)}
+    .verdict-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:12.5px;font-weight:700;margin-bottom:10px}
+    .pill-safe{background:rgba(74,222,128,.12);color:#4ade80}
+    .pill-ok{background:rgba(56,189,248,.12);color:#38bdf8}
+    .pill-warn{background:rgba(251,191,36,.12);color:#fbbf24}
+    .pill-danger{background:rgba(248,113,113,.12);color:#f87171}
+    /* Violation */
+    .vio-item{background:rgba(0,0,0,.2);border-radius:9px;padding:12px 14px;margin-bottom:8px;border-left:3px solid}
+    .vio-critical{border-left-color:#ef4444}
+    .vio-high{border-left-color:#f97316}
+    .vio-medium{border-left-color:#eab308}
+    .vio-low{border-left-color:#6b7280}
+    .vio-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .sev-tag{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+    .tag-critical{background:rgba(239,68,68,.2);color:#f87171}
+    .tag-high{background:rgba(249,115,22,.2);color:#fb923c}
+    .tag-medium{background:rgba(234,179,8,.2);color:#fbbf24}
+    .tag-low{background:rgba(107,114,128,.2);color:#9ca3af}
+    .vio-type{font-size:13px;font-weight:700;color:#fff}
+    .vio-excerpt{font-size:12px;color:rgba(255,255,255,.45);background:rgba(255,255,255,.04);padding:5px 9px;border-radius:5px;margin-bottom:6px;font-style:italic}
+    .vio-reason{font-size:12.5px;color:rgba(255,255,255,.55);margin-bottom:6px;line-height:1.5}
+    .vio-fix{font-size:12.5px;color:#4ade80;display:flex;align-items:flex-start;gap:5px;line-height:1.5}
+    /* Rec */
+    .rec-row{background:rgba(0,0,0,.2);border-radius:9px;padding:12px 14px;margin-bottom:8px;display:flex;gap:10px}
+    .rec-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+    .rec-high .rec-ico{background:rgba(248,113,113,.12);color:#f87171}
+    .rec-medium .rec-ico{background:rgba(251,191,36,.12);color:#fbbf24}
+    .rec-low .rec-ico{background:rgba(107,114,128,.12);color:#9ca3af}
+    .rec-act{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px}
+    .rec-imp{font-size:12px;color:rgba(255,255,255,.4);line-height:1.5}
+    /* Bars */
+    .sbar-wrap{margin-bottom:10px}
+    .sbar-lbl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+    .sbar-track{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+    .sbar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+    /* Section header */
+    .sec-hdr{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,.05)}
+    /* No vio */
+    .no-vio{display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.12);border-radius:8px;color:#4ade80;font-size:12.5px}
+    /* Analyzing */
+    .ai-analyzing{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:14px;text-align:center}
+    .ai-analyzing.show{display:flex}
+    .ai-spin{width:50px;height:50px;border:4px solid rgba(56,189,248,.15);border-top-color:#38bdf8;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .ai-empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,.2)}
+    .ai-empty i{font-size:42px;display:block;margin-bottom:10px;opacity:.25}
+    .hint-text{font-size:11.5px;color:rgba(255,255,255,.25);margin-top:4px;line-height:1.5}
   </style>
 </head>
 <body class="bg-space-black text-white antialiased overflow-x-hidden">
@@ -132,15 +204,120 @@
         <h1 class="page-title"><i class="bi bi-journal-text" style="color:#38bdf8"></i> Chính Sách Quảng Cáo Facebook</h1>
         <p class="page-subtitle">Tổng hợp và cập nhật các chính sách quan trọng nhất. Kiểm tra nội dung quảng cáo trước khi chạy để tránh vi phạm</p>
 
-        <!-- Content checker -->
+        <!-- AI Content checker -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title"><i class="bi bi-shield-check"></i> Kiểm Tra Nội Dung Quảng Cáo</div>
-            <button class="btn-sm btn-primary" onclick="checkContent()"><i class="bi bi-search"></i> Kiểm Tra</button>
+            <div class="card-title"><i class="bi bi-shield-check" style="color:#38bdf8"></i> Kiểm Tra Vi Phạm Chính Sách (AI)</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-sm btn-outline" onclick="loadSampleAd()"><i class="bi bi-lightning"></i> Mẫu</button>
+              <button class="btn-sm btn-primary" onclick="checkPolicyAI()"><i class="bi bi-cpu"></i> Kiểm Tra AI</button>
+            </div>
           </div>
           <div class="card-body">
-            <textarea class="checker-area" id="contentToCheck" placeholder="Dán nội dung quảng cáo vào đây để kiểm tra vi phạm chính sách...&#10;&#10;Ví dụ: Giảm cân 10kg trong 7 ngày! Cam kết 100% hiệu quả, không hiệu quả hoàn tiền!"></textarea>
-            <div class="check-result" id="checkResult"></div>
+            <div class="ai-checker-grid">
+              <!-- Form nhập -->
+              <div>
+                <div style="margin-bottom:14px">
+                  <label class="form-label-ai">Ngành hàng <span>Chọn ngành để AI phân tích đúng quy tắc riêng</span></label>
+                  <select class="form-ctrl" id="aiIndustry">
+                    <option value="">-- Chọn ngành hàng --</option>
+                    <option value="Thời trang & Phụ kiện">Thời trang & Phụ kiện</option>
+                    <option value="Sức khỏe & Làm đẹp">Sức khỏe & Làm đẹp</option>
+                    <option value="Thực phẩm chức năng">Thực phẩm chức năng</option>
+                    <option value="Mỹ phẩm">Mỹ phẩm</option>
+                    <option value="Ẩm thực & Đồ uống">Ẩm thực & Đồ uống</option>
+                    <option value="Bất động sản">Bất động sản</option>
+                    <option value="Giáo dục & Đào tạo">Giáo dục & Đào tạo</option>
+                    <option value="Tài chính & Đầu tư">Tài chính & Đầu tư</option>
+                    <option value="Công nghệ & Phần mềm">Công nghệ & Phần mềm</option>
+                    <option value="Thể thao & Giải trí">Thể thao & Giải trí</option>
+                    <option value="Dịch vụ khác">Dịch vụ khác</option>
+                  </select>
+                </div>
+                <div style="margin-bottom:14px">
+                  <label class="form-label-ai">Nội dung quảng cáo <span>Dán toàn bộ text: tiêu đề, mô tả, CTA, hashtag</span></label>
+                  <textarea class="form-ctrl" id="aiAdText" placeholder="Ví dụ:&#10;🔥 GIẢM CÂN SIÊU TỐC - Chỉ 7 ngày giảm 5kg!&#10;✅ 100% tự nhiên, không tác dụng phụ&#10;✅ Được bác sĩ khuyên dùng&#10;📞 Liên hệ ngay để được tư vấn MIỄN PHÍ"></textarea>
+                  <div class="hint-text">Càng nhiều nội dung → AI phân tích càng chính xác</div>
+                </div>
+                <div style="margin-bottom:14px">
+                  <label class="form-label-ai">URL hình ảnh <span>Tùy chọn — để AI kiểm tra hình ảnh</span></label>
+                  <input type="text" class="form-ctrl" id="aiImageUrl" placeholder="https://example.com/image.jpg" oninput="onAiImageUrl()">
+                  <div class="upload-zone" id="aiUploadZone">
+                    <input type="file" accept="image/*" onchange="onAiFileSelect(event)">
+                    <i class="bi bi-cloud-upload"></i>
+                    <p>Kéo thả hoặc click để tải ảnh lên</p>
+                  </div>
+                  <img id="aiImgPreview" class="img-prev" alt="Preview">
+                </div>
+                <div style="margin-bottom:14px">
+                  <label class="form-label-ai">Ghi chú thêm <span>Tùy chọn</span></label>
+                  <textarea class="form-ctrl" id="aiNotes" placeholder="Ví dụ: Sản phẩm có giấy phép ATTP số..., Đây là retargeting..." style="min-height:60px"></textarea>
+                </div>
+                <button class="btn-sm btn-primary" style="width:100%;padding:10px;justify-content:center" onclick="checkPolicyAI()">
+                  <i class="bi bi-cpu"></i> Kiểm Tra Vi Phạm Bằng AI
+                </button>
+              </div>
+              <!-- Kết quả AI -->
+              <div id="aiResultArea">
+                <div id="aiDefaultState" class="ai-empty">
+                  <i class="bi bi-shield-check"></i>
+                  <p style="font-size:13.5px;color:rgba(255,255,255,.35)">Nhập nội dung và nhấn<br><strong style="color:rgba(255,255,255,.5)">Kiểm Tra AI</strong></p>
+                  <p style="font-size:12px;margin-top:6px">AI phân tích từng từ ngữ và hình ảnh<br>theo chính sách Meta mới nhất</p>
+                </div>
+                <div id="aiAnalyzingState" class="ai-analyzing">
+                  <div class="ai-spin"></div>
+                  <div>
+                    <div style="font-size:14px;font-weight:700;margin-bottom:5px">Đang phân tích...</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.35)" id="aiStep">AI đang đọc nội dung</div>
+                  </div>
+                </div>
+                <div id="aiResultContent" style="display:none">
+                  <div class="ai-score-wrap">
+                    <div class="ai-score-ring" id="aiScoreRing">
+                      <span class="snum" id="aiScoreNum">--</span>
+                      <span class="slbl">/ 100</span>
+                    </div>
+                    <div class="verdict-pill" id="aiVerdictPill">--</div>
+                    <p id="aiSummary" style="font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.6;text-align:left"></p>
+                  </div>
+                  <div style="margin-bottom:14px">
+                    <div class="sbar-wrap">
+                      <div class="sbar-lbl">
+                        <span style="color:rgba(255,255,255,.45)"><i class="bi bi-type"></i> Văn bản</span>
+                        <span id="aiTextScore" style="font-weight:700"></span>
+                      </div>
+                      <div class="sbar-track"><div class="sbar-fill" id="aiTextBar" style="width:0%"></div></div>
+                    </div>
+                    <div class="sbar-wrap">
+                      <div class="sbar-lbl">
+                        <span style="color:rgba(255,255,255,.45)"><i class="bi bi-image"></i> Hình ảnh</span>
+                        <span id="aiImgScore" style="font-weight:700"></span>
+                      </div>
+                      <div class="sbar-track"><div class="sbar-fill" id="aiImgBar" style="width:0%"></div></div>
+                    </div>
+                  </div>
+                  <div id="aiTextVioSection">
+                    <div class="sec-hdr"><i class="bi bi-type"></i> Vi Phạm Văn Bản</div>
+                    <div id="aiTextVio"></div>
+                  </div>
+                  <div id="aiImgVioSection">
+                    <div class="sec-hdr"><i class="bi bi-image"></i> Vi Phạm Hình Ảnh</div>
+                    <div id="aiImgVio"></div>
+                  </div>
+                  <div id="aiIndSection">
+                    <div class="sec-hdr"><i class="bi bi-building"></i> Quy Tắc Ngành Đặc Biệt</div>
+                    <div id="aiIndVio"></div>
+                  </div>
+                  <div>
+                    <div class="sec-hdr"><i class="bi bi-lightbulb"></i> Đề Xuất Hành Động</div>
+                    <div id="aiRecs"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:14px">
+                    <button class="btn-sm btn-outline" style="flex:1" onclick="copyAiReport()"><i class="bi bi-clipboard"></i> Copy báo cáo</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -292,46 +469,159 @@
     { pattern: /giao hàng.*miễn phí|free ship/i, type: 'pass', label: 'Chính sách giao hàng rõ ràng', detail: 'Thông tin giao hàng minh bạch được đánh giá cao' },
   ];
 
-  function checkContent() {
-    const text = document.getElementById('contentToCheck').value.trim();
-    if (!text) { GZ.toast('Vui lòng nhập nội dung cần kiểm tra', 'error'); return; }
+  const AI_BACKEND = 'https://genztech-production.up.railway.app';
+  let aiUploadedImg = null;
 
-    const results = [];
-    let hasViolation = false;
-
-    VIOLATIONS.forEach(v => {
-      if (v.pattern.test(text)) {
-        results.push(v);
-        if (v.type === 'fail') hasViolation = true;
-      }
-    });
-
-    // Check length
-    if (text.length > 125) results.push({ type: 'warn', label: 'Văn bản quá dài', detail: `${text.length} ký tự. Facebook khuyến nghị dưới 125 ký tự cho primary text` });
-    else results.push({ type: 'pass', label: 'Độ dài phù hợp', detail: `${text.length} ký tự — trong giới hạn khuyến nghị` });
-
-    // Check emoji
-    const emojiCount = (text.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
-    if (emojiCount > 5) results.push({ type: 'warn', label: 'Quá nhiều emoji', detail: `${emojiCount} emoji. Nên dùng tối đa 3-5 emoji` });
-
-    if (!results.length) results.push({ type: 'pass', label: 'Không phát hiện vi phạm rõ ràng', detail: 'Nội dung có vẻ ổn. Vẫn cần review thủ công trước khi chạy' });
-
-    const icons = { pass: '✅', fail: '❌', warn: '⚠️' };
-    document.getElementById('checkResult').innerHTML = `
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:${hasViolation?'#f87171':'#4ade80'}">
-        ${hasViolation ? '❌ Phát hiện vi phạm tiềm năng' : '✅ Nội dung có vẻ ổn'}
-      </div>` +
-      results.map(r => `
-        <div class="check-item ${r.type}">
-          <span class="check-icon">${icons[r.type]}</span>
-          <div class="check-text">
-            <div class="check-label">${r.label}</div>
-            <div class="check-detail">${r.detail}</div>
-          </div>
-        </div>`).join('');
-
-    GZ.toast('Kiểm tra hoàn tất!', 'success');
+  function onAiImageUrl() {
+    const url = document.getElementById('aiImageUrl').value.trim();
+    const prev = document.getElementById('aiImgPreview');
+    if (url) { prev.src = url; prev.style.display = 'block'; }
+    else prev.style.display = 'none';
   }
+
+  function onAiFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5*1024*1024) { GZ.toast('Ảnh quá lớn (tối đa 5MB)', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      aiUploadedImg = ev.target.result;
+      const prev = document.getElementById('aiImgPreview');
+      prev.src = aiUploadedImg; prev.style.display = 'block';
+      document.getElementById('aiImageUrl').value = '';
+      GZ.toast('Đã tải ảnh lên');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function loadSampleAd() {
+    document.getElementById('aiIndustry').value = 'Thực phẩm chức năng';
+    document.getElementById('aiAdText').value = '🔥 GIẢM CÂN SIÊU TỐC - Chỉ 7 ngày giảm 5kg!\n✅ 100% tự nhiên, không tác dụng phụ\n✅ Được bác sĩ khuyên dùng\n📞 Liên hệ ngay để được tư vấn MIỄN PHÍ\n\n⚡ Cam kết hoàn tiền 100% nếu không giảm cân!\nHàng ngàn khách hàng đã thành công!';
+    GZ.toast('Đã điền nội dung mẫu');
+  }
+
+  function getScoreCls(s) {
+    if (s >= 85) return 'safe';
+    if (s >= 65) return 'ok';
+    if (s >= 40) return 'warn';
+    return 'danger';
+  }
+  function getBarColor(s) {
+    if (s >= 85) return '#4ade80';
+    if (s >= 65) return '#38bdf8';
+    if (s >= 40) return '#fbbf24';
+    return '#f87171';
+  }
+
+  async function checkPolicyAI() {
+    const text = document.getElementById('aiAdText').value.trim();
+    const imgUrl = aiUploadedImg || document.getElementById('aiImageUrl').value.trim();
+    const industry = document.getElementById('aiIndustry').value;
+    const notes = document.getElementById('aiNotes').value.trim();
+    if (!text && !imgUrl) { GZ.toast('Vui lòng nhập nội dung hoặc hình ảnh', 'error'); return; }
+
+    document.getElementById('aiDefaultState').style.display = 'none';
+    document.getElementById('aiResultContent').style.display = 'none';
+    document.getElementById('aiAnalyzingState').classList.add('show');
+
+    const steps = ['Đọc nội dung quảng cáo...','Kiểm tra từ ngữ nhạy cảm...','Phân tích hình ảnh...','So sánh chính sách Meta...','Tổng hợp kết quả...'];
+    let si = 0;
+    const iv = setInterval(() => { if (si < steps.length) document.getElementById('aiStep').textContent = steps[si++]; }, 1600);
+
+    try {
+      const body = { text, industry, notes };
+      if (imgUrl) body.image_url = imgUrl;
+      const res = await fetch(AI_BACKEND + '/api/ai/check-policy', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      clearInterval(iv);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Lỗi server');
+      renderAiResult(data.analysis);
+    } catch(e) {
+      clearInterval(iv);
+      document.getElementById('aiAnalyzingState').classList.remove('show');
+      document.getElementById('aiDefaultState').style.display = 'flex';
+      GZ.toast('Lỗi: ' + e.message, 'error');
+    }
+  }
+
+  function renderAiResult(a) {
+    document.getElementById('aiAnalyzingState').classList.remove('show');
+    document.getElementById('aiResultContent').style.display = 'block';
+
+    const score = a.overall_score || 0;
+    const cls = getScoreCls(score);
+    const ring = document.getElementById('aiScoreRing');
+    ring.className = 'ai-score-ring ring-' + cls;
+    document.getElementById('aiScoreNum').textContent = score;
+
+    const pill = document.getElementById('aiVerdictPill');
+    const pCls = cls;
+    pill.className = 'verdict-pill pill-' + pCls;
+    const icons = {safe:'✅',ok:'✔️',warn:'⚠️',danger:'🚫'};
+    pill.innerHTML = (icons[pCls]||'⚠️') + ' ' + (a.overall_verdict || '');
+    document.getElementById('aiSummary').textContent = a.overall_summary || '';
+
+    const ts = a.text_analysis?.score ?? score;
+    const is = a.image_analysis?.score ?? 100;
+    document.getElementById('aiTextScore').textContent = ts + '/100';
+    document.getElementById('aiTextBar').style.cssText = 'width:' + ts + '%;background:' + getBarColor(ts);
+    document.getElementById('aiImgScore').textContent = a.image_analysis?.has_image ? is + '/100' : 'Không có ảnh';
+    document.getElementById('aiImgBar').style.cssText = 'width:' + (a.image_analysis?.has_image ? is : 100) + '%;background:' + (a.image_analysis?.has_image ? getBarColor(is) : '#4ade80');
+
+    const textV = a.text_analysis?.violations || [];
+    document.getElementById('aiTextVio').innerHTML = textV.length === 0
+      ? '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Không phát hiện vi phạm văn bản</div>'
+      : textV.map(v => renderVioItem(v, true)).join('');
+
+    const imgV = a.image_analysis?.violations || [];
+    document.getElementById('aiImgVio').innerHTML = !a.image_analysis?.has_image
+      ? '<div style="font-size:12px;color:rgba(255,255,255,.25);padding:6px 0">Không có hình ảnh để phân tích</div>'
+      : imgV.length === 0
+        ? '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Không phát hiện vi phạm hình ảnh</div>'
+        : imgV.map(v => renderVioItem(v, false)).join('');
+
+    const indV = a.industry_specific?.violations || [];
+    let indHtml = '';
+    if (a.industry_specific?.industry) indHtml += '<div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:7px"><strong style="color:#38bdf8">' + a.industry_specific.industry + ':</strong> ' + (a.industry_specific.special_rules||'') + '</div>';
+    indHtml += indV.length === 0
+      ? '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Không vi phạm quy tắc ngành đặc biệt</div>'
+      : indV.map(v => renderVioItem(v, true)).join('');
+    document.getElementById('aiIndVio').innerHTML = indHtml;
+
+    const recs = a.recommendations || [];
+    document.getElementById('aiRecs').innerHTML = recs.length === 0
+      ? '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Quảng cáo đạt tiêu chuẩn</div>'
+      : recs.map(r => {
+          const p = (r.priority||'LOW').toLowerCase();
+          const ico = {high:'bi-exclamation-triangle-fill',medium:'bi-info-circle-fill',low:'bi-lightbulb'}[p]||'bi-lightbulb';
+          return '<div class="rec-row rec-' + p + '"><div class="rec-ico"><i class="bi ' + ico + '"></i></div><div><div class="rec-act">' + (r.action||'') + '</div><div class="rec-imp">' + (r.impact||'') + '</div></div></div>';
+        }).join('');
+  }
+
+  function renderVioItem(v, isText) {
+    const sev = (v.severity||'LOW').toLowerCase();
+    const excerpt = isText ? v.excerpt : v.details;
+    return '<div class="vio-item vio-' + sev + '"><div class="vio-head"><span class="sev-tag tag-' + sev + '">' + sev.toUpperCase() + '</span><span class="vio-type">' + (v.type||'') + '</span></div>' +
+      (excerpt ? '<div class="vio-excerpt">"' + excerpt + '"</div>' : '') +
+      '<div class="vio-reason"><i class="bi bi-info-circle" style="color:rgba(255,255,255,.25)"></i> ' + (v.reason||v.details||'') + '</div>' +
+      (v.recommendation ? '<div class="vio-fix"><i class="bi bi-arrow-right-circle-fill"></i> ' + v.recommendation + '</div>' : '') +
+      '</div>';
+  }
+
+  function copyAiReport() {
+    const score = document.getElementById('aiScoreNum').textContent;
+    const verdict = document.getElementById('aiVerdictPill').textContent;
+    const summary = document.getElementById('aiSummary').textContent;
+    let text = '=== BÁO CÁO KIỂM TRA CHÍNH SÁCH FACEBOOK ADS ===\n\n';
+    text += 'Điểm an toàn: ' + score + '/100 — ' + verdict + '\n';
+    text += 'Tóm tắt: ' + summary + '\n';
+    navigator.clipboard.writeText(text).then(() => GZ.toast('Đã copy báo cáo'));
+  }
+
+  // Giữ lại hàm checkContent cũ (rule-based) để không break gì
+  function checkContent() { checkPolicyAI(); }
 
   function filterPolicy(type) {
     const cards = document.querySelectorAll('.policy-card');
