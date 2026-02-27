@@ -1,1527 +1,393 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth">
-
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genztech - Tự Động Hóa Quảng Cáo Facebook</title>
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Genztech - Tự Động Hóa Quảng Cáo Facebook" />
-    <meta property="og:description" content="Nền tảng tự động hóa quảng cáo Facebook hàng đầu với công nghệ AI." />
-    <link rel="stylesheet" href="css/main.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <meta name="facebook-domain-verification" content="so8tfqvm6pf9m4ibfgkh4nzflzn2uw" />
-    <style>
-        html,
-        body {
-            scrollbar-width: none !important;
-            /* Firefox */
-            -ms-overflow-style: none !important;
-            /* IE and Edge */
-            cursor: none !important;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        html::-webkit-scrollbar,
-        body::-webkit-scrollbar {
-            display: none !important;
-            /* Chrome, Safari, Opera */
-            width: 0 !important;
-            height: 0 !important;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — GenzTech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,sans-serif;background:#080c1e;color:#fff;display:flex;min-height:100vh;overflow-x:hidden}
+    .sidebar{width:240px;flex-shrink:0;background:rgba(10,14,39,.92);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:34px;height:34px;border-radius:50%}
+    .sidebar-logo span{font-size:14px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1px;padding:10px 18px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent;cursor:pointer;background:none;width:100%;text-align:left}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:17px;text-align:center;font-size:14px}
+    .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 40px;font-size:12.5px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-sub-item.active{color:#00d4ff;background:rgba(0,212,255,.06);border-left-color:#00d4ff}
+    .nav-sub-item i{width:15px;text-align:center;font-size:13px}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.06)}
+    .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.4)}
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:#6b7280}
+    .conn-dot.connected{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.5)}
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{height:56px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(8,12,30,.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:30}
+    .topbar-left{display:flex;align-items:center;gap:12px}
+    .topbar-right{display:flex;align-items:center;gap:8px}
+    .page-body{padding:24px;flex:1}
+    .page-title{font-size:22px;font-weight:800;margin-bottom:4px;letter-spacing:-.3px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px}
+    .btn-icon{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s}
+    .btn-icon:hover{background:rgba(255,255,255,.1);color:#fff}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;margin-bottom:16px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-body{padding:18px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;transition:all .2s;cursor:pointer;text-decoration:none;display:block}
+    .stat-card:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+    .stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+    .stat-label{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+    .stat-value{font-size:22px;font-weight:800;margin-bottom:2px}
+    .stat-sub{font-size:11.5px;color:rgba(255,255,255,.35)}
+    .tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+    .tool-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;transition:all .25s;text-decoration:none;display:block;position:relative;overflow:hidden}
+    .tool-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.07)}
+    .tool-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+    .tool-icon.blue{background:rgba(24,119,242,.15);color:#60a5fa}
+    .tool-icon.cyan{background:rgba(0,212,255,.12);color:#00d4ff}
+    .tool-icon.green{background:rgba(34,197,94,.12);color:#4ade80}
+    .tool-icon.purple{background:rgba(139,92,246,.12);color:#a78bfa}
+    .tool-icon.orange{background:rgba(249,115,22,.12);color:#fb923c}
+    .tool-icon.pink{background:rgba(236,72,153,.12);color:#f472b6}
+    .tool-icon.yellow{background:rgba(234,179,8,.12);color:#fbbf24}
+    .tool-name{font-size:14px;font-weight:700;margin-bottom:6px}
+    .tool-desc{font-size:12.5px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:14px}
+    .tool-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:10.5px;font-weight:700}
+    .badge-live{background:rgba(34,197,94,.12);color:#4ade80}
+    .badge-new{background:rgba(0,212,255,.12);color:#00d4ff}
+    .badge-soon{background:rgba(107,114,128,.12);color:#9ca3af}
+    .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+    .quick-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+    .quick-btn:hover{background:rgba(255,255,255,.08);transform:translateY(-1px)}
+    .quick-btn i{font-size:22px;display:block;margin-bottom:6px}
+    .quick-btn span{font-size:12px;color:rgba(255,255,255,.6)}
+    .activity-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+    .activity-item:last-child{border-bottom:none}
+    .activity-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+    .activity-text{font-size:13px;color:rgba(255,255,255,.7);line-height:1.5}
+    .activity-time{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
+    .bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0}
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast-item{background:#1e2a4a;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;min-width:260px}
+    .toast-item.success{border-left:3px solid #22c55e}
+    .toast-item.error{border-left:3px solid #ef4444}
+    .toast-item.info{border-left:3px solid #00d4ff}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+    #custom-cursor{position:fixed;pointer-events:none;z-index:100;opacity:0;transition:opacity .2s;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:2px solid rgba(0,212,255,.6);background:rgba(0,212,255,.1)}
+    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-grid{grid-template-columns:repeat(2,1fr)}.tools-grid{grid-template-columns:1fr}.quick-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
 </head>
+<body>
+  <canvas class="bg-canvas" id="stars-canvas"></canvas>
+  <div id="custom-cursor"></div>
+  <div id="toast"></div>
 
-<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <div style="display:flex;min-height:100vh;position:relative;z-index:1">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo">
+        <img src="https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff&bold=true" alt="logo">
+        <span>GENZ<em>TECH</em></span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng Quan</div>
+        <a href="maindashboard.html" class="nav-item active"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        <div class="nav-group-label">Công Cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item" onclick="toggleSubNav(event,'subNavAds')">
+          <i class="bi bi-megaphone"></i> Trợ Lý Quảng Cáo
+          <i class="bi bi-chevron-down" id="subNavAdsArrow" style="margin-left:auto;font-size:11px;transition:transform .2s"></i>
+        </a>
+        <div id="subNavAds" style="display:block">
+          <a href="tool-ad-account.html" class="nav-sub-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-sub-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-sub-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-sub-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-sub-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-sub-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-sub-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status">
+          <div class="conn-dot" id="connDot"></div>
+          <span id="connText">Chưa kết nối</span>
+        </div>
+      </div>
+    </aside>
 
-    <!-- Multi-Layer Starfield Canvas -->
-    <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
-    <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
-    <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
-    <canvas id="constellation-lines" class="fixed inset-0 pointer-events-none z-3"></canvas>
-    <canvas id="data-particles" class="fixed inset-0 pointer-events-none z-4"></canvas>
+    <!-- Main -->
+    <div class="main-content">
+      <div class="topbar">
+        <div class="topbar-left">
+          <span style="font-size:12.5px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px">
+            <i class="bi bi-grid-1x2-fill" style="color:#00d4ff"></i> Dashboard
+          </span>
+        </div>
+        <div class="topbar-right">
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px">
+            <img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,212,255,.3)" src="" alt="">
+            <span id="userName" style="color:rgba(255,255,255,.7)"></span>
+          </div>
+          <button class="btn-icon" onclick="handleFBLogin()" title="Kết nối Facebook"><i class="bi bi-facebook" style="color:#1877f2"></i></button>
+        </div>
+      </div>
 
-    <!-- Cosmic Fog / Nebula Gradient Overlay -->
-    <div class="fixed inset-0 pointer-events-none z-5 opacity-30">
-        <div class="cosmic-fog"></div>
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-grid-1x2-fill" style="color:#00d4ff;margin-right:8px"></i>Dashboard</h1>
+        <p class="page-subtitle">Tổng quan hệ thống GenzTech — Tất cả công cụ quảng cáo Facebook trong một nơi</p>
+
+        <!-- Quick actions -->
+        <div class="quick-grid">
+          <a href="tool-ad-account.html" class="quick-btn">
+            <i class="bi bi-shield-check" style="color:#60a5fa"></i>
+            <span>Kiểm Tra TKQC</span>
+          </a>
+          <a href="tool-budget.html" class="quick-btn">
+            <i class="bi bi-graph-up-arrow" style="color:#4ade80"></i>
+            <span>Phân Tích Ngân Sách</span>
+          </a>
+          <a href="tool-policy.html" class="quick-btn">
+            <i class="bi bi-journal-text" style="color:#fbbf24"></i>
+            <span>Chính Sách FB</span>
+          </a>
+          <a href="auto-post.html" class="quick-btn">
+            <i class="bi bi-send" style="color:#a78bfa"></i>
+            <span>Đăng Bài Tự Động</span>
+          </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <a href="tool-ad-account.html" class="stat-card">
+            <div class="stat-icon" style="background:rgba(24,119,242,.12);color:#60a5fa"><i class="bi bi-shield-check"></i></div>
+            <div class="stat-label">TKQC đã kiểm tra</div>
+            <div class="stat-value" id="statAccounts">--</div>
+            <div class="stat-sub">Tài khoản quảng cáo</div>
+          </a>
+          <a href="tool-budget.html" class="stat-card">
+            <div class="stat-icon" style="background:rgba(34,197,94,.12);color:#4ade80"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="stat-label">Phân tích ngân sách</div>
+            <div class="stat-value" id="statBudget">--</div>
+            <div class="stat-sub">Chiến dịch đã phân tích</div>
+          </a>
+          <a href="tool-fb-id.html" class="stat-card">
+            <div class="stat-icon" style="background:rgba(0,212,255,.12);color:#00d4ff"><i class="bi bi-person-badge"></i></div>
+            <div class="stat-label">Facebook ID đã tìm</div>
+            <div class="stat-value" id="statFbId">--</div>
+            <div class="stat-sub">Từ lịch sử tra cứu</div>
+          </a>
+          <a href="tool-policy.html" class="stat-card">
+            <div class="stat-icon" style="background:rgba(251,191,36,.12);color:#fbbf24"><i class="bi bi-journal-text"></i></div>
+            <div class="stat-label">Kiểm tra chính sách</div>
+            <div class="stat-value" id="statPolicy">--</div>
+            <div class="stat-sub">Nội dung đã kiểm tra</div>
+          </a>
+        </div>
+
+        <!-- Tools grid -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-grid" style="color:#00d4ff"></i> Tất Cả Công Cụ</div>
+          </div>
+          <div class="card-body">
+            <div class="tools-grid">
+              <a href="tool-ad-account.html" class="tool-card">
+                <div class="tool-icon blue"><i class="bi bi-shield-check"></i></div>
+                <div class="tool-name">Kiểm Tra TKQC</div>
+                <div class="tool-desc">Kiểm tra trạng thái, múi giờ, giới hạn chi tiêu và rủi ro tài khoản quảng cáo Facebook.</div>
+                <span class="tool-badge badge-live"><i class="bi bi-circle-fill" style="font-size:7px"></i> Live</span>
+              </a>
+              <a href="tool-fb-id.html" class="tool-card">
+                <div class="tool-icon cyan"><i class="bi bi-person-badge"></i></div>
+                <div class="tool-name">Tìm Facebook ID</div>
+                <div class="tool-desc">Tra cứu Facebook ID từ link profile, fanpage, group. Hỗ trợ tra cứu hàng loạt và xuất CSV.</div>
+                <span class="tool-badge badge-live"><i class="bi bi-circle-fill" style="font-size:7px"></i> Live</span>
+              </a>
+              <a href="tool-budget.html" class="tool-card">
+                <div class="tool-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="tool-name">Phân Tích Ngân Sách</div>
+                <div class="tool-desc">AI phân tích hiệu suất quảng cáo, dự báo 3 tháng, so sánh đối thủ và đề xuất tối ưu.</div>
+                <span class="tool-badge badge-new"><i class="bi bi-stars"></i> AI</span>
+              </a>
+              <a href="tool-translate.html" class="tool-card">
+                <div class="tool-icon purple"><i class="bi bi-translate"></i></div>
+                <div class="tool-name">Dịch Thuật Quảng Cáo</div>
+                <div class="tool-desc">Dịch nội dung quảng cáo sang nhiều ngôn ngữ, tối ưu cho từng thị trường mục tiêu.</div>
+                <span class="tool-badge badge-live"><i class="bi bi-circle-fill" style="font-size:7px"></i> Live</span>
+              </a>
+              <a href="tool-ads-finder.html" class="tool-card">
+                <div class="tool-icon orange"><i class="bi bi-binoculars"></i></div>
+                <div class="tool-name">Ads Finder</div>
+                <div class="tool-desc">Tìm kiếm và phân tích quảng cáo đối thủ trên Facebook Ads Library theo từ khóa, ngành.</div>
+                <span class="tool-badge badge-live"><i class="bi bi-circle-fill" style="font-size:7px"></i> Live</span>
+              </a>
+              <a href="tool-policy.html" class="tool-card">
+                <div class="tool-icon yellow"><i class="bi bi-journal-text"></i></div>
+                <div class="tool-name">Chính Sách Facebook</div>
+                <div class="tool-desc">AI kiểm tra vi phạm nội dung và hình ảnh quảng cáo theo chính sách Meta mới nhất.</div>
+                <span class="tool-badge badge-new"><i class="bi bi-stars"></i> AI</span>
+              </a>
+              <a href="tool-cookie.html" class="tool-card">
+                <div class="tool-icon pink"><i class="bi bi-cookie"></i></div>
+                <div class="tool-name">Quản Lý Cookie</div>
+                <div class="tool-desc">Quản lý và kiểm tra cookie Facebook, hỗ trợ xác thực và duy trì phiên đăng nhập.</div>
+                <span class="tool-badge badge-live"><i class="bi bi-circle-fill" style="font-size:7px"></i> Live</span>
+              </a>
+              <a href="auto-post.html" class="tool-card">
+                <div class="tool-icon blue"><i class="bi bi-send"></i></div>
+                <div class="tool-name">Tự Động Đăng Bài</div>
+                <div class="tool-desc">Lên lịch và tự động đăng bài lên Facebook Page, tối ưu thời gian đăng cho tương tác cao nhất.</div>
+                <span class="tool-badge badge-live"><i class="bi bi-circle-fill" style="font-size:7px"></i> Live</span>
+              </a>
+              <a href="ads-assistant.html" class="tool-card">
+                <div class="tool-icon cyan"><i class="bi bi-megaphone"></i></div>
+                <div class="tool-name">Trợ Lý Quảng Cáo</div>
+                <div class="tool-desc">Trợ lý AI hỗ trợ tạo nội dung quảng cáo, viết copy, tối ưu targeting và chiến lược.</div>
+                <span class="tool-badge badge-new"><i class="bi bi-stars"></i> AI</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity & Tips -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-clock-history" style="color:#00d4ff"></i> Hoạt Động Gần Đây</div>
+            </div>
+            <div class="card-body" id="activityFeed">
+              <div style="text-align:center;padding:20px;color:rgba(255,255,255,.25);font-size:13px">
+                <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>
+                Chưa có hoạt động nào
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-lightbulb" style="color:#fbbf24"></i> Mẹo Hôm Nay</div>
+            </div>
+            <div class="card-body">
+              <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.6)" id="tipContent">Đang tải...</div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
+  </div>
 
-    <!-- Noise Texture Overlay -->
-    <div class="fixed inset-0 pointer-events-none z-6 noise-overlay opacity-10"></div>
+  <script>
+  function toggleSubNav(e, id) {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(id + 'Arrow');
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : 'block';
+    if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+  }
 
-    <!-- Global SVG Gradients -->
-    <svg width="0" height="0" class="absolute">
-        <defs>
-            <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#00C6FF;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#0072FF;stop-opacity:1" />
-            </linearGradient>
-            <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#9D50BB;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#6E48AA;stop-opacity:1" />
-            </linearGradient>
-            <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#4FACFE;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#00F2FE;stop-opacity:1" />
-            </linearGradient>
-        </defs>
-    </svg>
+  function loadStats() {
+    const fbIdHistory = JSON.parse(localStorage.getItem('gz_fbid_history') || '[]');
+    document.getElementById('statFbId').textContent = fbIdHistory.length || '0';
+    document.getElementById('statAccounts').textContent = localStorage.getItem('gz_accounts_checked') || '0';
+    document.getElementById('statBudget').textContent = localStorage.getItem('gz_budget_analyzed') || '0';
+    document.getElementById('statPolicy').textContent = localStorage.getItem('gz_policy_checked') || '0';
+  }
 
-    <!-- Custom Cursor -->
-    <div id="custom-cursor"
-        class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
-        <img src="images/logo.png" alt="Genztech Cursor"
-            class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
-    </div>
-
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-space-black/70 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-3 text-2xl font-bold tracking-tight glow-text">
-                <img src="images/logo.png" alt="GZ Icon" class="h-8 w-auto rounded-full">
-                GENZTECH <span class="hidden md:inline">PLATFORM</span>
-            </a>
-            <div class="hidden md:flex items-center gap-12 text-sm font-medium text-gray-400">
-                <a href="#facebook-automation" class="hover:text-facebook-blue transition-colors nav-link">Tự Động
-                    Hóa</a>
-                <a href="#features" class="hover:text-facebook-blue transition-colors nav-link">Hiệu Suất</a>
-                <a href="privacy-policy.html" class="hover:text-facebook-blue transition-colors nav-link">Chính sách</a>
-            </div>
-            <div class="flex items-center gap-4">
-                <button onclick="handleFBLogin()"
-                    class="hidden md:block cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
-                    <span class="relative z-10">Kết nối Facebook</span>
-                </button>
-                <a href="#contact"
-                    class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center cursor-pointer">
-                    <span class="relative z-10">Liên Hệ Ngay</span>
-                </a>
-            </div>
+  function loadActivity() {
+    const activities = JSON.parse(localStorage.getItem('gz_activity') || '[]');
+    const feed = document.getElementById('activityFeed');
+    if (!activities.length) return;
+    feed.innerHTML = activities.slice(0, 8).map(a => `
+      <div class="activity-item">
+        <div class="activity-dot" style="background:${a.color||'#00d4ff'}"></div>
+        <div>
+          <div class="activity-text">${a.text}</div>
+          <div class="activity-time">${a.time}</div>
         </div>
-    </nav>
-    <!-- Mục chức năng chính trong dashboard -->
-    <section class="ai-modules" style="margin-top: 20px;">
-        <div class="modules-grid">
-
-            <!-- Existing modules -->
-            <div class="module-card" style="border-color:rgba(24,119,242,0.3);box-shadow:0 0 20px rgba(24,119,242,0.08);">
-                <div class="icon bi bi-robot text-center" style="color:#60a5fa;"></div>
-                <h3>Tự động đăng bài</h3>
-                <p>Tự động lên lịch, đăng bài và tối ưu nội dung bài viết 24/7. Đa dạng hóa nội dung với AI</p>
-                <div class="text-center"><a href="auto-post.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block">
-                        <span>Mở ngay ✨</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="module-card">
-                <div class="icon bi bi-bar-chart-line text-center"></div>
-                <h3>Trợ lý quản lý quảng cáo</h3>
-                <p>Theo dõi ngân sách, hiệu suất và cảnh báo rủi ro tài khoản. Tối ưu hóa chiến dịch quảng cáo
-                </p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="module-card">
-                <div class="icon bi bi-shield-check text-center"></div>
-                <h3>Kháng nghị Facebook</h3>
-                <p>AI tạo nội dung kháng nghị vi phạm theo tiêu chuẩn cộng đồng. Tăng tỷ lệ kháng nghị thành công
-                </p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="module-card">
-                <div class="icon bi bi-palette text-center"></div>
-                <h3>Prompt tạo ảnh AI</h3>
-                <p>Tạo prompt hình ảnh chuẩn quảng cáo, tiết kiệm thời gian chỉnh sửa hình ảnh.</p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- NEW MODULES -->
-
-            <div class="module-card">
-                <div class="icon bi bi-person-workspace text-center"></div>
-                <h3>Human Agent</h3>
-                <p>Chuyển cuộc trò chuyện cho nhân viên hỗ trợ khi AI không xử lý được.</p>
-
-                <div class="btn-wrap text-center">
-                    <a href="human-agent.html"
-                        class="more-btn px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-
-            <div class="module-card">
-                <div class="icon bi bi-broadcast text-center"></div>
-                <h3>Genztech Live Manager</h3>
-                <p>Quản lý toàn bộ inbox, AI và nhân viên trong một bảng điều khiển duy nhất.</p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="module-card">
-                <div class="icon bi bi-magic text-center"></div>
-                <h3>Tiên tri xu hướng</h3>
-                <p>AI phân tích dữ liệu quảng cáo để dự đoán xu hướng và cơ hội tăng trưởng.</p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="module-card">
-                <div class="icon bi bi-book text-center"></div>
-                <h3>Chính sách Facebook</h3>
-                <p>Tự động cập nhật thông tin hiện tại và mới nhất theo Meta tránh vi phạm chính sách.</p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-            <!-- GENZTECH SHIELD -->
-            <div class="module-card">
-                <div class="icon bi bi-shield-fill text-center"></div>
-                <h3>Genztech Shield</h3>
-                <p>Bảo vệ tài sản số, phát hiện rủi ro và xử lý tự động bảo mật tài khoản.</p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- GENZTECH SAO KÊ -->
-            <div class="module-card">
-                <div class="icon bi bi-file-text text-center"></div>
-                <h3>Genztech đối chiếu </h3>
-                <p>Tổng hợp chi tiêu quảng cáo, sao kê minh bạch và xuất báo cáo nhanh.</p>
-                <div class="text-center"><a href="human-agent.html"
-                        class="cta-button px-6 py-2.5 bg-facebook-blue rounded-full text-sm font-semibold hover:shadow-glow-strong transition-all relative overflow-hidden inline-block text-center">
-                        <span class="relative">Xem thêm</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- JavaScript Animation Optimization and Mobile Support -->
-    <script>
-        // ==================== DEVICE DETECTION ====================
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-        // ==================== MULTI-LAYER STARFIELD WITH MOBILE OPTIMIZATION ====================
-        const canvasFar = document.getElementById('starfield-far');
-        const canvasMid = document.getElementById('starfield-mid');
-        const canvasNear = document.getElementById('starfield-near');
-        const ctxFar = canvasFar.getContext('2d');
-        const ctxMid = canvasMid.getContext('2d');
-        const ctxNear = canvasNear.getContext('2d');
-
-        function resizeCanvases() {
-            [canvasFar, canvasMid, canvasNear].forEach(canvas => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
-        }
-        resizeCanvases();
-        window.addEventListener('resize', resizeCanvases);
-
-        // Reduce particle count on mobile for better performance
-        const starCountMultiplier = isMobile ? 0.5 : 1;
-
-        // Far layer stars - tiny static
-        const starsFar = [];
-        for (let i = 0; i < Math.floor(200 * starCountMultiplier); i++) {
-            starsFar.push({
-                x: Math.random() * canvasFar.width,
-                y: Math.random() * canvasFar.height,
-                radius: Math.random() * 0.8 + 0.2,
-                opacity: Math.random() * 0.3 + 0.2
-            });
-        }
-
-        // Mid layer stars - slow drift
-        const starsMid = [];
-        for (let i = 0; i < Math.floor(100 * starCountMultiplier); i++) {
-            starsMid.push({
-                x: Math.random() * canvasMid.width,
-                y: Math.random() * canvasMid.height,
-                radius: Math.random() * 1.2 + 0.5,
-                vx: (Math.random() - 0.5) * (isMobile ? 0.1 : 0.2),
-                vy: (Math.random() - 0.5) * (isMobile ? 0.1 : 0.2),
-                opacity: Math.random() * 0.5 + 0.3
-            });
-        }
-
-        // Near layer stars - glowing particles
-        const starsNear = [];
-        for (let i = 0; i < Math.floor(50 * starCountMultiplier); i++) {
-            starsNear.push({
-                x: Math.random() * canvasNear.width,
-                y: Math.random() * canvasNear.height,
-                radius: Math.random() * 1.8 + 0.8,
-                vx: (Math.random() - 0.5) * (isMobile ? 0.2 : 0.4),
-                vy: (Math.random() - 0.5) * (isMobile ? 0.2 : 0.4),
-                opacity: Math.random() * 0.7 + 0.3,
-                pulse: Math.random() * Math.PI * 2
-            });
-        }
-
-        // Shooting Stars (Comets)
-        const shootingStars = [];
-        const shootingStarInterval = 800; // More frequent spawns
-        let lastShootingStarTime = 0;
-
-        class ShootingStar {
-            constructor() {
-                this.reset();
-            }
-
-            reset() {
-                this.x = Math.random() * canvasFar.width;
-                this.y = Math.random() * canvasFar.height * 0.5; // Start in top half
-                this.length = Math.random() * 200 + 100; // Longer tail
-                this.speed = Math.random() * 2 + 1; // Much slower speed (prevent dizziness)
-                this.size = Math.random() * 2 + 1.5; // Bigger size
-                // Shoot diagonally down-right or down-left
-                this.dirX = 1;
-                this.dirY = 1;
-                if (Math.random() < 0.5) {
-                    this.x = -100; // Start further left to avoid pop-in
-                    this.dirX = 1;
-                } else {
-                    this.x = canvasFar.width + 100; // Start further right
-                    this.dirX = -1;
-                }
-
-                this.vx = this.dirX * this.speed;
-                this.vy = this.dirY * this.speed * 0.5; // Flatter angle
-
-                this.opacity = 0;
-                this.life = 0;
-                this.maxLife = 200; // Live longer
-                this.active = true;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.life++;
-
-                // Fade in then out
-                if (this.life < 20) {
-                    this.opacity = this.life / 20;
-                } else if (this.life > this.maxLife - 40) {
-                    this.opacity = (this.maxLife - this.life) / 40;
-                } else {
-                    this.opacity = 1;
-                }
-
-                if (this.life >= this.maxLife ||
-                    this.x < -300 || this.x > canvasFar.width + 300 ||
-                    this.y > canvasFar.height + 300) {
-                    this.active = false;
-                }
-            }
-
-            draw(ctx) {
-                if (!this.active) return;
-
-                const tailX = this.x - this.vx * (this.length / this.speed);
-                const tailY = this.y - this.vy * (this.length / this.speed);
-
-                const gradient = ctx.createLinearGradient(this.x, this.y, tailX, tailY);
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${this.opacity})`);
-                gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
-
-                ctx.strokeStyle = gradient;
-                ctx.lineWidth = this.size;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y);
-                ctx.lineTo(tailX, tailY);
-                ctx.stroke();
-
-                // Glowing head
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Blueish tint glow
-                ctx.fillStyle = `rgba(100, 200, 255, ${this.opacity * 0.5})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size * 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function animateStarfield() {
-            // Far layer (static)
-            ctxFar.clearRect(0, 0, canvasFar.width, canvasFar.height);
-            starsFar.forEach(star => {
-                ctxFar.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-                ctxFar.beginPath();
-                ctxFar.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctxFar.fill();
-            });
-
-            // Spawn Shooting Stars
-            const now = Date.now();
-            if (now - lastShootingStarTime > (Math.random() * 1000 + 500)) {
-                if (shootingStars.length < 8) { // Max 8 at a time
-                    shootingStars.push(new ShootingStar());
-                    lastShootingStarTime = now;
-                }
-            }
-
-            // Update and Draw Shooting Stars (on Far layer for depth, or Mid)
-            // Let's use Mid layer ctxMid to be behind Near stars but visible
-            for (let i = shootingStars.length - 1; i >= 0; i--) {
-                const ss = shootingStars[i];
-                ss.update();
-                ss.draw(ctxMid);
-                if (!ss.active) {
-                    shootingStars.splice(i, 1);
-                }
-            }
-
-            // Mid layer (drifting)
-            // ctxMid.clearRect(0, 0, canvasMid.width, canvasMid.height); // ALREADY CLEARED ABOVE IF I MOVE IT
-            // Wait, I need to clear ctxMid inside this loop or before?
-            // Re-organizing loop:
-            // 1. Clear Far, Draw Far
-            // 2. Clear Mid, Draw Shooting Stars, Draw Mid Stars
-
-            ctxMid.clearRect(0, 0, canvasMid.width, canvasMid.height);
-
-            // Draw Shooting Stars (behind mid stars or mixed?)
-            shootingStars.forEach(ss => ss.draw(ctxMid));
-
-            starsMid.forEach(star => {
-                star.x += star.vx;
-                star.y += star.vy;
-                if (star.x < 0) star.x = canvasMid.width;
-                if (star.x > canvasMid.width) star.x = 0;
-                if (star.y < 0) star.y = canvasMid.height;
-                if (star.y > canvasMid.height) star.y = 0;
-
-                ctxMid.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-                ctxMid.beginPath();
-                ctxMid.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctxMid.fill();
-            });
-
-            // Near layer (glowing) - Simplified on mobile
-            ctxNear.clearRect(0, 0, canvasNear.width, canvasNear.height);
-            starsNear.forEach(star => {
-                star.x += star.vx;
-                star.y += star.vy;
-                star.pulse += (isMobile ? 0.01 : 0.02);
-
-                if (star.x < 0) star.x = canvasNear.width;
-                if (star.x > canvasNear.width) star.x = 0;
-                if (star.y < 0) star.y = canvasNear.height;
-                if (star.y > canvasNear.height) star.y = 0;
-
-                const pulseOpacity = star.opacity * (0.7 + Math.sin(star.pulse) * 0.3);
-
-                if (isMobile) {
-                    // Simple dot on mobile
-                    ctxNear.fillStyle = `rgba(24, 119, 242, ${pulseOpacity})`;
-                    ctxNear.beginPath();
-                    ctxNear.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                    ctxNear.fill();
-                } else {
-                    // Glow effect on desktop
-                    const gradient = ctxNear.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.radius * 3);
-                    gradient.addColorStop(0, `rgba(24, 119, 242, ${pulseOpacity})`);
-                    gradient.addColorStop(0.5, `rgba(0, 212, 255, ${pulseOpacity * 0.5})`);
-                    gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
-
-                    ctxNear.fillStyle = gradient;
-                    ctxNear.beginPath();
-                    ctxNear.arc(star.x, star.y, star.radius * 3, 0, Math.PI * 2);
-                    ctxNear.fill();
-                }
-            });
-
-            requestAnimationFrame(animateStarfield);
-        }
-        animateStarfield();
-
-        // ==================== CONSTELLATION LINES WITH MOBILE OPTIMIZATION ====================
-        const canvasConstellation = document.getElementById('constellation-lines');
-        const ctxConstellation = canvasConstellation.getContext('2d');
-        canvasConstellation.width = window.innerWidth;
-        canvasConstellation.height = window.innerHeight;
-
-        let constellationPoints = [];
-        let scrollVelocity = 0;
-        let lastScrollY = 0;
-
-        function initConstellationPoints() {
-            constellationPoints = [];
-            const pointCount = isMobile ? 8 : 15;
-            for (let i = 0; i < pointCount; i++) {
-                constellationPoints.push({
-                    x: Math.random() * canvasConstellation.width,
-                    y: Math.random() * canvasConstellation.height,
-                    connections: []
-                });
-            }
-
-            // Create connections
-            constellationPoints.forEach((point, i) => {
-                const numConnections = Math.floor(Math.random() * 2) + 1;
-                for (let j = 0; j < numConnections; j++) {
-                    const targetIndex = Math.floor(Math.random() * constellationPoints.length);
-                    if (targetIndex !== i && !point.connections.includes(targetIndex)) {
-                        point.connections.push(targetIndex);
-                    }
-                }
-            });
-        }
-        initConstellationPoints();
-
-        let constellationOpacity = 0;
-        function animateConstellation() {
-            if (isMobile) {
-                // Disable constellation animation on mobile
-                return;
-            }
-
-            ctxConstellation.clearRect(0, 0, canvasConstellation.width, canvasConstellation.height);
-
-            // Update opacity based on scroll velocity
-            if (Math.abs(scrollVelocity) > 5) {
-                constellationOpacity = Math.min(constellationOpacity + 0.02, 0.3);
-            } else {
-                constellationOpacity = Math.max(constellationOpacity - 0.01, 0);
-            }
-
-            if (constellationOpacity > 0) {
-                constellationPoints.forEach((point, i) => {
-                    point.connections.forEach(targetIndex => {
-                        const target = constellationPoints[targetIndex];
-                        const gradient = ctxConstellation.createLinearGradient(point.x, point.y, target.x, target.y);
-                        gradient.addColorStop(0, `rgba(24, 119, 242, ${constellationOpacity})`);
-                        gradient.addColorStop(0.5, `rgba(0, 212, 255, ${constellationOpacity * 0.7})`);
-                        gradient.addColorStop(1, `rgba(138, 43, 226, ${constellationOpacity * 0.5})`);
-
-                        ctxConstellation.strokeStyle = gradient;
-                        ctxConstellation.lineWidth = 1;
-                        ctxConstellation.beginPath();
-                        ctxConstellation.moveTo(point.x, point.y);
-                        ctxConstellation.lineTo(target.x, target.y);
-                        ctxConstellation.stroke();
-                    });
-                });
-            }
-
-            requestAnimationFrame(animateConstellation);
-        }
-        if (!isMobile) {
-            animateConstellation();
-        }
-
-        // Track scroll velocity
-        window.addEventListener('scroll', () => {
-            const currentScrollY = window.scrollY;
-            scrollVelocity = currentScrollY - lastScrollY;
-            lastScrollY = currentScrollY;
-        });
-
-        // ==================== DATA PARTICLES WITH MOBILE OPTIMIZATION ====================
-        const canvasData = document.getElementById('data-particles');
-        const ctxData = canvasData.getContext('2d');
-        canvasData.width = window.innerWidth;
-        canvasData.height = window.innerHeight;
-
-        const dataParticles = [];
-        const particleCount = isMobile ? 15 : 30;
-        for (let i = 0; i < particleCount; i++) {
-            dataParticles.push({
-                x: Math.random() * canvasData.width,
-                y: Math.random() * canvasData.height,
-                radius: Math.random() * 2 + 1,
-                path: {
-                    centerX: Math.random() * canvasData.width,
-                    centerY: Math.random() * canvasData.height,
-                    radiusX: Math.random() * (isMobile ? 50 : 100) + (isMobile ? 25 : 50),
-                    radiusY: Math.random() * (isMobile ? 50 : 100) + (isMobile ? 25 : 50),
-                    angle: Math.random() * Math.PI * 2,
-                    speed: Math.random() * (isMobile ? 0.005 : 0.01) + (isMobile ? 0.003 : 0.005)
-                },
-                pulse: Math.random() * Math.PI * 2,
-                pulseSpeed: Math.random() * 0.02 + 0.01
-            });
-        }
-
-        function animateDataParticles() {
-            ctxData.clearRect(0, 0, canvasData.width, canvasData.height);
-
-            dataParticles.forEach(particle => {
-                // Move along curved path
-                particle.path.angle += particle.path.speed;
-                particle.x = particle.path.centerX + Math.cos(particle.path.angle) * particle.path.radiusX;
-                particle.y = particle.path.centerY + Math.sin(particle.path.angle) * particle.path.radiusY;
-
-                // Pulse effect
-                particle.pulse += particle.pulseSpeed;
-                const pulseScale = 1 + Math.sin(particle.pulse) * 0.5;
-
-                if (isMobile) {
-                    // Simple particle on mobile
-                    ctxData.fillStyle = `rgba(24, 119, 242, ${0.6 * pulseScale})`;
-                    ctxData.beginPath();
-                    ctxData.arc(particle.x, particle.y, particle.radius * pulseScale, 0, Math.PI * 2);
-                    ctxData.fill();
-                } else {
-                    // Glow effect on desktop
-                    const gradient = ctxData.createRadialGradient(
-                        particle.x, particle.y, 0,
-                        particle.x, particle.y, particle.radius * pulseScale * 3
-                    );
-                    gradient.addColorStop(0, `rgba(24, 119, 242, ${0.8 * pulseScale})`);
-                    gradient.addColorStop(0.5, `rgba(0, 212, 255, ${0.4 * pulseScale})`);
-                    gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
-
-                    ctxData.fillStyle = gradient;
-                    ctxData.beginPath();
-                    ctxData.arc(particle.x, particle.y, particle.radius * pulseScale * 3, 0, Math.PI * 2);
-                    ctxData.fill();
-                }
-            });
-
-            requestAnimationFrame(animateDataParticles);
-        }
-        animateDataParticles();
-
-
-
-        // ==================== BENEFITS GRID CANVAS ====================
-        const benefitsCanvas = document.getElementById('benefits-grid');
-        if (benefitsCanvas) {
-            const ctxBenefits = benefitsCanvas.getContext('2d');
-
-            function resizeBenefitsCanvas() {
-                benefitsCanvas.width = benefitsCanvas.offsetWidth;
-                benefitsCanvas.height = benefitsCanvas.offsetHeight;
-            }
-            resizeBenefitsCanvas();
-            window.addEventListener('resize', resizeBenefitsCanvas);
-
-            function animateBenefitsGrid() {
-                ctxBenefits.clearRect(0, 0, benefitsCanvas.width, benefitsCanvas.height);
-
-                const time = Date.now() * 0.001;
-                const spacing = isMobile ? 50 : 40;
-
-                for (let x = 0; x < benefitsCanvas.width; x += spacing) {
-                    for (let y = 0; y < benefitsCanvas.height; y += spacing) {
-                        const opacity = Math.sin(x * 0.01 + time) * Math.cos(y * 0.01 + time) * 0.3 + 0.2;
-                        ctxBenefits.fillStyle = `rgba(24, 119, 242, ${opacity})`;
-                        ctxBenefits.fillRect(x, y, 2, 2);
-                    }
-                }
-
-                requestAnimationFrame(animateBenefitsGrid);
-            }
-            animateBenefitsGrid();
-        }
-
-        // ==================== GENZTECH GRID CANVAS ====================
-        const genztechCanvas = document.getElementById('genztech-grid');
-        if (genztechCanvas) {
-            const ctxGenztech = genztechCanvas.getContext('2d');
-
-            function resizeGenztechCanvas() {
-                genztechCanvas.width = genztechCanvas.offsetWidth;
-                genztechCanvas.height = genztechCanvas.offsetHeight;
-            }
-            resizeGenztechCanvas();
-            window.addEventListener('resize', resizeGenztechCanvas);
-
-            function animateGenztechGrid() {
-                ctxGenztech.clearRect(0, 0, genztechCanvas.width, genztechCanvas.height);
-
-                const time = Date.now() * 0.0005;
-                const spacing = isMobile ? 60 : 50;
-
-                for (let x = 0; x < genztechCanvas.width; x += spacing) {
-                    for (let y = 0; y < genztechCanvas.height; y += spacing) {
-                        const opacity = Math.sin(x * 0.02 + time) * Math.cos(y * 0.02 + time) * 0.4 + 0.3;
-                        const size = Math.sin(x * 0.01 + y * 0.01 + time) * 2 + 3;
-
-                        const gradient = ctxGenztech.createRadialGradient(x, y, 0, x, y, size * 2);
-                        gradient.addColorStop(0, `rgba(24, 119, 242, ${opacity})`);
-                        gradient.addColorStop(1, 'rgba(24, 119, 242, 0)');
-
-                        ctxGenztech.fillStyle = gradient;
-                        ctxGenztech.beginPath();
-                        ctxGenztech.arc(x, y, size * 2, 0, Math.PI * 2);
-                        ctxGenztech.fill();
-                    }
-                }
-
-                requestAnimationFrame(animateGenztechGrid);
-            }
-            animateGenztechGrid();
-        }
-
-        // ==================== CONTACT GRID CANVAS ====================
-        const contactCanvas = document.getElementById('contact-grid');
-        if (contactCanvas) {
-            const ctxContact = contactCanvas.getContext('2d');
-
-            function resizeContactCanvas() {
-                contactCanvas.width = contactCanvas.offsetWidth;
-                contactCanvas.height = contactCanvas.offsetHeight;
-            }
-            resizeContactCanvas();
-            window.addEventListener('resize', resizeContactCanvas);
-
-            function animateContactGrid() {
-                ctxContact.clearRect(0, 0, contactCanvas.width, contactCanvas.height);
-
-                const time = Date.now() * 0.0008;
-                const spacing = isMobile ? 55 : 45;
-
-                for (let x = 0; x < contactCanvas.width; x += spacing) {
-                    for (let y = 0; y < contactCanvas.height; y += spacing) {
-                        const opacity = Math.sin(x * 0.015 + time) * Math.cos(y * 0.015 + time) * 0.35 + 0.25;
-                        const size = Math.sin(x * 0.012 + y * 0.012 + time) * 2.5 + 3.5;
-
-                        const gradient = ctxContact.createRadialGradient(x, y, 0, x, y, size * 2);
-                        gradient.addColorStop(0, `rgba(24, 119, 242, ${opacity})`);
-                        gradient.addColorStop(1, 'rgba(24, 119, 242, 0)');
-
-                        ctxContact.fillStyle = gradient;
-                        ctxContact.beginPath();
-                        ctxContact.arc(x, y, size * 2, 0, Math.PI * 2);
-                        ctxContact.fill();
-                    }
-                }
-
-                requestAnimationFrame(animateContactGrid);
-            }
-            animateContactGrid();
-        }
-
-        // ==================== GENZTECH LOGO CUSTOM CURSOR ====================
-        const cursor = document.getElementById('custom-cursor');
-
-        // Force enable custom cursor for debugging
-        if (cursor) {
-            console.log('Initializing custom cursor...');
-
-            // Initial setup - Vanilla JS
-            cursor.style.transform = 'translate(-50%, -50%)';
-            cursor.style.opacity = '0';
-
-            // Cursor state
-            let mouseX = 0, mouseY = 0;
-            let cursorX = 0, cursorY = 0;
-            let isMouseMoving = false;
-            let isHovering = false;
-            let isClicking = false;
-            let animationFrameId = null;
-
-            // Hide default cursor IMMEDIATELY
-            document.body.style.cursor = 'none';
-
-            // Mouse event handlers
-            document.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-
-                if (!isMouseMoving) {
-                    isMouseMoving = true;
-                    // Show cursor on first move
-                    cursor.style.opacity = '1';
-                }
-            });
-
-            document.addEventListener('mouseleave', () => {
-                isMouseMoving = false;
-                cursor.style.opacity = '0';
-                document.body.style.cursor = 'auto';
-            });
-
-            document.addEventListener('mouseenter', () => {
-                // cursor.style.opacity = '1'; // Let mousemove handle it
-                // document.body.style.cursor = 'none';
-            });
-
-            document.addEventListener('mousedown', () => {
-                isClicking = true;
-                if (typeof gsap !== 'undefined') {
-                    gsap.to(cursor, { scale: 0.85, duration: 0.15, ease: 'power2.out' });
-                } else {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(0.85)';
-                }
-            });
-
-            document.addEventListener('mouseup', () => {
-                isClicking = false;
-                const scale = isHovering ? 1.2 : 1;
-                if (typeof gsap !== 'undefined') {
-                    gsap.to(cursor, { scale: scale, duration: 0.2, ease: 'power2.out' });
-                } else {
-                    cursor.style.transform = `translate(-50%, -50%) scale(${scale})`;
-                }
-            });
-
-            // Smooth cursor following animation - Vanilla JS
-            function animateCursor() {
-                if (isMouseMoving) {
-                    // Smooth easing
-                    const easing = 0.15;
-                    cursorX += (mouseX - cursorX) * easing;
-                    cursorY += (mouseY - cursorY) * easing;
-
-                    // Update position
-                    cursor.style.left = `${cursorX}px`;
-                    cursor.style.top = `${cursorY}px`;
-                }
-                animationFrameId = requestAnimationFrame(animateCursor);
-            }
-
-            // Start cursor animation
-            animateCursor();
-
-            // Hover effects for interactive elements
-            const interactiveElements = document.querySelectorAll(
-                'a, button, input, textarea, select, ' +
-                '.cta-button, .magnetic-cta, .magnetic-cta-large, ' +
-                '.feature-card, .benefit-card, .testimonial-card, ' +
-                '.flow-card, .stat-card-premium, .genztech-card, ' +
-                '.feature-highlight, .stat-badge'
-            );
-
-            interactiveElements.forEach(el => {
-                el.addEventListener('mouseenter', () => {
-                    isHovering = true;
-                    if (!isClicking) {
-                        gsap.to(cursor, {
-                            scale: 1.2,
-                            duration: 0.3,
-                            ease: 'back.out(1.7)'
-                        });
-                    }
-                });
-
-                el.addEventListener('mouseleave', () => {
-                    isHovering = false;
-                    if (!isClicking) {
-                        gsap.to(cursor, {
-                            scale: 1,
-                            duration: 0.3,
-                            ease: 'power2.out'
-                        });
-                    }
-                });
-            });
-
-            // Cleanup on page unload
-            window.addEventListener('beforeunload', () => {
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                }
-            });
-        } else {
-            // On mobile/touch devices, hide custom cursor
-            if (cursor) {
-                cursor.style.display = 'none';
-            }
-            document.body.style.cursor = 'auto';
-        }
-
-        // ==================== PARALLAX EFFECTS - DISABLED ON MOBILE ====================
-        if (!isMobile) {
-            let mouseParallaxX = 0, mouseParallaxY = 0;
-
-            document.addEventListener('mousemove', (e) => {
-                mouseParallaxX = (e.clientX / window.innerWidth - 0.5) * 20;
-                mouseParallaxY = (e.clientY / window.innerHeight - 0.5) * 20;
-
-                // Apply parallax to star layers
-                canvasFar.style.transform = `translate(${mouseParallaxX * 0.3}px, ${mouseParallaxY * 0.3}px)`;
-                canvasMid.style.transform = `translate(${mouseParallaxX * 0.6}px, ${mouseParallaxY * 0.6}px)`;
-                canvasNear.style.transform = `translate(${mouseParallaxX}px, ${mouseParallaxY}px)`;
-
-                // Apply subtle parallax to hero text
-                const heroHeadline = document.querySelector('.hero-headline');
-                if (heroHeadline) {
-                    heroHeadline.style.transform = `translate(${mouseParallaxX * 0.5}px, ${mouseParallaxY * 0.5}px)`;
-                }
-            });
-        }
-
-        // ==================== CONTACT MODAL FUNCTIONALITY ====================
-        const contactModal = document.getElementById('contactModal');
-        const openContactFormBtn = document.getElementById('openContactForm');
-        const closeModalBtn = document.getElementById('closeModal');
-        const contactForm = document.getElementById('contactForm');
-        const navCtaButton = document.querySelector('nav .cta-button');
-        const heroCtaButton = document.querySelector('#hero .magnetic-cta');
-        const finalCtaButton = document.querySelector('section:has(.magnetic-cta-large) .magnetic-cta-large');
-
-        // Function to open modal
-        function openModal() {
-            if (contactModal) {
-                contactModal.classList.remove('pointer-events-none', 'opacity-0');
-                contactModal.classList.add('pointer-events-auto', 'opacity-100');
-                document.body.style.overflow = 'hidden';
-
-                // Animate modal content
-                const modalContent = contactModal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.transform = 'scale(1)';
-                }
-            }
-        }
-
-        // Function to close modal
-        function closeModal() {
-            if (contactModal) {
-                const modalContent = contactModal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.transform = 'scale(0.9)';
-                }
-
-                setTimeout(() => {
-                    contactModal.classList.add('pointer-events-none', 'opacity-0');
-                    contactModal.classList.remove('pointer-events-auto', 'opacity-100');
-                    document.body.style.overflow = 'auto';
-                }, 200);
-            }
-        }
-
-        // Event listeners for opening modal
-        if (openContactFormBtn) {
-            openContactFormBtn.addEventListener('click', openModal);
-        }
-        if (navCtaButton) {
-            navCtaButton.addEventListener('click', openModal);
-        }
-        if (heroCtaButton) {
-            heroCtaButton.addEventListener('click', openModal);
-        }
-        if (finalCtaButton) {
-            finalCtaButton.addEventListener('click', openModal);
-        }
-
-        // Event listener for closing modal
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', closeModal);
-        }
-
-        // Close modal when clicking backdrop
-        if (contactModal) {
-            contactModal.addEventListener('click', (e) => {
-                if (e.target === contactModal || e.target.classList.contains('modal-backdrop')) {
-                    closeModal();
-                }
-            });
-        }
-
-        // Close modal on Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && contactModal && !contactModal.classList.contains('pointer-events-none')) {
-                closeModal();
-            }
-        });
-
-        // Handle form submission
-        if (contactForm) {
-            contactForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                const phone = document.getElementById('phone') ? document.getElementById('phone').value : '';
-                const email = document.getElementById('email') ? document.getElementById('email').value : '';
-
-                // Here you would typically send the data to your backend
-                console.log('Form submitted:', { phone, email });
-
-                // Show success message (you can customize this)
-                alert('Cảm ơn bạn! Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.');
-
-                // Reset form and close modal
-                contactForm.reset();
-                closeModal();
-            });
-        }
-
-        // ==================== MAIN CONTACT FORM HANDLER ====================
-        const mainContactForm = document.getElementById('mainContactForm');
-        const successMessage = document.getElementById('successMessage');
-        const resetFormBtn = document.getElementById('resetFormBtn');
-
-        if (mainContactForm) {
-            mainContactForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                const message = document.getElementById('message') ? document.getElementById('message').value : '';
-                const contactEmail = document.getElementById('contact-email') ? document.getElementById('contact-email').value : '';
-                const contactPhone = document.getElementById('contact-phone') ? document.getElementById('contact-phone').value : '';
-
-                // Here you would typically send the data to your backend
-                console.log('Contact form submitted:', { message, email: contactEmail, phone: contactPhone });
-
-                // Hide form and show success message
-                mainContactForm.style.display = 'none';
-                if (successMessage) {
-                    successMessage.classList.remove('hidden');
-
-                    // Scroll to success message
-                    successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            });
-        }
-
-        // Reset form button
-        if (resetFormBtn) {
-            resetFormBtn.addEventListener('click', () => {
-                if (mainContactForm) {
-                    mainContactForm.reset();
-                    mainContactForm.style.display = 'block';
-                }
-                if (successMessage) {
-                    successMessage.classList.add('hidden');
-                }
-
-                // Scroll back to form
-                if (mainContactForm) {
-                    mainContactForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        }
-
-        // ==================== GSAP ANIMATIONS ====================
-        gsap.registerPlugin(ScrollTrigger);
-
-        // Hero subtitle word reveal
-        gsap.to('.word-reveal', {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'power3.out'
-        });
-
-        // Hero description fade in
-        gsap.to('.hero-description', {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            delay: 0.6,
-            ease: 'power3.out'
-        });
-
-        // Hero description secondary fade in
-        gsap.to('.hero-description-secondary', {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            delay: 0.8,
-            ease: 'power3.out'
-        });
-
-        // Feature highlights stagger animation
-        gsap.from('.feature-highlight', {
-            opacity: 0,
-            y: 30,
-            scale: 0.9,
-            duration: 0.6,
-            stagger: 0.1,
-            delay: 1,
-            ease: 'back.out(1.7)'
-        });
-
-        // Stats badges animation
-        gsap.from('.stat-badge', {
-            opacity: 0,
-            scale: 0.8,
-            duration: 0.6,
-            stagger: 0.15,
-            delay: 1.4,
-            ease: 'back.out(1.7)'
-        });
-
-        // Trust logos fade in
-        gsap.from('.trust-logos', {
-            opacity: 0,
-            y: 20,
-            duration: 0.8,
-            delay: 1.8,
-            ease: 'power3.out'
-        });
-
-        // Ambient rings animation
-        gsap.to('.ambient-ring', {
-            scale: 2,
-            opacity: 0,
-            duration: 3,
-            repeat: -1,
-            ease: 'power1.out',
-            stagger: 1
-        });
-
-        // Geometric shapes animation - disabled on mobile
-        if (!isMobile) {
-            const shape1 = document.querySelector('.shape-1');
-            const shape2 = document.querySelector('.shape-2');
-            const shape3 = document.querySelector('.shape-3');
-            const shape4 = document.querySelector('.shape-4');
-
-            if (shape1) {
-                gsap.to(shape1, {
-                    rotation: 360,
-                    duration: 20,
-                    repeat: -1,
-                    ease: 'none'
-                });
-            }
-
-            if (shape2) {
-                gsap.to(shape2, {
-                    rotation: -360,
-                    duration: 15,
-                    repeat: -1,
-                    ease: 'none'
-                });
-            }
-
-            if (shape3) {
-                gsap.to(shape3, {
-                    rotation: 360,
-                    duration: 25,
-                    repeat: -1,
-                    ease: 'none'
-                });
-            }
-
-            if (shape4) {
-                gsap.to(shape4, {
-                    rotation: -360,
-                    duration: 18,
-                    repeat: -1,
-                    ease: 'none'
-                });
-            }
-        }
-
-        // Feature cards scroll animation
-        gsap.utils.toArray('.feature-card').forEach((card, i) => {
-            gsap.from(card, {
-                scrollTrigger: {
-                    trigger: card,
-                    start: 'top 80%',
-                    end: 'top 50%',
-                    scrub: isMobile ? 0.5 : 1
-                },
-                opacity: 0,
-                y: isMobile ? 50 : 100,
-                scale: 0.9,
-                duration: 1
-            });
-        });
-
-        // GenZtech cards scroll animation
-        gsap.utils.toArray('.genztech-card').forEach((card, i) => {
-            gsap.from(card, {
-                scrollTrigger: {
-                    trigger: card,
-                    start: 'top 80%'
-                },
-                opacity: 0,
-                y: isMobile ? 40 : 80,
-                scale: 0.95,
-                duration: 0.8,
-                delay: i * 0.15,
-                ease: 'power3.out'
-            });
-        });
-
-        // Benefit cards stagger animation
-        gsap.utils.toArray('.benefit-card').forEach((card, i) => {
-            gsap.from(card, {
-                scrollTrigger: {
-                    trigger: card,
-                    start: 'top 85%'
-                },
-                opacity: 0,
-                x: isMobile ? 0 : (i % 2 === 0 ? -50 : 50),
-                y: isMobile ? 40 : 0,
-                duration: 0.8,
-                delay: i * 0.1,
-                ease: 'power3.out'
-            });
-        });
-
-        // Testimonial cards animation
-        gsap.utils.toArray('.testimonial-card').forEach((card, i) => {
-            gsap.from(card, {
-                scrollTrigger: {
-                    trigger: card,
-                    start: 'top 80%'
-                },
-                opacity: 0,
-                y: 50,
-                rotation: isMobile ? 0 : (i % 2 === 0 ? -5 : 5),
-                duration: 0.8,
-                delay: i * 0.15,
-                ease: 'power3.out'
-            });
-        });
-
-        // Contact form wrapper animation
-        const contactFormWrapper = document.querySelector('.contact-form-wrapper');
-        if (contactFormWrapper) {
-            gsap.from(contactFormWrapper, {
-                scrollTrigger: {
-                    trigger: contactFormWrapper,
-                    start: 'top 80%'
-                },
-                opacity: 0,
-                y: 60,
-                duration: 1,
-                ease: 'power3.out'
-            });
-        }
-
-        // ==================== STATS COUNTER - FIXED ANIMATION ====================
-        const statNumbers = document.querySelectorAll('.stat-number');
-
-        statNumbers.forEach(stat => {
-            const target = parseInt(stat.dataset.target);
-            let hasAnimated = false;
-
-            // Create counter object for GSAP to animate
-            const counterObj = { val: 0 };
-
-            // Create ScrollTrigger with better configuration
-            ScrollTrigger.create({
-                trigger: stat.closest('.stat-card-premium'),
-                start: 'top 75%',
-                once: true,
-                onEnter: () => {
-                    if (!hasAnimated) {
-                        hasAnimated = true;
-
-                        // Animate the counter
-                        gsap.to(counterObj, {
-                            val: target,
-                            duration: 2.5,
-                            ease: 'power2.out',
-                            onUpdate: function () {
-                                stat.textContent = Math.ceil(counterObj.val);
-                            },
-                            onComplete: function () {
-                                stat.textContent = target;
-                            }
-                        });
-                    }
-                }
-            });
-        });
-
-        // Star warp effect on scroll - disabled on mobile
-        if (!isMobile) {
-            const starWarpSection = document.querySelector('.star-warp-section');
-            if (starWarpSection) {
-                gsap.to(canvasNear, {
-                    scrollTrigger: {
-                        trigger: starWarpSection,
-                        start: 'top center',
-                        end: 'bottom center',
-                        scrub: true
-                    },
-                    filter: 'blur(5px)',
-                    scale: 1.3
-                });
-            }
-        }
-
-        // Magnetic CTA effects - disabled on mobile
-        if (!isMobile) {
-            document.querySelectorAll('.magnetic-cta, .magnetic-cta-large').forEach(btn => {
-                btn.addEventListener('mousemove', (e) => {
-                    const rect = btn.getBoundingClientRect();
-                    const x = e.clientX - rect.left - rect.width / 2;
-                    const y = e.clientY - rect.top - rect.height / 2;
-
-                    gsap.to(btn, {
-                        x: x * 0.4,
-                        y: y * 0.4,
-                        duration: 0.3,
-                        ease: 'power2.out'
-                    });
-                });
-
-                btn.addEventListener('mouseleave', () => {
-                    gsap.to(btn, {
-                        x: 0,
-                        y: 0,
-                        duration: 0.6,
-                        ease: 'elastic.out(1, 0.5)'
-                    });
-                });
-            });
-        }
-
-        // Resize handler
-        window.addEventListener('resize', () => {
-            canvasConstellation.width = window.innerWidth;
-            canvasConstellation.height = window.innerHeight;
-            canvasData.width = window.innerWidth;
-            canvasData.height = window.innerHeight;
-            initConstellationPoints();
-
-        });
-
-        // Performance optimization
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
-
-        // ANTI-COPY PROTECTION
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.addEventListener('keydown', event => {
-            if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'u' || event.key === 's')) {
-                event.preventDefault();
-            }
-        });
-        document.addEventListener('copy', event => event.preventDefault());
-        document.addEventListener('dragstart', event => event.preventDefault());
-
-    </script>
-
-    <!-- Footer -->
-    <footer
-        class="py-10 text-center text-gray-500 text-sm relative z-10 border-t border-white/5 bg-space-black/50 backdrop-blur-sm mt-20">
-        <div class="flex justify-center gap-6 mb-4">
-            <a href="privacy-policy.html" class="hover:text-blue-400 transition-colors">Chính sách quyền riêng tư</a>
-            <span class="text-gray-700">|</span>
-            <a href="data-deletion.html" class="hover:text-blue-400 transition-colors">Hướng dẫn xóa dữ liệu</a>
-        </div>
-        <p>&copy; 2026 Genztech. All rights reserved.</p>
-    </footer>
-
-    <!-- Smart Contact Speed Dial -->
-    <div id="smart-contact-dial" class="fixed bottom-12 right-8 z-[9999] flex flex-col items-end">
-
-        <!-- Speed Dial Options -->
-        <div id="dial-options"
-            class="mb-4 flex flex-col gap-4 items-end transition-all duration-300 opacity-0 translate-y-4 invisible pointer-events-none relative z-10">
-
-            <!-- Zalo -->
-            <a href="https://zalo.me/0346727045" target="_blank"
-                class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
-                <span
-                    class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">Chat
-                    Zalo</span>
-                <div
-                    class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-blue-500/20 flex items-center justify-center relative overflow-hidden group-hover/item:border-facebook-blue/50 transition-colors">
-                    <span class="font-black text-white text-xl z-10">Z</span>
-                </div>
-            </a>
-
-            <!-- Facebook -->
-            <a href="https://www.facebook.com/GenztechCorp1/" target="_blank"
-                class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
-                <span
-                    class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">Facebook</span>
-                <div
-                    class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-blue-500/20 flex items-center justify-center relative group-hover/item:border-facebook-blue/50 transition-colors">
-                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                </div>
-            </a>
-
-            <!-- Instagram -->
-            <a href="#" target="_blank"
-                class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
-                <span
-                    class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">Instagram</span>
-                <div
-                    class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-pink-500/20 flex items-center justify-center relative group-hover/item:border-pink-500/50 transition-colors">
-                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                    </svg>
-                </div>
-            </a>
-
-            <!-- X -->
-            <a href="#" target="_blank"
-                class="flex items-center gap-3 transition-transform hover:scale-110 active:scale-95 group/item">
-                <span
-                    class="bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-lg text-white text-sm font-bold shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity">X</span>
-                <div
-                    class="w-12 h-12 rounded-full bg-space-black/80 border border-white/20 shadow-lg shadow-gray-500/20 flex items-center justify-center relative group-hover/item:border-gray-500/50 transition-colors">
-                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                </div>
-            </a>
-
-        </div>
-
-
-
-        <!-- Main Trigger Button -->
-        <button id="dial-trigger" onclick="toggleSmartDial()"
-            class="w-16 h-16 rounded-full bg-gradient-to-r from-facebook-blue to-cyan shadow-[0_0_20px_rgba(24,119,242,0.6)] flex items-center justify-center relative z-20 transition-all duration-300 hover:scale-110 active:scale-95">
-            <!-- Icon Closed (Chat Bubble) -->
-            <svg id="icon-closed" class="w-8 h-8 text-white absolute transition-all duration-300 rotate-0 scale-100"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-                </path>
-            </svg>
-            <!-- Icon Open (Close X) -->
-            <svg id="icon-open" class="w-8 h-8 text-white absolute transition-all duration-300 opacity-0 -rotate-90"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </button>
-
-    </div>
-
-    <script>
-        function toggleSmartDial() {
-            const options = document.getElementById('dial-options');
-            const iconClosed = document.getElementById('icon-closed');
-            const iconOpen = document.getElementById('icon-open');
-            const isHidden = options.classList.contains('invisible');
-
-            if (isHidden) {
-                // OPEN
-                options.classList.remove('invisible', 'opacity-0', 'translate-y-4', 'pointer-events-none');
-                options.classList.add('visible', 'opacity-100', 'translate-y-0', 'pointer-events-auto');
-
-                iconClosed.classList.add('rotate-90', 'scale-0', 'opacity-0');
-                iconClosed.classList.remove('rotate-0', 'scale-100');
-
-                iconOpen.classList.remove('opacity-0', '-rotate-90');
-                iconOpen.classList.add('opacity-100', 'rotate-0');
-            } else {
-                // CLOSE
-                options.classList.add('invisible', 'opacity-0', 'translate-y-4', 'pointer-events-none');
-                options.classList.remove('visible', 'opacity-100', 'translate-y-0', 'pointer-events-auto');
-
-                iconClosed.classList.remove('rotate-90', 'scale-0', 'opacity-0');
-                iconClosed.classList.add('rotate-0', 'scale-100');
-
-                iconOpen.classList.add('opacity-0', '-rotate-90');
-                iconOpen.classList.remove('opacity-100', 'rotate-0');
-            }
-        }
-    </script>
-
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js"></script>
-
-    <script>
-        // 2. Cấu hình SDK
-        window.fbAsyncInit = function () {
-            FB.init({
-                appId: '807344775697014', // Thay App ID vào đây
-                cookie: true,
-                xfbml: true,
-                version: 'v24.0' // Luôn dùng bản mới nhất
-            });
-        };
-
-        // 3. Hàm xử lý khi bấm nút "Kết nối Facebook"
-        function handleFBLogin() {
-
-            FB.login(function (response) {
-
-                if (response.status === 'connected') {
-                    // User đã đồng ý, lấy được Token tạm
-                    const accessToken = response.authResponse.accessToken;
-                    const userID = response.authResponse.userID;
-
-
-
-                    // GỌI NGAY VỀ BACKEND GOLANG ĐỂ SYNC
-                    syncWithBackend(accessToken, userID);
-
-                } else {
-
-                }
-            }, {
-                // [QUAN TRỌNG] Xin các quyền cần thiết cho Tool Ads
-                // Nếu thiếu dòng này, bạn chỉ lấy được Tên & Avatar, không lấy được tk quảng cáo
-                scope: 'email,public_profile,ads_read,ads_management,pages_show_list,pages_read_engagement'
-            });
-        }
-
-        // 4. Hàm bắn về Backend
-        function syncWithBackend(token, uid) {
-            const jwt = localStorage.getItem('gz_jwt');
-            fetch('https://genztech-production.up.railway.app/api/facebook/sync', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(jwt ? { 'Authorization': 'Bearer ' + jwt } : {})
-                },
-                body: JSON.stringify({
-                    token: token,
-                    fbUser: { id: uid }
-                })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("Đồng bộ thành công!");
-                        window.location.reload();
-                    } else {
-                        alert("Lỗi: " + (data.error || data.message || 'Không xác định'));
-                    }
-                })
-                .catch(err => alert('Lỗi kết nối: ' + err.message));
-        }
-    </script>
-
+      </div>`).join('');
+  }
+
+  const tips = [
+    { icon: '💡', text: 'Kiểm tra TKQC thường xuyên để phát hiện sớm các rủi ro bị hạn chế chi tiêu. Tài khoản có điểm chất lượng thấp nên được tối ưu ngay.' },
+    { icon: '📊', text: 'ROAS dưới 2x thường có nghĩa là landing page hoặc offer cần cải thiện, không phải do quảng cáo. Hãy kiểm tra CVR trước khi tăng ngân sách.' },
+    { icon: '🎯', text: 'Frequency trên 3.5 là dấu hiệu audience fatigue. Hãy mở rộng audience hoặc thay creative mới để tránh CPM tăng cao.' },
+    { icon: '⚡', text: 'Dùng tool Kiểm Tra Chính Sách trước khi chạy quảng cáo mới để tránh bị từ chối và ảnh hưởng đến điểm chất lượng tài khoản.' },
+    { icon: '🔍', text: 'Ads Finder giúp bạn xem quảng cáo đối thủ đang chạy. Hãy phân tích creative và messaging của họ để tìm cơ hội khác biệt hóa.' },
+    { icon: '📅', text: 'Múi giờ tài khoản ảnh hưởng đến báo cáo và lịch chạy quảng cáo. Đảm bảo múi giờ đúng với thị trường mục tiêu của bạn.' },
+  ];
+
+  function loadTip() {
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    document.getElementById('tipContent').innerHTML = `<span style="font-size:20px">${tip.icon}</span><br><br>${tip.text}`;
+  }
+
+  function checkLoginStatus() {
+    const token = localStorage.getItem('gz_manual_fb_token') || localStorage.getItem('gz_fb_token');
+    const dot = document.getElementById('connDot');
+    const text = document.getElementById('connText');
+    if (token) {
+      dot.classList.add('connected');
+      text.textContent = 'Đã kết nối';
+      const name = localStorage.getItem('gz_fb_name');
+      const avatar = localStorage.getItem('gz_fb_avatar');
+      if (name) {
+        document.getElementById('userName').textContent = name;
+        if (avatar) document.getElementById('userAvatar').src = avatar;
+        document.getElementById('userBadge').style.display = 'flex';
+      }
+    }
+  }
+
+  function handleFBLogin() { window.location.href = 'tool-ad-account.html'; }
+  function openSettings() { alert('Tính năng cài đặt đang phát triển'); }
+
+  // Cursor
+  const cursor = document.getElementById('custom-cursor');
+  if (cursor && !('ontouchstart' in window)) {
+    document.addEventListener('mousemove', e => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+      cursor.style.opacity = '1';
+    });
+    document.addEventListener('mouseleave', () => { cursor.style.opacity = '0'; });
+  }
+
+  // Stars
+  const canvas = document.getElementById('stars-canvas');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+  const ctx = canvas.getContext('2d');
+  const stars = Array.from({length: 150}, () => ({
+    x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+    r: Math.random() * 1.2 + 0.2, o: Math.random() * 0.5 + 0.1,
+    vx: (Math.random() - 0.5) * 0.1, vy: (Math.random() - 0.5) * 0.1
+  }));
+  (function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.x += s.vx; s.y += s.vy;
+      if (s.x < 0) s.x = canvas.width; if (s.x > canvas.width) s.x = 0;
+      if (s.y < 0) s.y = canvas.height; if (s.y > canvas.height) s.y = 0;
+      ctx.fillStyle = 'rgba(255,255,255,' + s.o + ')';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    });
+    requestAnimationFrame(animate);
+  })();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadStats(); loadActivity(); loadTip(); checkLoginStatus();
+  });
+  </script>
 </body>
-
 </html>

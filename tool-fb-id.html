@@ -109,35 +109,37 @@
 
 <div class="app-layout">
   <aside class="sidebar">
-    <a href="index.html" class="sidebar-logo">
-      <img src="https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff&bold=true" alt="logo">
-      <span>GENZ<em>TECH</em></span>
-    </a>
-    <nav class="sidebar-nav">
-      <div class="nav-group-label">Công Cụ</div>
-      <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-      <a href="auto-post.html" class="nav-item"><i class="bi bi-send"></i> Tự Động Đăng Bài</a>
-      <a href="ads-assistant.html" class="nav-item" onclick="toggleSubNav(event,'subNavAds')">
-        <i class="bi bi-megaphone"></i> Trợ Lý Quảng Cáo
-        <i class="bi bi-chevron-down" id="subNavAdsArrow" style="margin-left:auto;font-size:11px;transition:transform .2s"></i>
+      <a href="index.html" class="sidebar-logo">
+        <img src="https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff&bold=true" alt="logo">
+        <span>GENZ<em>TECH</em></span>
       </a>
-      <div id="subNavAds" style="display:block">
-        <a href="tool-ad-account.html" class="nav-sub-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
-        <a href="tool-fb-id.html" class="nav-sub-item active"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
-        <a href="tool-budget.html" class="nav-sub-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
-        <a href="tool-translate.html" class="nav-sub-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
-        <a href="tool-ads-finder.html" class="nav-sub-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
-        <a href="tool-policy.html" class="nav-sub-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
-        <a href="tool-cookie.html" class="nav-sub-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng Quan</div>
+        <a href="maindashboard.html" class="nav-item"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        <div class="nav-group-label">Công Cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item" onclick="toggleSubNav(event,'subNavAds')">
+          <i class="bi bi-megaphone"></i> Trợ Lý Quảng Cáo
+          <i class="bi bi-chevron-down" id="subNavAdsArrow" style="margin-left:auto;font-size:11px;transition:transform .2s"></i>
+        </a>
+        <div id="subNavAds" style="display:block">
+          <a href="tool-ad-account.html" class="nav-sub-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-sub-item active"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-sub-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-sub-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-sub-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-sub-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-sub-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status" id="connStatus">
+          <div class="conn-dot" id="connDot"></div>
+          <span id="connText">Chưa kết nối</span>
+        </div>
       </div>
-      <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
-    </nav>
-    <div class="sidebar-footer">
-      <div style="font-size:11px;color:rgba(255,255,255,.3);display:flex;align-items:center;gap:6px">
-        <i class="bi bi-person-badge" style="color:#38bdf8"></i> Tìm Facebook ID v2.1
-      </div>
-    </div>
-  </aside>
+    </aside>
 
   <div class="main-content">
     <div class="topbar">
