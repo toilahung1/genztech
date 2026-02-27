@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ads Finder — Genztech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
+    .app-layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
+    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:18px;text-align:center;font-size:15px}
+    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .btn-primary{background:linear-gradient(135deg,#ea580c,#f97316);color:#fff}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#f97316;color:#f97316}
+    .page-body{padding:28px;flex:1}
+    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#fb923c}
+    .card-body{padding:20px}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
+    .form-control:focus{outline:none;border-color:#f97316}
+    .form-control::placeholder{color:rgba(255,255,255,.25)}
+    select.form-control option{background:#1a2035}
+    .search-bar{display:flex;gap:10px;margin-bottom:16px}
+    .search-bar .form-control{flex:1}
+    .filter-row{display:flex;gap:10px;flex-wrap:wrap}
+    .filter-row select{flex:1;min-width:140px}
+    .ads-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media(max-width:1200px){.ads-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:768px){.ads-grid{grid-template-columns:1fr};.sidebar{display:none};.main-content{margin-left:0}}
+    .ad-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;transition:all .2s}
+    .ad-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .ad-img{width:100%;height:160px;object-fit:cover;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:40px}
+    .ad-body{padding:14px}
+    .ad-page{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .ad-page-avatar{width:28px;height:28px;border-radius:50%;background:rgba(234,88,12,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fb923c;flex-shrink:0}
+    .ad-page-name{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.8)}
+    .ad-text{font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .ad-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+    .ad-tag{font-size:10.5px;padding:2px 8px;border-radius:12px;background:rgba(234,88,12,.1);color:#fb923c;border:1px solid rgba(234,88,12,.2)}
+    .ad-footer{display:flex;gap:5px}
+    .ad-btn{flex:1;padding:6px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px}
+    .ad-btn-save{background:rgba(234,88,12,.15);color:#fb923c}
+    .ad-btn-save:hover{background:rgba(234,88,12,.25)}
+    .ad-btn-save.saved{background:rgba(34,197,94,.15);color:#4ade80}
+    .ad-btn-link{background:rgba(255,255,255,.07);color:rgba(255,255,255,.6)}
+    .ad-btn-link:hover{background:rgba(255,255,255,.12);color:#fff}
+    .tab-bar{display:flex;gap:4px;padding:4px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:20px}
+    .tab-btn{flex:1;padding:8px 12px;border:none;border-radius:7px;background:transparent;color:rgba(255,255,255,.5);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+    .tab-btn.active{background:rgba(234,88,12,.15);color:#fb923c}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#f97316;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .empty-state{text-align:center;padding:40px 20px;color:rgba(255,255,255,.3)}
+    .empty-state i{font-size:40px;margin-bottom:12px;display:block}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
+    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+  </style>
+</head>
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-layout relative z-10">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo"><img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span></a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng quan</div>
+        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <div class="nav-group-label">Công cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
+        <div class="nav-sub">
+          <a href="tool-ad-account.html" class="nav-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-item active"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <div class="nav-group-label">Hệ thống</div>
+        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Ads Finder</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-sm btn-outline" onclick="switchTab('saved')"><i class="bi bi-bookmark-fill"></i> Đã lưu (<span id="savedCount">0</span>)</button>
+          <a href="https://www.facebook.com/ads/library" target="_blank" class="btn-sm btn-primary"><i class="bi bi-box-arrow-up-right"></i> Mở Ad Library</a>
+        </div>
+      </header>
+
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-binoculars" style="color:#fb923c"></i> Ads Finder</h1>
+        <p class="page-subtitle">Tìm kiếm và phân tích quảng cáo đang chạy trên Facebook Ad Library. Lưu, phân loại và theo dõi quảng cáo đối thủ</p>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('search')" id="tabSearch"><i class="bi bi-search"></i> Tìm Kiếm</button>
+          <button class="tab-btn" onclick="switchTab('saved')" id="tabSaved"><i class="bi bi-bookmark-fill"></i> Đã Lưu (<span id="savedCount2">0</span>)</button>
+          <button class="tab-btn" onclick="switchTab('trending')" id="tabTrending"><i class="bi bi-fire"></i> Xu Hướng</button>
+        </div>
+
+        <!-- Search tab -->
+        <div id="paneSearch" class="tab-pane active">
+          <div class="card">
+            <div class="card-body">
+              <div class="search-bar">
+                <input type="text" class="form-control" id="searchQuery" placeholder="Nhập từ khóa, tên thương hiệu, sản phẩm..." onkeydown="if(event.key==='Enter')doSearch()">
+                <button class="btn-sm btn-primary" onclick="doSearch()" id="searchBtn"><i class="bi bi-search"></i> Tìm</button>
+              </div>
+              <div class="filter-row">
+                <select class="form-control" id="filterCountry">
+                  <option value="VN">🇻🇳 Việt Nam</option>
+                  <option value="US">🇺🇸 Hoa Kỳ</option>
+                  <option value="TH">🇹🇭 Thái Lan</option>
+                  <option value="ID">🇮🇩 Indonesia</option>
+                  <option value="PH">🇵🇭 Philippines</option>
+                  <option value="SG">🇸🇬 Singapore</option>
+                  <option value="ALL">🌍 Tất cả</option>
+                </select>
+                <select class="form-control" id="filterType">
+                  <option value="ALL">Tất cả loại</option>
+                  <option value="IMAGE">Ảnh</option>
+                  <option value="VIDEO">Video</option>
+                  <option value="CAROUSEL">Carousel</option>
+                </select>
+                <select class="form-control" id="filterStatus">
+                  <option value="ACTIVE">Đang chạy</option>
+                  <option value="INACTIVE">Đã dừng</option>
+                  <option value="ALL">Tất cả</option>
+                </select>
+                <select class="form-control" id="filterSort">
+                  <option value="relevance">Liên quan nhất</option>
+                  <option value="recent">Mới nhất</option>
+                  <option value="impressions">Nhiều lượt xem</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="searchResults">
+            <div class="empty-state"><i class="bi bi-binoculars"></i><p>Nhập từ khóa và nhấn Tìm để xem quảng cáo</p></div>
+          </div>
+        </div>
+
+        <!-- Saved tab -->
+        <div id="paneSaved" class="tab-pane">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-size:13px;color:rgba(255,255,255,.5)" id="savedInfo">0 quảng cáo đã lưu</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-sm btn-outline" onclick="exportSaved()"><i class="bi bi-download"></i> Xuất CSV</button>
+              <button class="btn-sm btn-outline" style="color:#f87171;border-color:rgba(239,68,68,.3)" onclick="clearSaved()"><i class="bi bi-trash"></i> Xóa tất cả</button>
+            </div>
+          </div>
+          <div id="savedGrid" class="ads-grid">
+            <div class="empty-state" style="grid-column:1/-1"><i class="bi bi-bookmark"></i><p>Chưa có quảng cáo nào được lưu</p></div>
+          </div>
+        </div>
+
+        <!-- Trending tab -->
+        <div id="paneTrending" class="tab-pane">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="bi bi-fire" style="color:#f97316"></i> Xu Hướng Quảng Cáo Việt Nam</div><span style="font-size:11px;color:rgba(255,255,255,.35)">Cập nhật: hôm nay</span></div>
+            <div class="card-body" id="trendingBody">
+              <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.4);font-size:13px"><span class="spinner"></span> Đang tải xu hướng...</div>
+            </div>
+          </div>
+          <div id="trendingGrid" class="ads-grid"></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/ads-shared.js"></script>
+  <script>
+  let savedAds = JSON.parse(localStorage.getItem('genz_saved_ads') || '[]');
+
+  function switchTab(tab) {
+    ['search','saved','trending'].forEach(t => {
+      document.getElementById('pane'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+      document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+    });
+    if (tab === 'saved') renderSaved();
+    if (tab === 'trending') loadTrending();
+    updateSavedCount();
+  }
+
+  function updateSavedCount() {
+    const n = savedAds.length;
+    document.getElementById('savedCount').textContent = n;
+    document.getElementById('savedCount2').textContent = n;
+  }
+
+  async function doSearch() {
+    const query = document.getElementById('searchQuery').value.trim();
+    if (!query) { GZ.toast('Vui lòng nhập từ khóa tìm kiếm', 'error'); return; }
+
+    const btn = document.getElementById('searchBtn');
+    btn.innerHTML = '<span class="spinner"></span> Đang tìm...';
+    btn.disabled = true;
+
+    const country = document.getElementById('filterCountry').value;
+    const adType = document.getElementById('filterType').value;
+    const status = document.getElementById('filterStatus').value;
+
+    try {
+      let ads = [];
+
+      if (GZ.isFbConnected()) {
+        // Real Facebook Ad Library API
+        const params = {
+          search_terms: query,
+          ad_reached_countries: country === 'ALL' ? '["VN","US","TH"]' : `["${country}"]`,
+          ad_active_status: status === 'ALL' ? 'ALL' : status,
+          fields: 'id,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_descriptions,ad_creative_link_titles,ad_delivery_start_time,ad_snapshot_url,page_id,page_name,impressions',
+          limit: 12
+        };
+        if (adType !== 'ALL') params.ad_type = adType;
+        const data = await GZ.fbApi('ads_archive', params);
+        ads = data.data || [];
+      } else {
+        // Demo data
+        await new Promise(r => setTimeout(r, 800));
+        ads = generateDemoAds(query, 9);
+        GZ.toast('Hiển thị dữ liệu demo (chưa kết nối Facebook)', 'info');
+      }
+
+      renderAds(ads, 'searchResults');
+    } catch(e) {
+      document.getElementById('searchResults').innerHTML = `<div class="empty-state"><i class="bi bi-x-circle" style="color:#f87171"></i><p style="color:#f87171">${e.message}</p></div>`;
+    } finally {
+      btn.innerHTML = '<i class="bi bi-search"></i> Tìm';
+      btn.disabled = false;
+    }
+  }
+
+  function generateDemoAds(query, count) {
+    const pages = ['Thời Trang ABC', 'Shop Mỹ Phẩm XYZ', 'Đồ Gia Dụng Pro', 'Tech Store VN', 'Beauty House', 'Fashion World', 'Food & Drink VN', 'Travel Vietnam', 'Edu Online'];
+    const texts = [
+      `🔥 ${query} - Ưu đãi đặc biệt hôm nay! Giảm 50% cho đơn hàng đầu tiên. Số lượng có hạn!`,
+      `✨ Khám phá ${query} chất lượng cao. Giao hàng miễn phí toàn quốc. Order ngay!`,
+      `💎 ${query} cao cấp - Chỉ từ 199,000đ. Hơn 10,000 khách hàng tin dùng mỗi tháng.`,
+      `🎯 Bạn đang tìm ${query}? Chúng tôi có giải pháp hoàn hảo cho bạn!`,
+      `⚡ Flash Sale ${query} - 24 giờ duy nhất! Đặt hàng trước 12h để nhận ưu đãi.`
+    ];
+    return Array.from({length: count}, (_, i) => ({
+      id: 'demo_' + i,
+      page_name: pages[i % pages.length],
+      page_id: '10000' + i,
+      ad_creative_bodies: [texts[i % texts.length]],
+      ad_delivery_start_time: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
+      ad_snapshot_url: null,
+      impressions: { lower_bound: Math.floor(Math.random() * 50000 + 1000).toString() },
+      demo: true
+    }));
+  }
+
+  function renderAds(ads, containerId) {
+    const container = document.getElementById(containerId);
+    if (!ads.length) {
+      container.innerHTML = '<div class="empty-state"><i class="bi bi-search"></i><p>Không tìm thấy quảng cáo nào</p></div>';
+      return;
+    }
+    container.className = 'ads-grid';
+    container.innerHTML = ads.map(ad => {
+      const isSaved = savedAds.some(s => s.id === ad.id);
+      const text = (ad.ad_creative_bodies && ad.ad_creative_bodies[0]) || 'Không có nội dung';
+      const pageName = ad.page_name || 'Unknown Page';
+      const initial = pageName.charAt(0).toUpperCase();
+      const startDate = ad.ad_delivery_start_time ? new Date(ad.ad_delivery_start_time).toLocaleDateString('vi-VN') : '—';
+      const impressions = ad.impressions?.lower_bound ? GZ.num(parseInt(ad.impressions.lower_bound)) + '+' : '—';
+
+      return `<div class="ad-card" id="adcard_${ad.id}">
+        <div class="ad-img">${ad.ad_snapshot_url ? `<img src="${ad.ad_snapshot_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<i class=\\'bi bi-image\\'></i>'">` : '<i class="bi bi-image"></i>'}</div>
+        <div class="ad-body">
+          <div class="ad-page">
+            <div class="ad-page-avatar">${initial}</div>
+            <div>
+              <div class="ad-page-name">${pageName}</div>
+              <div style="font-size:10.5px;color:rgba(255,255,255,.3)">Bắt đầu: ${startDate} • ${impressions} lượt xem</div>
+            </div>
+          </div>
+          <div class="ad-text">${text}</div>
+          <div class="ad-meta">
+            ${ad.demo ? '<span class="ad-tag">Demo</span>' : '<span class="ad-tag">Đang chạy</span>'}
+            <span class="ad-tag">Facebook</span>
+          </div>
+          <div class="ad-footer">
+            <button class="ad-btn ad-btn-save ${isSaved ? 'saved' : ''}" id="savebtn_${ad.id}" onclick="toggleSave(${JSON.stringify(ad).replace(/"/g,'&quot;')})">
+              <i class="bi bi-bookmark${isSaved ? '-fill' : ''}"></i> ${isSaved ? 'Đã lưu' : 'Lưu'}
+            </button>
+            ${ad.ad_snapshot_url ? `<button class="ad-btn ad-btn-link" onclick="window.open('${ad.ad_snapshot_url}','_blank')"><i class="bi bi-box-arrow-up-right"></i> Xem</button>` : `<button class="ad-btn ad-btn-link" onclick="window.open('https://www.facebook.com/ads/library/?id=${ad.id}','_blank')"><i class="bi bi-box-arrow-up-right"></i> Ad Library</button>`}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function toggleSave(ad) {
+    const idx = savedAds.findIndex(s => s.id === ad.id);
+    if (idx >= 0) {
+      savedAds.splice(idx, 1);
+      GZ.toast('Đã bỏ lưu quảng cáo', 'info');
+    } else {
+      savedAds.unshift({ ...ad, savedAt: Date.now() });
+      GZ.toast('Đã lưu quảng cáo!', 'success');
+    }
+    localStorage.setItem('genz_saved_ads', JSON.stringify(savedAds));
+    updateSavedCount();
+    // Update button state
+    const btn = document.getElementById('savebtn_' + ad.id);
+    if (btn) {
+      const isSaved = savedAds.some(s => s.id === ad.id);
+      btn.className = `ad-btn ad-btn-save ${isSaved ? 'saved' : ''}`;
+      btn.innerHTML = `<i class="bi bi-bookmark${isSaved ? '-fill' : ''}"></i> ${isSaved ? 'Đã lưu' : 'Lưu'}`;
+    }
+  }
+
+  function renderSaved() {
+    const container = document.getElementById('savedGrid');
+    document.getElementById('savedInfo').textContent = savedAds.length + ' quảng cáo đã lưu';
+    if (!savedAds.length) {
+      container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="bi bi-bookmark"></i><p>Chưa có quảng cáo nào được lưu</p></div>';
+      return;
+    }
+    renderAds(savedAds, 'savedGrid');
+  }
+
+  function clearSaved() {
+    if (!confirm('Xóa tất cả quảng cáo đã lưu?')) return;
+    savedAds = [];
+    localStorage.removeItem('genz_saved_ads');
+    updateSavedCount();
+    renderSaved();
+    GZ.toast('Đã xóa tất cả', 'info');
+  }
+
+  function exportSaved() {
+    if (!savedAds.length) { GZ.toast('Không có dữ liệu', 'error'); return; }
+    const csv = 'ID,Tên Page,Nội dung,Ngày bắt đầu,Ngày lưu\n' + savedAds.map(a => `"${a.id}","${a.page_name || ''}","${(a.ad_creative_bodies?.[0] || '').replace(/"/g,"'")}","${a.ad_delivery_start_time || ''}","${new Date(a.savedAt).toLocaleString('vi-VN')}"`).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const el = document.createElement('a'); el.href = URL.createObjectURL(blob); el.download = `saved_ads_${Date.now()}.csv`; el.click();
+    GZ.toast('Đã xuất CSV!', 'success');
+  }
+
+  async function loadTrending() {
+    const body = document.getElementById('trendingBody');
+    const grid = document.getElementById('trendingGrid');
+
+    const trends = [
+      { keyword: 'Thời trang nữ', count: '2,450 ads', growth: '+23%', color: '#f87171' },
+      { keyword: 'Mỹ phẩm Hàn Quốc', count: '1,890 ads', growth: '+18%', color: '#fb923c' },
+      { keyword: 'Đồ gia dụng', count: '1,650 ads', growth: '+12%', color: '#fbbf24' },
+      { keyword: 'Khóa học online', count: '1,420 ads', growth: '+35%', color: '#4ade80' },
+      { keyword: 'Thực phẩm chức năng', count: '1,280 ads', growth: '+28%', color: '#60a5fa' },
+      { keyword: 'Điện thoại phụ kiện', count: '1,100 ads', growth: '+8%', color: '#c084fc' },
+    ];
+
+    body.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">` + trends.map((t, i) => `
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;border:1px solid rgba(255,255,255,.06)" onclick="searchTrend('${t.keyword}')">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:16px;font-weight:800;color:${t.color}">#${i+1}</span>
+          <span style="font-size:13px;font-weight:700">${t.keyword}</span>
+        </div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.4)">${t.count} • <span style="color:#4ade80">${t.growth}</span></div>
+      </div>`).join('') + '</div>';
+
+    // Load demo trending ads
+    const demoAds = generateDemoAds('trending', 6);
+    renderAds(demoAds, 'trendingGrid');
+  }
+
+  function searchTrend(keyword) {
+    document.getElementById('searchQuery').value = keyword;
+    switchTab('search');
+    doSearch();
+  }
+
+  document.addEventListener('DOMContentLoaded', updateSavedCount);
+  </script>
+  <script>
+  const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
+  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));const ss=[];let lt=0;function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
+  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(234,88,12,'+po+')');g.addColorStop(.5,'rgba(249,115,22,'+(po*.5)+')');g.addColorStop(1,'rgba(249,115,22,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+  </script>
+</body>
+</html>
