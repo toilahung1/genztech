@@ -53,7 +53,7 @@ const GZ = {
     if (body) opts.body = JSON.stringify(body);
     const resp = await fetch(`${GZ.API}${path}`, opts);
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.message || 'Lỗi server');
+    if (!resp.ok) throw new Error(data.error || data.message || `Lỗi server (${resp.status})`);
     return data;
   },
 
