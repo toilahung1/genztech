@@ -172,6 +172,23 @@
                 </select>
               </div>
             </div>
+            <!-- Manual Token (fallback) -->
+            <div id="manualTokenSection" style="margin-top:14px;padding:12px 14px;background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.12);border-radius:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="font-size:12px;color:#fbbf24;font-weight:600"><i class="bi bi-key"></i> Phương Án Dự Phòng — Nhập Access Token Thủ Công</div>
+                <button onclick="toggleManualToken()" id="toggleTokenBtn" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:11px;cursor:pointer">▼ Mở rộng</button>
+              </div>
+              <div id="manualTokenBody" style="display:none">
+                <div style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:8px">Dùng khi Facebook cấm OAuth. Lấy token tại <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:#1877f2">Graph API Explorer</a> → chọn quyền <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px">ads_read</code></div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input type="password" class="form-control" id="manualToken" placeholder="EAAxxxxxxxxxxxxxxx..." style="flex:1;font-size:12px">
+                  <button class="btn-sm btn-outline" onclick="saveManualToken()" style="white-space:nowrap"><i class="bi bi-save"></i> Lưu Token</button>
+                  <button class="btn-sm" onclick="clearManualToken()" style="white-space:nowrap;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#f87171"><i class="bi bi-trash"></i></button>
+                </div>
+                <div id="tokenStatus" style="font-size:11px;margin-top:6px;color:rgba(255,255,255,.35)"></div>
+              </div>
+            </div>
+
             <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
               <button class="btn-sm btn-primary" onclick="checkAccount()" id="checkBtn">
                 <i class="bi bi-search"></i> Kiểm Tra TKQC
@@ -295,24 +312,79 @@
     if (v && !el.value.startsWith('act_')) el.value = v;
   }
 
+  // ── Manual Token helpers ──
+  function toggleManualToken() {
+    const body = document.getElementById('manualTokenBody');
+    const btn = document.getElementById('toggleTokenBtn');
+    const open = body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    btn.textContent = open ? '▲ Thu gọn' : '▼ Mở rộng';
+    if (open) {
+      const saved = localStorage.getItem('gz_manual_fb_token');
+      if (saved) {
+        document.getElementById('manualToken').value = saved;
+        document.getElementById('tokenStatus').innerHTML = '<i class="bi bi-check-circle" style="color:#4ade80"></i> Token đã lưu — sẽ ưu tiên dùng khi kiểm tra';
+      }
+    }
+  }
+
+  function saveManualToken() {
+    const token = document.getElementById('manualToken').value.trim();
+    if (!token) { GZ.toast('Vui lòng nhập token', 'error'); return; }
+    if (!token.startsWith('EAA') && !token.startsWith('EAB')) {
+      GZ.toast('Token không hợp lệ — phải bắt đầu bằng EAA', 'error'); return;
+    }
+    localStorage.setItem('gz_manual_fb_token', token);
+    document.getElementById('tokenStatus').innerHTML = '<i class="bi bi-check-circle" style="color:#4ade80"></i> Đã lưu! Token sẽ ưu tiên dùng khi kiểm tra TKQC';
+    GZ.toast('Lưu token thành công!', 'success');
+  }
+
+  function clearManualToken() {
+    localStorage.removeItem('gz_manual_fb_token');
+    document.getElementById('manualToken').value = '';
+    document.getElementById('tokenStatus').innerHTML = '<i class="bi bi-x-circle" style="color:#f87171"></i> Đã xóa token thủ công';
+    GZ.toast('Xóa token thành công', 'info');
+  }
+
+  function getActiveToken() {
+    return localStorage.getItem('gz_manual_fb_token') || null;
+  }
+
   // Check if logged in (not FB connected — backend proxy handles FB token)
   document.addEventListener('DOMContentLoaded', () => {
     if (!GZ.isLoggedIn()) {
       document.getElementById('fbConnWarn').style.display = 'flex';
       document.getElementById('fbConnWarn').innerHTML = '<i class="bi bi-exclamation-triangle"></i> Chưa đăng nhập GenZTech — <a href="auto-post.html" style="color:#fbbf24;text-decoration:none;font-weight:600">Đăng nhập ngay</a>';
     }
+    // Show token status if saved
+    const saved = localStorage.getItem('gz_manual_fb_token');
+    if (saved) {
+      const warn = document.getElementById('fbConnWarn');
+      warn.style.display = 'flex';
+      warn.style.color = '#4ade80';
+      warn.innerHTML = '<i class="bi bi-key-fill" style="color:#4ade80"></i> Token thủ công đã sẵn sàng — <button onclick="toggleManualToken()" style="background:none;border:none;color:#4ade80;cursor:pointer;font-size:12px;text-decoration:underline">Xem / Đổi token</button>';
+    }
   });
 
-  // Load my ad accounts — gọi qua backend proxy
+  // Load my ad accounts — gọi qua backend proxy hoặc manual token
   async function loadMyAccounts() {
     const section = document.getElementById('myAccountsSection');
     const list = document.getElementById('myAccountsList');
     section.style.display = 'block';
     list.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.4);font-size:13px"><span class="spinner"></span> Đang tải danh sách TKQC...</div>';
 
+    const manualToken = getActiveToken();
     try {
-      const resp = await GZ.api('/api/facebook/proxy/my-ad-accounts');
-      const data = { data: resp.accounts || [] };
+      let data;
+      if (manualToken) {
+        // Dùng manual token: gọi thẳng Graph API
+        const r = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name,account_status,balance,currency&access_token=${manualToken}`).then(r=>r.json());
+        if (r.error) throw new Error(r.error.message);
+        data = { data: r.data || [] };
+      } else {
+        const resp = await GZ.api('/api/facebook/proxy/my-ad-accounts');
+        data = { data: resp.accounts || [] };
+      }
 
       if (!data.data || !data.data.length) {
         list.innerHTML = '<div class="empty-state"><i class="bi bi-collection"></i><p>Không tìm thấy tài khoản quảng cáo nào</p></div>';
@@ -360,18 +432,28 @@
     btn.disabled = true;
 
     const dateRange = document.getElementById('dateRange').value;
+    const manualToken = getActiveToken();
 
     try {
-      let accountData, insightData, campaignData;
+      let resp;
 
-      // Gọi qua backend proxy (backend dùng token đã lưu trong DB)
-      const resp = await GZ.api(`/api/facebook/proxy/ad-account/${id}?date_preset=${dateRange}`);
-      accountData = resp.account;
-      insightData = { data: resp.insights ? [resp.insights] : [] };
-      campaignData = { data: resp.campaigns || [] };
+      if (manualToken) {
+        // Phương án dự phòng: gọi thẳng Facebook Graph API bằng manual token
+        const fields = 'id,name,account_status,balance,currency,amount_spent,spend_cap,daily_spend_limit,timezone_name,created_time,funding_source_details';
+        const [accRes, insRes, campRes] = await Promise.all([
+          fetch(`https://graph.facebook.com/v19.0/${id}?fields=${fields}&access_token=${manualToken}`).then(r=>r.json()),
+          fetch(`https://graph.facebook.com/v19.0/${id}/insights?fields=spend,impressions,clicks,reach,cpm,cpc,ctr&date_preset=${dateRange}&access_token=${manualToken}`).then(r=>r.json()),
+          fetch(`https://graph.facebook.com/v19.0/${id}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,insights{spend,impressions,clicks}&limit=10&access_token=${manualToken}`).then(r=>r.json())
+        ]);
+        if (accRes.error) throw new Error(accRes.error.message);
+        resp = { account: accRes, insights: insRes.data?.[0] || null, campaigns: campRes.data || [] };
+      } else {
+        // Phương án chính: gọi qua backend proxy
+        resp = await GZ.api(`/api/facebook/proxy/ad-account/${id}?date_preset=${dateRange}`);
+      }
 
-      renderResult(accountData, insightData, campaignData, dateRange);
-      document.getElementById('lastChecked').textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
+      renderResult(resp.account, { data: resp.insights ? [resp.insights] : [] }, { data: resp.campaigns || [] }, dateRange);
+      document.getElementById('lastChecked').textContent = (manualToken ? '🔑 Token thủ công — ' : '') + 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
 
     } catch(e) {
       GZ.toast('Lỗi: ' + e.message, 'error');
