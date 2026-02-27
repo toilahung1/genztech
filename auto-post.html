@@ -508,13 +508,13 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <a href="index.html" class="sidebar-logo" style="text-decoration:none;cursor:pointer">
+      <div class="sidebar-logo">
         <img src="images/logo.png" alt="Logo">
         <span>GENZ<em>TECH</em></span>
-      </a>
+      </div>
       <nav class="sidebar-nav">
         <div class="nav-group-label">Tổng quan</div>
-        <a href="index.html" class="nav-item">
+        <a href="maindashboard.html" class="nav-item">
           <i class="bi bi-grid-1x2"></i> Dashboard
         </a>
         <div class="nav-group-label">Công cụ</div>
@@ -526,7 +526,9 @@
         <a href="#" class="nav-item" onclick="openModal('settingsModal')">
           <i class="bi bi-gear"></i> Cài Đặt
         </a>
-
+        <a href="maindashboard.html" class="nav-item">
+          <i class="bi bi-arrow-left-circle"></i> Trang Chủ
+        </a>
       </nav>
       <div class="sidebar-footer">
         <div class="conn-status" id="connStatus">
@@ -1213,8 +1215,8 @@
       localStorage.setItem('gz_username', S.username);
       toast('Đăng nhập thành công! Chào ' + S.username, 'success');
       updateConnUI();
-      // Tự động chuyển sang tab Facebook sau khi đăng nhập
-      setTimeout(function() { switchAuthTabDirect('authFacebook'); }, 300);
+      // Đóng modal sau khi đăng nhập thành công
+      closeModal('connectModal');
     } catch(e) {
       toast(e.message, 'error');
     } finally {
@@ -1267,8 +1269,8 @@
       localStorage.setItem('gz_username', S.username);
       toast('Đăng ký thành công! Chào mừng ' + S.username, 'success');
       updateConnUI();
-      // Tự động chuyển sang tab Facebook sau khi đăng ký
-      setTimeout(function() { switchAuthTabDirect('authFacebook'); }, 300);
+      // Đóng modal sau khi đăng ký thành công
+      closeModal('connectModal');
     } catch(e) {
       toast(e.message, 'error');
     } finally {
