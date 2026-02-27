@@ -639,10 +639,24 @@ function renderCharts(kpis) {
     datasets: [{ data: [kpis.spend, kpis.revenue, Math.max(0, kpis.profit)], backgroundColor: ['rgba(239,68,68,.7)', 'rgba(34,197,94,.7)', 'rgba(0,212,255,.7)'], borderRadius: 6 }]
   }, { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(255,255,255,.5)', font: { size: 10 } } }, y: { ticks: { color: 'rgba(255,255,255,.5)', font: { size: 10 }, callback: v => fmtVnd(v) } } } });
 
+  // Phễu chuyển đổi: dùng logarithmic scale để hiển thị đúng tỷ lệ
+  const funnelLabels = [
+    `Hiển thị\n(${kpis.impressions.toLocaleString('vi-VN')})`,
+    `Nhấp\n(${kpis.clicks.toLocaleString('vi-VN')} · CTR ${kpis.ctr.toFixed(2)}%)`,
+    `Chuyển đổi\n(${kpis.conversions.toLocaleString('vi-VN')} · CVR ${kpis.cvr.toFixed(2)}%)`
+  ];
+  const funnelData = [kpis.impressions || 1, kpis.clicks || 1, kpis.conversions || 1];
   mkChart('chartFunnel', 'bar', {
-    labels: ['Hiển thị', 'Nhấp', 'Chuyển đổi'],
-    datasets: [{ data: [kpis.impressions, kpis.clicks, kpis.conversions], backgroundColor: ['rgba(99,102,241,.7)', 'rgba(0,212,255,.7)', 'rgba(34,197,94,.7)'], borderRadius: 6 }]
-  }, { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(255,255,255,.5)', font: { size: 10 } } }, y: { ticks: { color: 'rgba(255,255,255,.5)', font: { size: 10 } } } } });
+    labels: funnelLabels,
+    datasets: [{ data: funnelData, backgroundColor: ['rgba(99,102,241,.75)', 'rgba(0,212,255,.75)', 'rgba(34,197,94,.75)'], borderRadius: 6 }]
+  }, {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toLocaleString('vi-VN')}` } } },
+    scales: {
+      x: { type: 'logarithmic', ticks: { color: 'rgba(255,255,255,.5)', font: { size: 10 }, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: 'rgba(255,255,255,.05)' } },
+      y: { ticks: { color: 'rgba(255,255,255,.6)', font: { size: 10 } } }
+    }
+  });
 
   const adCost = kpis.spend;
   const cogsCost = kpis.conversions * kpis.cogs;
