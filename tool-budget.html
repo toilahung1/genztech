@@ -842,10 +842,12 @@ function renderAIResult(a) {
 
 // ── Tabs ──
 function switchTab(tab) {
+  const tabMap = { charts: 'Charts', ai: 'AI', scenario: 'Scenario' };
   ['charts','ai','scenario'].forEach(t => {
-    const cap = t.charAt(0).toUpperCase() + t.slice(1);
-    document.getElementById('pane' + cap).classList.toggle('active', t === tab);
-    document.getElementById('tab' + cap).classList.toggle('active', t === tab);
+    const pane = document.getElementById('pane' + tabMap[t]);
+    const btn  = document.getElementById('tab'  + tabMap[t]);
+    if (pane) pane.classList.toggle('active', t === tab);
+    if (btn)  btn.classList.toggle('active', t === tab);
   });
 }
 
