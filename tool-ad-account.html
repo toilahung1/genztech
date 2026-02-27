@@ -279,16 +279,17 @@
                   <tr>
                     <th style="width:36px"><input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"></th>
                     <th onclick="sortTable('accounts','name')">Tài khoản quảng cáo <i class="bi bi-arrow-down-up"></i></th>
-                    <th onclick="sortTable('accounts','account_status')">Trạng thái tài khoản <i class="bi bi-arrow-down-up"></i></th>
-                    <th>Quyền sở hữu</th>
-                    <th>Loại tài khoản</th>
+                    <th onclick="sortTable('accounts','account_status')">Trạng thái <i class="bi bi-arrow-down-up"></i></th>
+                    <th>Quốc gia</th>
+                    <th>Múi giờ</th>
                     <th onclick="sortTable('accounts','currency')">Tiền tệ <i class="bi bi-arrow-down-up"></i></th>
                     <th onclick="sortTable('accounts','balance')">Số dư <i class="bi bi-arrow-down-up"></i></th>
                     <th onclick="sortTable('accounts','amount_spent')">Chi tiêu <i class="bi bi-arrow-down-up"></i></th>
+                    <th style="width:80px">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-accounts">
-                  <tr class="loading-row"><td colspan="8"><span class="spinner"></span> Đang tải...</td></tr>
+                  <tr class="loading-row"><td colspan="9"><span class="spinner"></span> Đang tải...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -474,6 +475,96 @@
     </div>
   </div>
 
+  <!-- Edit Timezone / Country Modal -->
+  <div class="modal-overlay" id="editTzModal">
+    <div class="modal-box" style="width:540px">
+      <div class="modal-title"><i class="bi bi-globe" style="color:#00d4ff"></i> Sửa Múi Giờ / Quốc Gia</div>
+      <div class="modal-sub" id="editTzAccName" style="color:#00d4ff;font-size:13px;margin-bottom:16px"></div>
+      <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#fbbf24">
+        <i class="bi bi-exclamation-triangle"></i> <strong>Lưu ý:</strong> Facebook chỉ cho phép sửa múi giờ và quốc gia qua <strong>Business Manager</strong> hoặc API với quyền <code>ads_management</code>. Thay đổi có thể ảnh hưởng đến báo cáo và múi giờ hiển thị của chiến dịch.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="form-group">
+          <label class="form-label"><i class="bi bi-globe2" style="color:#60a5fa"></i> Quốc gia</label>
+          <select class="form-control" id="editCountry">
+            <option value="VN">🆻🇳 Việt Nam (VN)</option>
+            <option value="US">🇺🇸 United States (US)</option>
+            <option value="GB">🇬🇧 United Kingdom (GB)</option>
+            <option value="SG">🇸🇬 Singapore (SG)</option>
+            <option value="TH">🇹🇭 Thailand (TH)</option>
+            <option value="ID">🇮🇩 Indonesia (ID)</option>
+            <option value="MY">🇲🇾 Malaysia (MY)</option>
+            <option value="PH">🇵🇭 Philippines (PH)</option>
+            <option value="AU">🇦🇺 Australia (AU)</option>
+            <option value="JP">🇯🇵 Japan (JP)</option>
+            <option value="KR">🇰🇷 South Korea (KR)</option>
+            <option value="CN">🇨🇳 China (CN)</option>
+            <option value="IN">🇮🇳 India (IN)</option>
+            <option value="DE">🇩🇪 Germany (DE)</option>
+            <option value="FR">🇫🇷 France (FR)</option>
+            <option value="CA">🇨🇦 Canada (CA)</option>
+            <option value="BR">🇧🇷 Brazil (BR)</option>
+            <option value="MX">🇲🇽 Mexico (MX)</option>
+            <option value="AE">🇦🇪 UAE (AE)</option>
+            <option value="SA">🇸🇦 Saudi Arabia (SA)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="bi bi-clock" style="color:#c084fc"></i> Múi giờ</label>
+          <select class="form-control" id="editTimezone">
+            <optgroup label="Đông Nam Á">
+              <option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh (UTC+7)</option>
+              <option value="Asia/Bangkok">Asia/Bangkok (UTC+7)</option>
+              <option value="Asia/Jakarta">Asia/Jakarta (UTC+7)</option>
+              <option value="Asia/Singapore">Asia/Singapore (UTC+8)</option>
+              <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (UTC+8)</option>
+              <option value="Asia/Manila">Asia/Manila (UTC+8)</option>
+            </optgroup>
+            <optgroup label="Đông Á">
+              <option value="Asia/Shanghai">Asia/Shanghai (UTC+8)</option>
+              <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
+              <option value="Asia/Seoul">Asia/Seoul (UTC+9)</option>
+              <option value="Asia/Kolkata">Asia/Kolkata (UTC+5:30)</option>
+            </optgroup>
+            <optgroup label="Trung Đông">
+              <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
+              <option value="Asia/Riyadh">Asia/Riyadh (UTC+3)</option>
+            </optgroup>
+            <optgroup label="Châu Âu">
+              <option value="Europe/London">Europe/London (UTC+0/+1)</option>
+              <option value="Europe/Paris">Europe/Paris (UTC+1/+2)</option>
+              <option value="Europe/Berlin">Europe/Berlin (UTC+1/+2)</option>
+            </optgroup>
+            <optgroup label="Châu Mỹ">
+              <option value="America/New_York">America/New_York (UTC-5/-4)</option>
+              <option value="America/Chicago">America/Chicago (UTC-6/-5)</option>
+              <option value="America/Los_Angeles">America/Los_Angeles (UTC-8/-7)</option>
+              <option value="America/Toronto">America/Toronto (UTC-5/-4)</option>
+              <option value="America/Sao_Paulo">America/Sao_Paulo (UTC-3)</option>
+            </optgroup>
+            <optgroup label="Châu Ú c">
+              <option value="Australia/Sydney">Australia/Sydney (UTC+10/+11)</option>
+            </optgroup>
+            <optgroup label="UTC">
+              <option value="UTC">UTC (UTC+0)</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+      <div style="background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.1);border-radius:8px;padding:10px 14px;margin-bottom:16px">
+        <div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-bottom:6px">Thông tin hiện tại</div>
+        <div style="display:flex;gap:20px;font-size:12.5px">
+          <div><span style="color:rgba(255,255,255,.4)">Quốc gia: </span><span id="currentCountryDisplay" style="color:#60a5fa;font-weight:600"></span></div>
+          <div><span style="color:rgba(255,255,255,.4)">Múi giờ: </span><span id="currentTzDisplay" style="color:#c084fc;font-weight:600"></span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+        <button class="btn btn-outline" onclick="closeEditTzModal()">Hủy</button>
+        <button class="btn" onclick="saveTimezone()" style="background:linear-gradient(135deg,#1877f2,#00d4ff);color:#fff"><i class="bi bi-check-lg"></i> Cập nhật</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/ads-shared.js"></script>
   <script>
   // ── Constants ──
@@ -649,7 +740,7 @@
       let accounts = [];
       if (S.token) {
         const datePreset = document.getElementById('datePreset').value;
-        const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,currency,amount_spent,spend_cap,account_id,owner,business,account_type&limit=50&access_token=${S.token}`);
+        const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,currency,amount_spent,spend_cap,account_id,owner,business,account_type,timezone_id,timezone_name,country&limit=50&access_token=${S.token}`);
         const d = await r.json();
         if (d.error) throw new Error(d.error.message);
         accounts = d.data || [];
@@ -707,6 +798,10 @@
       const spend = acc._insights?.spend || acc.amount_spent || 0;
       const safeId = acc.id;
       const safeName = (acc.name||acc.id).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const country = acc.country || '—';
+      const tzName = acc.timezone_name || (acc.timezone_id ? 'TZ #'+acc.timezone_id : '—');
+      // Shorten timezone display: Asia/Ho_Chi_Minh → Ho Chi Minh
+      const tzShort = tzName.replace('Asia/','').replace('America/','').replace('Europe/','').replace(/_/g,' ');
       return `<tr onclick="selectAccount('${safeId}','${safeName}')" style="cursor:pointer">
         <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${safeId}"></td>
         <td>
@@ -714,14 +809,25 @@
           <div class="td-id">${acc.id}</div>
         </td>
         <td><span class="badge ${statusClass}">${statusText}</span></td>
-        <td style="font-size:12px;color:rgba(255,255,255,.5)">${isAdmin}</td>
-        <td style="font-size:12px;color:rgba(255,255,255,.5)">Doanh nghiệp</td>
+        <td style="font-size:12px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <img src="https://flagcdn.com/16x12/${(country||'').toLowerCase()}.png" onerror="this.style.display='none'" style="border-radius:2px">
+            <span style="color:rgba(255,255,255,.7)">${country}</span>
+          </div>
+        </td>
+        <td style="font-size:12px;color:rgba(255,255,255,.6)">
+          <div title="${tzName}"><i class="bi bi-clock" style="color:#c084fc;margin-right:4px"></i>${tzShort}</div>
+        </td>
         <td>
           <div style="font-size:13px;font-weight:600">${acc.currency || 'VND'}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.35)">Trả sau</div>
         </td>
         <td style="color:#4ade80;font-weight:600">${vnd(parseFloat(acc.balance||0))}</td>
         <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(spend))}</td>
+        <td onclick="event.stopPropagation()">
+          <button class="btn-icon btn-sm" onclick="openEditTzModal('${safeId}','${safeName}','${tzName}','${country}')" title="Sửa múi giờ / quốc gia" style="font-size:11px">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+        </td>
       </tr>`;
     }).join('');
   }
@@ -1172,6 +1278,87 @@
   }
 
   function openSettings() { toast('Cài đặt đang phát triển', 'info'); }
+
+  // ── Edit Timezone / Country ──
+  let _editTzAccId = null;
+
+  function openEditTzModal(accId, accName, currentTz, currentCountry) {
+    _editTzAccId = accId;
+    document.getElementById('editTzAccName').textContent = accName;
+    document.getElementById('currentCountryDisplay').textContent = currentCountry || '—';
+    document.getElementById('currentTzDisplay').textContent = currentTz || '—';
+    // Pre-select current values
+    const tzSel = document.getElementById('editTimezone');
+    const ctrSel = document.getElementById('editCountry');
+    if (currentTz) {
+      const opt = [...tzSel.options].find(o => o.value === currentTz);
+      if (opt) tzSel.value = currentTz;
+    }
+    if (currentCountry) {
+      const opt = [...ctrSel.options].find(o => o.value === currentCountry.toUpperCase());
+      if (opt) ctrSel.value = currentCountry.toUpperCase();
+    }
+    document.getElementById('editTzModal').classList.add('open');
+  }
+
+  function closeEditTzModal() {
+    document.getElementById('editTzModal').classList.remove('open');
+    _editTzAccId = null;
+  }
+
+  async function saveTimezone() {
+    if (!_editTzAccId) return;
+    const timezone = document.getElementById('editTimezone').value;
+    const country = document.getElementById('editCountry').value;
+    if (!S.token) {
+      toast('Cần Access Token để cập nhật thông tin TKQC', 'error');
+      return;
+    }
+    const btn = document.querySelector('#editTzModal .btn:last-child');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Đang cập nhật...';
+    try {
+      // Facebook Marketing API: POST /{ad-account-id} with timezone_id or timezone_name
+      // Note: Facebook uses timezone_id (numeric) not timezone_name for updates
+      // We need to map timezone_name to timezone_id
+      const TZ_ID_MAP = {
+        'Asia/Ho_Chi_Minh': 217, 'Asia/Bangkok': 209, 'Asia/Jakarta': 213,
+        'Asia/Singapore': 219, 'Asia/Kuala_Lumpur': 216, 'Asia/Manila': 218,
+        'Asia/Shanghai': 210, 'Asia/Tokyo': 220, 'Asia/Seoul': 218,
+        'Asia/Kolkata': 212, 'Asia/Dubai': 211, 'Asia/Riyadh': 219,
+        'Europe/London': 100, 'Europe/Paris': 101, 'Europe/Berlin': 102,
+        'America/New_York': 1, 'America/Chicago': 2, 'America/Los_Angeles': 4,
+        'America/Toronto': 3, 'America/Sao_Paulo': 20, 'Australia/Sydney': 300,
+        'UTC': 0
+      };
+      const tzId = TZ_ID_MAP[timezone];
+      const params = new URLSearchParams();
+      params.append('access_token', S.token);
+      if (tzId !== undefined) params.append('timezone_id', tzId);
+      params.append('country', country);
+      const r = await fetch(`${FB_GRAPH}/${_editTzAccId}`, {
+        method: 'POST',
+        body: params
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(`${d.error.message} (code: ${d.error.code})`);
+      if (d === true || d.success) {
+        toast('Cập nhật thành công!', 'success');
+        // Update local state
+        const acc = S.accounts.find(a => a.id === _editTzAccId);
+        if (acc) { acc.timezone_name = timezone; acc.country = country; }
+        closeEditTzModal();
+        renderAccounts(S.accounts);
+      } else {
+        throw new Error('Facebook không xác nhận cập nhật');
+      }
+    } catch(e) {
+      toast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Cập nhật';
+    }
+  }
 
   // ── Init ──
   async function init() {
