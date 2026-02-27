@@ -143,6 +143,11 @@
                     <label class="form-label">Link Facebook hoặc Username</label>
                     <input type="text" class="form-control" id="fbInput" placeholder="https://facebook.com/username hoặc username" onkeydown="if(event.key==='Enter')doFind()">
                   </div>
+                  <div class="form-group">
+                    <label class="form-label"><i class="bi bi-key" style="color:#fbbf24"></i> Access Token <span style="color:rgba(255,255,255,.35);font-weight:400">(bắt buộc)</span></label>
+                    <input type="password" class="form-control" id="fbTokenInput" placeholder="Dán Access Token Facebook vào đây..." style="font-family:monospace;font-size:12px" oninput="saveToken()">
+                    <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:5px">Token được lưu tạm trong trình duyệt, không gửi lên server</div>
+                  </div>
                   <div style="margin-bottom:14px">
                     <div style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:8px">Ví dụ hợp lệ:</div>
                     <div style="display:flex;flex-wrap:wrap;gap:6px">
@@ -239,6 +244,16 @@
   <script src="js/ads-shared.js"></script>
   <script>
   let history = JSON.parse(localStorage.getItem('genz_fbid_history') || '[]');
+
+  function saveToken() {
+    const t = document.getElementById('fbTokenInput')?.value.trim();
+    if (t) localStorage.setItem('gz_fbid_token', t);
+    else localStorage.removeItem('gz_fbid_token');
+  }
+  function loadSavedToken() {
+    const t = localStorage.getItem('gz_fbid_token');
+    if (t) { const el = document.getElementById('fbTokenInput'); if (el) el.value = t; }
+  }
   let lastResult = null;
 
   function switchTab(tab) {
@@ -267,8 +282,11 @@
   async function lookupId(link) {
     if (!link) throw new Error('Link không hợp lệ');
 
-    // Gọi qua backend proxy — backend dùng token đã lưu trong DB
-    const resp = await GZ.api(`/api/facebook/proxy/find-id?query=${encodeURIComponent(link)}`);
+    // Lấy token từ ô nhập hoặc localStorage
+    const token = document.getElementById('fbTokenInput')?.value.trim() ||
+                  localStorage.getItem('gz_fbid_token') || '';
+    if (!token) throw new Error('Vui lòng nhập Access Token Facebook để sử dụng tính năng này');
+    const resp = await GZ.api(`/api/facebook/proxy/find-id?query=${encodeURIComponent(link)}&access_token=${encodeURIComponent(token)}`);
     const data = resp.result;
     return {
       id: data.id,
@@ -435,6 +453,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('historyCount').textContent = history.length;
+    loadSavedToken();
   });
   </script>
   <script>

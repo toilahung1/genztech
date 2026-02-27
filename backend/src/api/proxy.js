@@ -102,8 +102,12 @@ router.get('/find-id', async (req, res) => {
   try {
     const { query } = req.query;
     if (!query) return res.status(400).json({ error: 'Thiếu query' });
-    const token = process.env.FB_DEFAULT_TOKEN;
-    if (!token) return res.status(400).json({ error: 'Chưa cấu hình FB_DEFAULT_TOKEN trên server' });
+    // Ưu tiên: token từ query param > Authorization header > FB_DEFAULT_TOKEN
+    const authHeader = req.headers.authorization;
+    const token = req.query.access_token ||
+      (authHeader && authHeader.startsWith('Bearer ') ? null : authHeader) ||
+      process.env.FB_DEFAULT_TOKEN;
+    if (!token) return res.status(400).json({ error: 'Cần nhập Access Token để sử dụng tính năng này' });
     const data = await fbGet('', { id: query, access_token: token });
     res.json(data);
   } catch (e) {
@@ -115,9 +119,11 @@ router.get('/find-id', async (req, res) => {
 // GET /api/facebook/proxy/ad-library
 router.get('/ad-library', async (req, res) => {
   try {
-    const token = process.env.FB_DEFAULT_TOKEN;
-    if (!token) return res.status(400).json({ error: 'Chưa cấu hình FB_DEFAULT_TOKEN' });
-    const params = { ...req.query, access_token: token };
+    // Ưu tiên: token từ query param > FB_DEFAULT_TOKEN
+    const token = req.query.access_token || process.env.FB_DEFAULT_TOKEN;
+    if (!token) return res.status(400).json({ error: 'Cần nhập Access Token để sử dụng tính năng này' });
+    const { access_token, ...restQuery } = req.query; // tách token khỏi params
+    const params = { ...restQuery, access_token: token };
     const data = await fbGet('ads_archive', params);
     res.json(data);
   } catch (e) {

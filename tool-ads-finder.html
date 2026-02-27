@@ -140,6 +140,10 @@
         <div id="paneSearch" class="tab-pane active">
           <div class="card">
             <div class="card-body">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <i class="bi bi-key" style="color:#fbbf24;flex-shrink:0"></i>
+                <input type="password" class="form-control" id="adsTokenInput" placeholder="Dán Access Token Facebook vào đây... (bắt buộc)" style="font-family:monospace;font-size:12px" oninput="saveAdsToken()">
+              </div>
               <div class="search-bar">
                 <input type="text" class="form-control" id="searchQuery" placeholder="Nhập từ khóa, tên thương hiệu, sản phẩm..." onkeydown="if(event.key==='Enter')doSearch()">
                 <button class="btn-sm btn-primary" onclick="doSearch()" id="searchBtn"><i class="bi bi-search"></i> Tìm</button>
@@ -212,6 +216,16 @@
   <script>
   let savedAds = JSON.parse(localStorage.getItem('genz_saved_ads') || '[]');
 
+  function saveAdsToken() {
+    const t = document.getElementById('adsTokenInput')?.value.trim();
+    if (t) localStorage.setItem('gz_ads_token', t);
+    else localStorage.removeItem('gz_ads_token');
+  }
+  function loadAdsToken() {
+    const t = localStorage.getItem('gz_ads_token');
+    if (t) { const el = document.getElementById('adsTokenInput'); if (el) el.value = t; }
+  }
+
   function switchTab(tab) {
     ['search','saved','trending'].forEach(t => {
       document.getElementById('pane'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
@@ -243,11 +257,17 @@
     try {
       let ads = [];
 
+      // Lấy token từ ô nhập hoặc localStorage
+      const fbToken = document.getElementById('adsTokenInput')?.value.trim() ||
+                      localStorage.getItem('gz_ads_token') || '';
+      if (!fbToken) throw new Error('Vui lòng nhập Access Token Facebook để tìm kiếm quảng cáo');
+
       // Gọi qua backend proxy
       const params = new URLSearchParams({
         keyword: query,
         country: country === 'ALL' ? 'VN' : country,
-        limit: 12
+        limit: 12,
+        access_token: fbToken
       });
       if (adType !== 'ALL') params.append('ad_type', adType);
       const resp = await GZ.api(`/api/facebook/proxy/ad-library?${params.toString()}`);
@@ -404,7 +424,7 @@
     doSearch();
   }
 
-  document.addEventListener('DOMContentLoaded', updateSavedCount);
+  document.addEventListener('DOMContentLoaded', () => { updateSavedCount(); loadAdsToken(); });
   </script>
   <script>
   const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
