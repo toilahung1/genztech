@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phân Tích Ngân Sách — Genztech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
+    .app-layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
+    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:18px;text-align:center;font-size:15px}
+    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .btn-primary{background:#22c55e;color:#fff}
+    .btn-primary:hover{background:#16a34a;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#22c55e;color:#22c55e}
+    .page-body{padding:28px;flex:1}
+    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#4ade80}
+    .card-body{padding:20px}
+    .form-group{margin-bottom:16px}
+    .form-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px;display:block}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
+    .form-control:focus{outline:none;border-color:#22c55e}
+    .form-control::placeholder{color:rgba(255,255,255,.25)}
+    select.form-control option{background:#1a2035}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    @media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+    @media(max-width:768px){.grid-2{grid-template-columns:1fr}.sidebar{display:none}.main-content{margin-left:0}}
+    .result-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;text-align:center}
+    .result-stat-label{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+    .result-stat-value{font-size:20px;font-weight:800;line-height:1}
+    .result-stat-sub{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px}
+    .scenario-card{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;transition:all .2s;cursor:pointer}
+    .scenario-card:hover{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.05)}
+    .scenario-card.selected{border-color:#22c55e;background:rgba(34,197,94,.08)}
+    .scenario-name{font-size:13px;font-weight:700;margin-bottom:8px}
+    .scenario-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px}
+    .scenario-row strong{color:#fff}
+    .insight-item{background:rgba(0,0,0,.2);border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid transparent}
+    .insight-item.good{border-left-color:#22c55e}
+    .insight-item.warn{border-left-color:#fbbf24}
+    .insight-item.bad{border-left-color:#ef4444}
+    .insight-title{font-size:13px;font-weight:700;margin-bottom:3px}
+    .insight-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
+    .range-wrap{position:relative}
+    .range-input{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.1);outline:none;margin-top:8px}
+    .range-input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#22c55e;cursor:pointer;box-shadow:0 0 8px rgba(34,197,94,.5)}
+    .range-val{position:absolute;right:0;top:-2px;font-size:12px;font-weight:700;color:#4ade80}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
+    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-layout relative z-10">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo"><img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span></a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng quan</div>
+        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <div class="nav-group-label">Công cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
+        <div class="nav-sub">
+          <a href="tool-ad-account.html" class="nav-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-item active"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <div class="nav-group-label">Hệ thống</div>
+        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Phân Tích Ngân Sách</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-sm btn-outline" onclick="resetForm()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+          <button class="btn-sm btn-primary" onclick="calculate()"><i class="bi bi-calculator"></i> Tính Toán</button>
+        </div>
+      </header>
+
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-graph-up-arrow" style="color:#4ade80"></i> Phân Tích & Tối Ưu Ngân Sách</h1>
+        <p class="page-subtitle">Tính toán ROAS, CPA, CPM và dự báo kết quả chiến dịch. Nhận gợi ý phân bổ ngân sách tối ưu từ AI</p>
+
+        <div class="grid-2">
+          <!-- Input -->
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-sliders"></i> Thông Số Chiến Dịch</div></div>
+              <div class="card-body">
+                <div class="grid-2" style="gap:12px">
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">Ngân sách ngày (VNĐ)</label>
+                    <input type="number" class="form-control" id="dailyBudget" value="500000" min="10000" oninput="calculate()">
+                  </div>
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">Số ngày chạy</label>
+                    <input type="number" class="form-control" id="numDays" value="30" min="1" max="365" oninput="calculate()">
+                  </div>
+                </div>
+                <div style="margin-top:14px">
+                  <label class="form-label">Mục tiêu chiến dịch</label>
+                  <select class="form-control" id="objective" onchange="calculate()">
+                    <option value="sales">Bán hàng (Conversions)</option>
+                    <option value="leads">Thu thập khách hàng (Leads)</option>
+                    <option value="traffic">Lưu lượng truy cập (Traffic)</option>
+                    <option value="awareness">Nhận thức thương hiệu (Awareness)</option>
+                    <option value="messages">Tin nhắn (Messages)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart-line"></i> Chỉ Số Kỳ Vọng</div></div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">CPM kỳ vọng (VNĐ / 1000 lượt hiển thị)</label>
+                  <div class="range-wrap">
+                    <input type="range" class="range-input" id="cpmRange" min="10000" max="200000" value="50000" step="5000" oninput="syncCpm(this.value);calculate()">
+                    <span class="range-val" id="cpmVal">50,000</span>
+                  </div>
+                  <input type="number" class="form-control" id="cpmInput" value="50000" style="margin-top:8px" oninput="syncCpm(this.value,true);calculate()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CTR kỳ vọng (%)</label>
+                  <div class="range-wrap">
+                    <input type="range" class="range-input" id="ctrRange" min="0.1" max="10" value="1.5" step="0.1" oninput="syncCtr(this.value);calculate()">
+                    <span class="range-val" id="ctrVal">1.5%</span>
+                  </div>
+                </div>
+                <div class="form-group" id="convGroup">
+                  <label class="form-label">Tỷ lệ chuyển đổi (%)</label>
+                  <div class="range-wrap">
+                    <input type="range" class="range-input" id="convRange" min="0.1" max="20" value="2" step="0.1" oninput="syncConv(this.value);calculate()">
+                    <span class="range-val" id="convVal">2.0%</span>
+                  </div>
+                </div>
+                <div class="form-group" id="aovGroup">
+                  <label class="form-label">Giá trị đơn hàng trung bình (VNĐ)</label>
+                  <input type="number" class="form-control" id="aov" value="350000" oninput="calculate()">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div>
+            <div class="grid-4" style="margin-bottom:20px" id="statsGrid">
+              <div class="result-stat"><div class="result-stat-label">Tổng Ngân Sách</div><div class="result-stat-value" id="rTotalBudget" style="color:#4ade80">—</div><div class="result-stat-sub">toàn chiến dịch</div></div>
+              <div class="result-stat"><div class="result-stat-label">Lượt Hiển Thị</div><div class="result-stat-value" id="rImpressions" style="color:#60a5fa">—</div><div class="result-stat-sub">ước tính</div></div>
+              <div class="result-stat"><div class="result-stat-label">Lượt Click</div><div class="result-stat-value" id="rClicks" style="color:#c084fc">—</div><div class="result-stat-sub">ước tính</div></div>
+              <div class="result-stat"><div class="result-stat-label">Chuyển Đổi</div><div class="result-stat-value" id="rConversions" style="color:#fbbf24">—</div><div class="result-stat-sub">ước tính</div></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-trophy"></i> Chỉ Số Hiệu Quả</div></div>
+              <div class="card-body">
+                <div class="grid-2" style="gap:12px">
+                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">CPA (Chi phí/chuyển đổi)</div>
+                    <div style="font-size:22px;font-weight:800;color:#fbbf24" id="rCPA">—</div>
+                  </div>
+                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">CPC (Chi phí/click)</div>
+                    <div style="font-size:22px;font-weight:800;color:#c084fc" id="rCPC">—</div>
+                  </div>
+                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">ROAS (Doanh thu/chi phí)</div>
+                    <div style="font-size:22px;font-weight:800;color:#4ade80" id="rROAS">—</div>
+                  </div>
+                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Doanh thu ước tính</div>
+                    <div style="font-size:18px;font-weight:800;color:#38bdf8" id="rRevenue">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-lightbulb"></i> Phân Tích & Gợi Ý</div></div>
+              <div class="card-body" id="insightsBody">
+                <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nhập thông số để xem phân tích</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenarios -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-layers"></i> So Sánh Kịch Bản Ngân Sách</div>
+            <button class="btn-sm btn-outline" onclick="exportScenarios()"><i class="bi bi-download"></i> Xuất báo cáo</button>
+          </div>
+          <div class="card-body">
+            <div class="grid-3" id="scenariosGrid">
+              <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px;grid-column:1/-1">Nhập thông số và nhấn "Tính Toán" để xem so sánh kịch bản</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart"></i> Biểu Đồ Dự Báo Chi Tiêu Theo Ngày</div></div>
+          <div class="card-body"><canvas id="budgetChart" height="100"></canvas></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/ads-shared.js"></script>
+  <script>
+  let chartInstance = null;
+
+  function syncCpm(v, fromInput) {
+    const n = parseInt(v) || 50000;
+    document.getElementById('cpmRange').value = Math.min(200000, Math.max(10000, n));
+    document.getElementById('cpmInput').value = n;
+    document.getElementById('cpmVal').textContent = GZ.num(n);
+  }
+  function syncCtr(v) {
+    document.getElementById('ctrVal').textContent = parseFloat(v).toFixed(1) + '%';
+  }
+  function syncConv(v) {
+    document.getElementById('convVal').textContent = parseFloat(v).toFixed(1) + '%';
+  }
+
+  function calculate() {
+    const daily = parseInt(document.getElementById('dailyBudget').value) || 500000;
+    const days = parseInt(document.getElementById('numDays').value) || 30;
+    const cpm = parseInt(document.getElementById('cpmInput').value) || 50000;
+    const ctr = parseFloat(document.getElementById('ctrRange').value) || 1.5;
+    const conv = parseFloat(document.getElementById('convRange').value) || 2;
+    const aov = parseInt(document.getElementById('aov').value) || 350000;
+    const obj = document.getElementById('objective').value;
+
+    const total = daily * days;
+    const impressions = Math.round((total / cpm) * 1000);
+    const clicks = Math.round(impressions * (ctr / 100));
+    const conversions = Math.round(clicks * (conv / 100));
+    const cpc = clicks > 0 ? total / clicks : 0;
+    const cpa = conversions > 0 ? total / conversions : 0;
+    const revenue = conversions * aov;
+    const roas = total > 0 ? revenue / total : 0;
+
+    document.getElementById('rTotalBudget').textContent = GZ.vnd(total);
+    document.getElementById('rImpressions').textContent = GZ.num(impressions);
+    document.getElementById('rClicks').textContent = GZ.num(clicks);
+    document.getElementById('rConversions').textContent = GZ.num(conversions);
+    document.getElementById('rCPA').textContent = GZ.vnd(Math.round(cpa));
+    document.getElementById('rCPC').textContent = GZ.vnd(Math.round(cpc));
+    document.getElementById('rROAS').textContent = roas.toFixed(2) + 'x';
+    document.getElementById('rRevenue').textContent = GZ.vnd(revenue);
+
+    renderInsights(daily, total, cpm, ctr, conv, cpa, roas, obj);
+    renderScenarios(daily, days, cpm, ctr, conv, aov);
+    renderChart(daily, days);
+  }
+
+  function renderInsights(daily, total, cpm, ctr, conv, cpa, roas, obj) {
+    const insights = [];
+
+    if (cpm > 100000) insights.push({ type: 'warn', title: 'CPM cao', desc: `CPM ${GZ.vnd(cpm)} khá cao. Thử thu hẹp đối tượng hoặc tối ưu creative để giảm CPM xuống 40,000–70,000 VNĐ.` });
+    else if (cpm < 20000) insights.push({ type: 'good', title: 'CPM tốt', desc: `CPM ${GZ.vnd(cpm)} rất cạnh tranh. Duy trì đối tượng và creative hiện tại.` });
+
+    if (ctr < 0.8) insights.push({ type: 'bad', title: 'CTR thấp', desc: `CTR ${ctr}% dưới mức trung bình (1–2%). Cần cải thiện creative: thử video ngắn, headline mạnh hơn.` });
+    else if (ctr > 3) insights.push({ type: 'good', title: 'CTR xuất sắc', desc: `CTR ${ctr}% rất cao! Creative đang hoạt động tốt. Có thể tăng ngân sách để scale.` });
+
+    if (obj === 'sales') {
+      if (roas < 1) insights.push({ type: 'bad', title: 'ROAS âm', desc: `ROAS ${roas.toFixed(2)}x — đang lỗ. Cần tăng giá trị đơn hàng hoặc giảm CPA xuống dưới ${GZ.vnd(parseInt(document.getElementById('aov').value))}.` });
+      else if (roas >= 3) insights.push({ type: 'good', title: 'ROAS tốt', desc: `ROAS ${roas.toFixed(2)}x — chiến dịch đang có lãi tốt. Có thể scale ngân sách lên 20–30%.` });
+      else if (roas >= 1.5) insights.push({ type: 'warn', title: 'ROAS trung bình', desc: `ROAS ${roas.toFixed(2)}x — đang có lãi nhưng chưa tối ưu. Mục tiêu ROAS ≥ 3x cho ngành TMĐT.` });
+    }
+
+    if (daily < 100000) insights.push({ type: 'warn', title: 'Ngân sách ngày thấp', desc: 'Ngân sách dưới 100,000 VNĐ/ngày có thể khiến Facebook không đủ dữ liệu để tối ưu. Khuyến nghị tối thiểu 200,000–500,000 VNĐ/ngày.' });
+
+    if (insights.length === 0) insights.push({ type: 'good', title: 'Thông số ổn định', desc: 'Các chỉ số đang ở mức tốt. Theo dõi sau 3–5 ngày chạy để có dữ liệu thực tế và điều chỉnh.' });
+
+    const colors = { good: '#22c55e', warn: '#fbbf24', bad: '#ef4444' };
+    document.getElementById('insightsBody').innerHTML = insights.map(i => `
+      <div class="insight-item ${i.type}">
+        <div class="insight-title" style="color:${colors[i.type]}">${i.type==='good'?'✅':i.type==='warn'?'⚠️':'❌'} ${i.title}</div>
+        <div class="insight-desc">${i.desc}</div>
+      </div>`).join('');
+  }
+
+  function renderScenarios(daily, days, cpm, ctr, conv, aov) {
+    const scenarios = [
+      { name: 'Thấp (50%)', budget: daily * 0.5, color: '#60a5fa' },
+      { name: 'Hiện tại', budget: daily, color: '#4ade80', selected: true },
+      { name: 'Tăng 50%', budget: daily * 1.5, color: '#fbbf24' },
+      { name: 'Tăng 2x', budget: daily * 2, color: '#f87171' },
+      { name: 'Tăng 3x', budget: daily * 3, color: '#c084fc' },
+    ];
+    document.getElementById('scenariosGrid').style.gridTemplateColumns = 'repeat(5,1fr)';
+    document.getElementById('scenariosGrid').innerHTML = scenarios.map(s => {
+      const total = s.budget * days;
+      const imp = Math.round((total / cpm) * 1000);
+      const clicks = Math.round(imp * (ctr / 100));
+      const convs = Math.round(clicks * (conv / 100));
+      const revenue = convs * aov;
+      const roas = total > 0 ? revenue / total : 0;
+      return `<div class="scenario-card ${s.selected ? 'selected' : ''}">
+        <div class="scenario-name" style="color:${s.color}">${s.name}</div>
+        <div class="scenario-row"><span>Ngân sách/ngày</span><strong>${GZ.vnd(Math.round(s.budget))}</strong></div>
+        <div class="scenario-row"><span>Tổng ngân sách</span><strong>${GZ.vnd(Math.round(total))}</strong></div>
+        <div class="scenario-row"><span>Lượt hiển thị</span><strong>${GZ.num(imp)}</strong></div>
+        <div class="scenario-row"><span>Chuyển đổi</span><strong>${GZ.num(convs)}</strong></div>
+        <div class="scenario-row"><span>Doanh thu</span><strong style="color:${s.color}">${GZ.vnd(revenue)}</strong></div>
+        <div class="scenario-row"><span>ROAS</span><strong style="color:${roas>=3?'#4ade80':roas>=1.5?'#fbbf24':'#f87171'}">${roas.toFixed(2)}x</strong></div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderChart(daily, days) {
+    const ctx = document.getElementById('budgetChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+    const labels = Array.from({length: Math.min(days, 30)}, (_, i) => `Ngày ${i+1}`);
+    const data = labels.map((_, i) => {
+      const factor = 0.7 + Math.sin(i * 0.3) * 0.2 + (i / labels.length) * 0.3;
+      return Math.round(daily * factor);
+    });
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Chi tiêu ngày (VNĐ)',
+          data,
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: days <= 14 ? 4 : 2,
+          pointBackgroundColor: '#22c55e'
+        }, {
+          label: 'Ngân sách mục tiêu',
+          data: labels.map(() => daily),
+          borderColor: 'rgba(255,255,255,0.2)',
+          borderDash: [5,5],
+          fill: false,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + GZ.vnd(ctx.raw) } } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, maxTicksLimit: 10 } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, callback: v => GZ.vnd(v) } }
+        }
+      }
+    });
+  }
+
+  function resetForm() {
+    document.getElementById('dailyBudget').value = 500000;
+    document.getElementById('numDays').value = 30;
+    document.getElementById('cpmInput').value = 50000;
+    document.getElementById('cpmRange').value = 50000;
+    document.getElementById('cpmVal').textContent = '50,000';
+    document.getElementById('ctrRange').value = 1.5;
+    document.getElementById('ctrVal').textContent = '1.5%';
+    document.getElementById('convRange').value = 2;
+    document.getElementById('convVal').textContent = '2.0%';
+    document.getElementById('aov').value = 350000;
+    calculate();
+  }
+
+  function exportScenarios() {
+    const rows = document.querySelectorAll('.scenario-card');
+    if (!rows.length) { GZ.toast('Chưa có dữ liệu', 'error'); return; }
+    GZ.toast('Đang xuất báo cáo...', 'info');
+    setTimeout(() => {
+      const data = Array.from(rows).map(r => {
+        const cells = r.querySelectorAll('.scenario-row strong');
+        return [r.querySelector('.scenario-name').textContent, ...Array.from(cells).map(c => c.textContent)].join(',');
+      });
+      const csv = 'Kịch bản,Ngân sách/ngày,Tổng ngân sách,Lượt hiển thị,Chuyển đổi,Doanh thu,ROAS\n' + data.join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `budget_analysis_${Date.now()}.csv`; a.click();
+      GZ.toast('Đã xuất báo cáo!', 'success');
+    }, 500);
+  }
+
+  document.addEventListener('DOMContentLoaded', calculate);
+  </script>
+  <script>
+  const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
+  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));const ss=[];let lt=0;function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
+  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(34,197,94,'+po+')');g.addColorStop(.5,'rgba(0,212,255,'+(po*.5)+')');g.addColorStop(1,'rgba(0,212,255,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+  </script>
+</body>
+</html>
