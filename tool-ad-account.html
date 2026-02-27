@@ -815,7 +815,9 @@
       // Store account data in a global map to avoid HTML escaping issues
       window._accMap = window._accMap || {};
       window._accMap[acc.id] = acc;
-      return `<tr data-accid="${acc.id}" data-accname="${(acc.name||acc.id).replace(/"/g,'&quot;')}" class="acc-row" style="cursor:pointer">
+      const safeId = acc.id;
+      const safeName = JSON.stringify(acc.name || acc.id);
+      return `<tr data-accid="${acc.id}" class="acc-row" style="cursor:pointer" onclick="selectAccount('${acc.id}', ${safeName})">
         <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${acc.id}"></td>
         <td>
           <div class="td-name">${acc.name || acc.id}</div>
@@ -837,7 +839,7 @@
         <td style="color:#4ade80;font-weight:600">${vnd(parseFloat(acc.balance||0))}</td>
         <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(spend))}</td>
         <td onclick="event.stopPropagation()">
-          <button class="btn-icon btn-sm edit-tz-btn" data-accid="${acc.id}" title="Sửa múi giờ / quốc gia" style="font-size:11px">
+          <button class="btn-icon btn-sm" onclick="event.stopPropagation();openEditTzModal('${acc.id}', ${safeName}, '${(acc.timezone_name||'').replace(/'/g,\"\\'\")}'  , '${acc.country||''}')" title="Sửa múi giờ / quốc gia" style="font-size:11px">
             <i class="bi bi-pencil-square"></i>
           </button>
         </td>
