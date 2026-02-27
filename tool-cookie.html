@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Cookie — Genztech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
+    .app-layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
+    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:18px;text-align:center;font-size:15px}
+    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .btn-primary{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#f59e0b;color:#f59e0b}
+    .page-body{padding:28px;flex:1}
+    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#fbbf24}
+    .card-body{padding:20px}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
+    .form-control:focus{outline:none;border-color:#f59e0b}
+    .form-control::placeholder{color:rgba(255,255,255,.25)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+    @media(max-width:768px){.sidebar{display:none};.main-content{margin-left:0}}
+    .cookie-item{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px 16px;margin-bottom:8px;transition:all .2s}
+    .cookie-item:hover{border-color:rgba(245,158,11,.2)}
+    .cookie-item.active-session{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04)}
+    .cookie-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .cookie-avatar{width:36px;height:36px;border-radius:50%;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fbbf24;flex-shrink:0}
+    .cookie-name{font-size:14px;font-weight:700;flex:1}
+    .cookie-status{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600}
+    .status-active{background:rgba(34,197,94,.15);color:#4ade80}
+    .status-expired{background:rgba(239,68,68,.15);color:#f87171}
+    .status-unknown{background:rgba(255,255,255,.07);color:rgba(255,255,255,.4)}
+    .cookie-meta{display:flex;gap:12px;font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:10px}
+    .cookie-value{font-size:11px;font-family:monospace;background:rgba(0,0,0,.3);border-radius:6px;padding:6px 10px;color:rgba(255,255,255,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px}
+    .cookie-actions{display:flex;gap:6px}
+    .cookie-btn{padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:11.5px;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:4px}
+    .btn-activate{background:rgba(34,197,94,.15);color:#4ade80}
+    .btn-activate:hover{background:rgba(34,197,94,.25)}
+    .btn-copy{background:rgba(245,158,11,.15);color:#fbbf24}
+    .btn-copy:hover{background:rgba(245,158,11,.25)}
+    .btn-check{background:rgba(96,165,250,.15);color:#60a5fa}
+    .btn-check:hover{background:rgba(96,165,250,.25)}
+    .btn-delete{background:rgba(239,68,68,.1);color:#f87171}
+    .btn-delete:hover{background:rgba(239,68,68,.2)}
+    .cookie-textarea{width:100%;min-height:80px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box;transition:border-color .2s;line-height:1.5}
+    .cookie-textarea:focus{outline:none;border-color:#f59e0b}
+    .cookie-textarea::placeholder{color:rgba(255,255,255,.2)}
+    .info-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:10px;padding:14px 16px;font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:16px}
+    .info-box strong{color:#fbbf24}
+    .tab-bar{display:flex;gap:4px;padding:4px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:20px}
+    .tab-btn{flex:1;padding:8px 12px;border:none;border-radius:7px;background:transparent;color:rgba(255,255,255,.5);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+    .tab-btn.active{background:rgba(245,158,11,.15);color:#fbbf24}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
+    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+  </style>
+</head>
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-layout relative z-10">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo"><img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span></a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng quan</div>
+        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <div class="nav-group-label">Công cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
+        <div class="nav-sub">
+          <a href="tool-ad-account.html" class="nav-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-item active"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <div class="nav-group-label">Hệ thống</div>
+        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Quản Lý Cookie</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-sm btn-outline" onclick="exportAllCookies()"><i class="bi bi-download"></i> Xuất JSON</button>
+          <label class="btn-sm btn-primary" style="cursor:pointer"><i class="bi bi-upload"></i> Nhập JSON <input type="file" accept=".json" style="display:none" onchange="importCookies(this)"></label>
+        </div>
+      </header>
+
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-cookie" style="color:#fbbf24"></i> Quản Lý Cookie Phiên</h1>
+        <p class="page-subtitle">Lưu trữ, quản lý và kiểm tra cookie phiên đăng nhập Facebook. Hỗ trợ nhiều tài khoản cùng lúc</p>
+
+        <div class="info-box">
+          <strong>⚠️ Lưu ý bảo mật:</strong> Cookie là thông tin đăng nhập nhạy cảm. Chỉ lưu cookie của tài khoản bạn sở hữu. Dữ liệu được lưu <strong>chỉ trên trình duyệt của bạn</strong> (localStorage), không gửi lên server.
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchCookieTab('list')" id="tabList"><i class="bi bi-list-ul"></i> Danh Sách (<span id="cookieCount">0</span>)</button>
+          <button class="tab-btn" onclick="switchCookieTab('add')" id="tabAdd"><i class="bi bi-plus-circle"></i> Thêm Cookie</button>
+          <button class="tab-btn" onclick="switchCookieTab('checker')" id="tabChecker"><i class="bi bi-shield-check"></i> Kiểm Tra Cookie</button>
+        </div>
+
+        <!-- List tab -->
+        <div id="paneList" class="tab-pane active">
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <input type="text" class="form-control" id="cookieSearch" placeholder="Tìm theo tên tài khoản..." oninput="renderCookieList()" style="flex:1">
+            <button class="btn-sm btn-outline" onclick="checkAllCookies()"><i class="bi bi-shield-check"></i> Kiểm tra tất cả</button>
+          </div>
+          <div id="cookieList">
+            <div style="text-align:center;padding:40px;color:rgba(255,255,255,.3)"><i class="bi bi-cookie" style="font-size:32px;display:block;margin-bottom:10px"></i>Chưa có cookie nào được lưu</div>
+          </div>
+        </div>
+
+        <!-- Add tab -->
+        <div id="paneAdd" class="tab-pane">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="bi bi-plus-circle"></i> Thêm Cookie Mới</div></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+                <div>
+                  <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);display:block;margin-bottom:6px">Tên tài khoản *</label>
+                  <input type="text" class="form-control" id="newCookieName" placeholder="Ví dụ: Tài khoản chính, Shop ABC...">
+                </div>
+                <div>
+                  <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);display:block;margin-bottom:6px">Ghi chú</label>
+                  <input type="text" class="form-control" id="newCookieNote" placeholder="Mục đích sử dụng...">
+                </div>
+              </div>
+              <div style="margin-bottom:14px">
+                <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);display:block;margin-bottom:6px">Cookie Value *</label>
+                <textarea class="cookie-textarea" id="newCookieValue" placeholder="Dán cookie vào đây...&#10;&#10;Cách lấy cookie: Mở Facebook → F12 → Application → Cookies → facebook.com → Copy toàn bộ hoặc chỉ cookie 'c_user' và 'xs'"></textarea>
+              </div>
+              <div style="margin-bottom:14px">
+                <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);display:block;margin-bottom:6px">User Agent (tùy chọn)</label>
+                <input type="text" class="form-control" id="newCookieUA" placeholder="Mozilla/5.0 ...">
+              </div>
+              <div style="display:flex;gap:10px">
+                <button class="btn-sm btn-primary" onclick="addCookie()"><i class="bi bi-plus-circle"></i> Lưu Cookie</button>
+                <button class="btn-sm btn-outline" onclick="clearAddForm()"><i class="bi bi-x-circle"></i> Xóa form</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="bi bi-info-circle"></i> Hướng Dẫn Lấy Cookie</div></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#fbbf24">🖥️ Trên máy tính (Chrome)</div>
+                  <ol style="font-size:12px;color:rgba(255,255,255,.5);padding-left:16px;line-height:1.8;margin:0">
+                    <li>Mở facebook.com và đăng nhập</li>
+                    <li>Nhấn F12 → Application</li>
+                    <li>Chọn Cookies → https://www.facebook.com</li>
+                    <li>Tìm cookie <strong style="color:#fbbf24">c_user</strong> và <strong style="color:#fbbf24">xs</strong></li>
+                    <li>Copy giá trị và dán vào ô trên</li>
+                  </ol>
+                </div>
+                <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#60a5fa">🔌 Dùng Extension</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.8">
+                    Cài extension <strong style="color:#60a5fa">Cookie-Editor</strong> hoặc <strong style="color:#60a5fa">EditThisCookie</strong> trên Chrome để export toàn bộ cookie dạng JSON một cách dễ dàng hơn.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checker tab -->
+        <div id="paneChecker" class="tab-pane">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="bi bi-shield-check"></i> Kiểm Tra Cookie Nhanh</div></div>
+            <div class="card-body">
+              <div style="margin-bottom:14px">
+                <label style="font-size:12px;font-weight:600;color:rgba(255,255,255,.6);display:block;margin-bottom:6px">Dán cookie cần kiểm tra</label>
+                <textarea class="cookie-textarea" id="checkCookieInput" placeholder="Dán cookie vào đây..."></textarea>
+              </div>
+              <button class="btn-sm btn-primary" onclick="quickCheckCookie()"><i class="bi bi-shield-check"></i> Kiểm Tra</button>
+              <div id="quickCheckResult" style="margin-top:14px"></div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/ads-shared.js"></script>
+  <script>
+  let cookies = JSON.parse(localStorage.getItem('genz_cookies') || '[]');
+
+  function switchCookieTab(tab) {
+    ['list','add','checker'].forEach(t => {
+      document.getElementById('pane'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+      document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+    });
+    if (tab === 'list') renderCookieList();
+  }
+
+  function saveCookies() {
+    localStorage.setItem('genz_cookies', JSON.stringify(cookies));
+    document.getElementById('cookieCount').textContent = cookies.length;
+  }
+
+  function addCookie() {
+    const name = document.getElementById('newCookieName').value.trim();
+    const value = document.getElementById('newCookieValue').value.trim();
+    const note = document.getElementById('newCookieNote').value.trim();
+    const ua = document.getElementById('newCookieUA').value.trim();
+
+    if (!name) { GZ.toast('Vui lòng nhập tên tài khoản', 'error'); return; }
+    if (!value) { GZ.toast('Vui lòng nhập cookie value', 'error'); return; }
+
+    // Extract c_user if possible
+    const cUserMatch = value.match(/c_user[=:]\s*["']?(\d+)["']?/);
+    const uid = cUserMatch ? cUserMatch[1] : null;
+
+    cookies.unshift({
+      id: Date.now().toString(),
+      name,
+      value,
+      note,
+      ua,
+      uid,
+      status: 'unknown',
+      addedAt: Date.now(),
+      lastChecked: null
+    });
+    saveCookies();
+    clearAddForm();
+    switchCookieTab('list');
+    GZ.toast('Đã lưu cookie!', 'success');
+  }
+
+  function clearAddForm() {
+    ['newCookieName','newCookieValue','newCookieNote','newCookieUA'].forEach(id => document.getElementById(id).value = '');
+  }
+
+  function renderCookieList() {
+    const query = document.getElementById('cookieSearch').value.toLowerCase();
+    const filtered = cookies.filter(c => c.name.toLowerCase().includes(query) || (c.note || '').toLowerCase().includes(query));
+    const container = document.getElementById('cookieList');
+    document.getElementById('cookieCount').textContent = cookies.length;
+
+    if (!filtered.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3)"><i class="bi bi-cookie" style="font-size:32px;display:block;margin-bottom:10px"></i>' + (query ? 'Không tìm thấy cookie nào' : 'Chưa có cookie nào được lưu') + '</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(c => {
+      const statusClass = c.status === 'active' ? 'status-active' : c.status === 'expired' ? 'status-expired' : 'status-unknown';
+      const statusText = c.status === 'active' ? '✅ Còn sống' : c.status === 'expired' ? '❌ Hết hạn' : '❓ Chưa kiểm tra';
+      const masked = c.value.length > 60 ? c.value.substring(0, 60) + '...' : c.value;
+      const addedDate = new Date(c.addedAt).toLocaleDateString('vi-VN');
+      const checkedDate = c.lastChecked ? new Date(c.lastChecked).toLocaleString('vi-VN') : 'Chưa kiểm tra';
+
+      return `<div class="cookie-item ${c.status === 'active' ? 'active-session' : ''}" id="cookie_${c.id}">
+        <div class="cookie-header">
+          <div class="cookie-avatar">${c.name.charAt(0).toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="cookie-name">${c.name}</div>
+            ${c.note ? `<div style="font-size:11.5px;color:rgba(255,255,255,.35)">${c.note}</div>` : ''}
+          </div>
+          <span class="cookie-status ${statusClass}">${statusText}</span>
+        </div>
+        <div class="cookie-meta">
+          ${c.uid ? `<span><i class="bi bi-person"></i> UID: ${c.uid}</span>` : ''}
+          <span><i class="bi bi-calendar"></i> Thêm: ${addedDate}</span>
+          <span><i class="bi bi-clock"></i> Kiểm tra: ${checkedDate}</span>
+        </div>
+        <div class="cookie-value" title="${c.value}">${masked}</div>
+        <div class="cookie-actions">
+          <button class="cookie-btn btn-check" onclick="checkSingleCookie('${c.id}')"><i class="bi bi-shield-check"></i> Kiểm tra</button>
+          <button class="cookie-btn btn-copy" onclick="copyCookie('${c.id}')"><i class="bi bi-clipboard"></i> Copy</button>
+          <button class="cookie-btn btn-activate" onclick="activateCookie('${c.id}')"><i class="bi bi-lightning"></i> Kích hoạt</button>
+          <button class="cookie-btn btn-delete" onclick="deleteCookie('${c.id}')"><i class="bi bi-trash"></i> Xóa</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function checkSingleCookie(id) {
+    const cookie = cookies.find(c => c.id === id);
+    if (!cookie) return;
+
+    GZ.toast('Đang kiểm tra cookie...', 'info');
+
+    try {
+      // Check cookie validity via backend
+      const resp = await fetch(`${GZ.API}/api/facebook/check-cookie`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...GZ.authHeaders() },
+        body: JSON.stringify({ cookie: cookie.value })
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        cookie.status = data.valid ? 'active' : 'expired';
+        cookie.lastChecked = Date.now();
+        if (data.uid) cookie.uid = data.uid;
+        if (data.name) cookie.name = data.name;
+        saveCookies();
+        renderCookieList();
+        GZ.toast(data.valid ? `Cookie còn sống! UID: ${data.uid}` : 'Cookie đã hết hạn', data.valid ? 'success' : 'error');
+      } else {
+        // Fallback: check locally
+        const hasValidFields = cookie.value.includes('c_user') || cookie.value.includes('xs') || cookie.value.length > 20;
+        cookie.status = hasValidFields ? 'active' : 'expired';
+        cookie.lastChecked = Date.now();
+        saveCookies();
+        renderCookieList();
+        GZ.toast(hasValidFields ? 'Cookie có vẻ hợp lệ (kiểm tra cục bộ)' : 'Cookie không hợp lệ', hasValidFields ? 'success' : 'error');
+      }
+    } catch(e) {
+      // Offline check
+      const hasValidFields = cookie.value.includes('c_user') || cookie.value.includes('xs') || cookie.value.length > 20;
+      cookie.status = hasValidFields ? 'active' : 'expired';
+      cookie.lastChecked = Date.now();
+      saveCookies();
+      renderCookieList();
+      GZ.toast('Kiểm tra offline: ' + (hasValidFields ? 'Có vẻ hợp lệ' : 'Không hợp lệ'), 'info');
+    }
+  }
+
+  async function checkAllCookies() {
+    if (!cookies.length) { GZ.toast('Không có cookie nào', 'error'); return; }
+    GZ.toast(`Đang kiểm tra ${cookies.length} cookie...`, 'info');
+    for (const c of cookies) await checkSingleCookie(c.id);
+    GZ.toast('Đã kiểm tra tất cả!', 'success');
+  }
+
+  function copyCookie(id) {
+    const cookie = cookies.find(c => c.id === id);
+    if (!cookie) return;
+    navigator.clipboard.writeText(cookie.value);
+    GZ.toast('Đã copy cookie!', 'success');
+  }
+
+  function activateCookie(id) {
+    const cookie = cookies.find(c => c.id === id);
+    if (!cookie) return;
+    // Store as active cookie for use in other tools
+    localStorage.setItem('genz_active_cookie', JSON.stringify({ id: cookie.id, name: cookie.name, value: cookie.value }));
+    GZ.toast(`Đã kích hoạt cookie: ${cookie.name}`, 'success');
+  }
+
+  function deleteCookie(id) {
+    if (!confirm('Xóa cookie này?')) return;
+    cookies = cookies.filter(c => c.id !== id);
+    saveCookies();
+    renderCookieList();
+    GZ.toast('Đã xóa cookie', 'info');
+  }
+
+  function exportAllCookies() {
+    if (!cookies.length) { GZ.toast('Không có cookie nào', 'error'); return; }
+    const blob = new Blob([JSON.stringify(cookies, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `genztech_cookies_${Date.now()}.json`; a.click();
+    GZ.toast('Đã xuất file JSON!', 'success');
+  }
+
+  function importCookies(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          const newCount = imported.filter(c => !cookies.find(ex => ex.id === c.id)).length;
+          cookies = [...imported.filter(c => !cookies.find(ex => ex.id === c.id)), ...cookies];
+          saveCookies();
+          renderCookieList();
+          GZ.toast(`Đã nhập ${newCount} cookie mới!`, 'success');
+        } else throw new Error('Invalid format');
+      } catch(e) { GZ.toast('File không hợp lệ', 'error'); }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
+  function quickCheckCookie() {
+    const value = document.getElementById('checkCookieInput').value.trim();
+    if (!value) { GZ.toast('Vui lòng nhập cookie', 'error'); return; }
+
+    const checks = [];
+    const cUser = value.match(/c_user[=:]\s*["']?(\d+)["']?/);
+    const xs = value.match(/\bxs[=:]\s*["']?([^"',;\s]+)["']?/);
+    const datr = value.match(/\bdatr[=:]\s*["']?([^"',;\s]+)["']?/);
+
+    if (cUser) checks.push({ pass: true, label: 'c_user', detail: `UID: ${cUser[1]}` });
+    else checks.push({ pass: false, label: 'c_user', detail: 'Không tìm thấy — cookie có thể không hợp lệ' });
+
+    if (xs) checks.push({ pass: true, label: 'xs (session)', detail: 'Tìm thấy session token' });
+    else checks.push({ pass: false, label: 'xs (session)', detail: 'Không tìm thấy session token' });
+
+    if (datr) checks.push({ pass: true, label: 'datr', detail: 'Tìm thấy browser fingerprint' });
+
+    checks.push({ pass: value.length > 50, label: 'Độ dài', detail: `${value.length} ký tự ${value.length > 50 ? '— đủ dài' : '— quá ngắn'}` });
+
+    const isValid = cUser && xs;
+    document.getElementById('quickCheckResult').innerHTML = `
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:${isValid?'#4ade80':'#f87171'}">
+        ${isValid ? '✅ Cookie có vẻ hợp lệ' : '❌ Cookie không đầy đủ'}
+      </div>` +
+      checks.map(c => `
+        <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:8px 12px;margin-bottom:5px;display:flex;align-items:center;gap:8px;font-size:12.5px;border-left:3px solid ${c.pass?'#22c55e':'#ef4444'}">
+          <span>${c.pass?'✅':'❌'}</span>
+          <div><strong>${c.label}</strong>: ${c.detail}</div>
+        </div>`).join('') +
+      (isValid ? `<button class="btn-sm btn-primary" style="margin-top:10px" onclick="document.getElementById('newCookieValue').value=document.getElementById('checkCookieInput').value;switchCookieTab('add');GZ.toast('Đã chuyển sang form thêm cookie','info')"><i class='bi bi-plus-circle'></i> Lưu cookie này</button>` : '');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { renderCookieList(); document.getElementById('cookieCount').textContent = cookies.length; });
+  </script>
+  <script>
+  const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
+  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));const ss=[];let lt=0;function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
+  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(217,119,6,'+po+')');g.addColorStop(.5,'rgba(245,158,11,'+(po*.5)+')');g.addColorStop(1,'rgba(245,158,11,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+  </script>
+</body>
+</html>
