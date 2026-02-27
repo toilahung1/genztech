@@ -819,12 +819,15 @@
     const tbody = document.getElementById('tbody-adsets');
     tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải nhóm quảng cáo...</td></tr>';
     const datePreset = document.getElementById('datePreset').value;
+    // Fallback campaign name from state
+    const campLabel = campaignName || S.selectedCampaignName || '—';
 
     try {
       if (!S.token && !S.jwt) throw new Error('Chưa đăng nhập hoặc chưa có token');
       let adsets = [];
       if (S.token) {
-        const r = await fetch(`${FB_GRAPH}/${campaignId}/adsets?fields=id,name,status,daily_budget,lifetime_budget,targeting,optimization_goal&limit=50&access_token=${S.token}`);
+        // Include campaign{name} so we always have the campaign name even if passed incorrectly
+        const r = await fetch(`${FB_GRAPH}/${campaignId}/adsets?fields=id,name,status,daily_budget,lifetime_budget,campaign_id,campaign{name},optimization_goal&limit=100&access_token=${S.token}`);
         const d = await r.json();
         if (d.error) throw new Error(d.error.message);
         adsets = d.data || [];
@@ -834,24 +837,35 @@
             a._ins = ins.data?.[0] || {};
           } catch(e) { a._ins = {}; }
         }));
+      } else if (S.jwt) {
+        const r = await fetch(`${API_BASE}/api/facebook/proxy/ad-account/${S.selectedAccountId}?date_preset=${datePreset}`, {
+          headers: { Authorization: `Bearer ${S.jwt}` }
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Lỗi server');
+        // Filter adsets by campaign
+        adsets = (d.adsets || []).filter(a => a.campaign_id === campaignId);
       }
 
       S.adsets = adsets;
       document.getElementById('countAdsets').textContent = adsets.length;
 
       if (!adsets.length) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="bi bi-collection"></i><p>Không có nhóm quảng cáo nào trong chiến dịch "${campaignName}"</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="bi bi-collection"></i><p>Không có nhóm quảng cáo nào trong chiến dịch "${campLabel}"</p></div></td></tr>`;
         return;
       }
 
       tbody.innerHTML = adsets.map(a => {
         const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
         const ins = a._ins || {};
-        return `<tr onclick="selectAdset('${a.id}','${a.name}')">
+        // Use campaign name from API response first, then fallback
+        const cName = a.campaign?.name || campLabel;
+        return `<tr onclick="selectAdset('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"
+          style="cursor:pointer">
           <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
           <td><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></td>
           <td><span class="badge ${sc}">${st}</span></td>
-          <td style="font-size:12px;color:rgba(255,255,255,.5)">${campaignName || '—'}</td>
+          <td style="font-size:12px;color:rgba(255,255,255,.5)">${cName}</td>
           <td style="color:#fbbf24">${a.daily_budget ? vnd(parseInt(a.daily_budget)/100) : '—'}</td>
           <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
           <td>${vnd(parseInt(ins.impressions||0))}</td>
