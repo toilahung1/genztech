@@ -738,8 +738,12 @@
     document.getElementById('countAds').textContent = '0';
     toast(`Đã chọn: ${name}`, 'info');
     updateContextBar();
-    // Auto switch to campaigns tab
-    switchTab('campaigns');
+    // Switch tab first (without auto-loading since we call loadCampaigns below)
+    S.currentTab = 'campaigns';
+    ['accounts','campaigns','adsets','ads','rules'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('active', t === 'campaigns');
+      document.getElementById(`panel-${t}`).style.display = t === 'campaigns' ? 'block' : 'none';
+    });
     await loadCampaigns(id);
   }
 
@@ -967,26 +971,25 @@
     // Auto-load data when switching tabs
     if (tab === 'campaigns') {
       if (S.selectedAccountId) {
-        if (!S.campaigns.length) loadCampaigns(S.selectedAccountId);
+        loadCampaigns(S.selectedAccountId); // always reload
       } else {
-        document.getElementById('tbody-campaigns').innerHTML = '<tr class="loading-row"><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy chọn một Tài khoản quảng cáo trước</p></div></td></tr>';
+        document.getElementById('tbody-campaigns').innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy quay lại tab <strong>Tài khoản quảng cáo</strong> và click vào một tài khoản để xem chiến dịch</p></div></td></tr>';
       }
     } else if (tab === 'adsets') {
       if (S.selectedCampaignId) {
-        if (!S.adsets.length) loadAdsets(S.selectedCampaignId, S.selectedCampaignName);
+        loadAdsets(S.selectedCampaignId, S.selectedCampaignName);
       } else if (S.selectedAccountId) {
-        // Load all adsets for the account
         loadAllAdsets(S.selectedAccountId);
       } else {
-        document.getElementById('tbody-adsets').innerHTML = '<tr class="loading-row"><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy chọn một Tài khoản quảng cáo trước</p></div></td></tr>';
+        document.getElementById('tbody-adsets').innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy quay lại tab <strong>Tài khoản quảng cáo</strong> và click vào một tài khoản</p></div></td></tr>';
       }
     } else if (tab === 'ads') {
       if (S.selectedAdsetId) {
-        if (!S.ads.length) loadAds(S.selectedAdsetId, S.selectedAdsetName);
+        loadAds(S.selectedAdsetId, S.selectedAdsetName);
       } else if (S.selectedAccountId) {
         loadAllAds(S.selectedAccountId);
       } else {
-        document.getElementById('tbody-ads').innerHTML = '<tr class="loading-row"><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy chọn một Tài khoản quảng cáo trước</p></div></td></tr>';
+        document.getElementById('tbody-ads').innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><p>Hãy quay lại tab <strong>Tài khoản quảng cáo</strong> và click vào một tài khoản</p></div></td></tr>';
       }
     } else if (tab === 'rules') {
       renderRules();
