@@ -250,7 +250,10 @@
           </div>
 
           <div class="table-wrap">
-            <div class="table-toolbar">
+            <!-- Context breadcrumb -->
+          <div id="contextBar" style="display:none;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,212,255,.04);border-bottom:1px solid rgba(0,212,255,.08);font-size:12px;flex-wrap:wrap"></div>
+
+          <div class="table-toolbar">
               <div class="search-box">
                 <i class="bi bi-search"></i>
                 <input type="text" id="searchInput" placeholder="Tìm kiếm..." oninput="filterTable()">
@@ -522,6 +525,8 @@
   let S = {
     accounts: [], campaigns: [], adsets: [], ads: [],
     selectedAccountId: null, selectedAccountName: null,
+    selectedCampaignId: null, selectedCampaignName: null,
+    selectedAdsetId: null, selectedAdsetName: null,
     currentTab: 'accounts', sortField: null, sortAsc: true,
     page: 1, perPage: 20, searchQ: '',
     token: localStorage.getItem('gz_manual_fb_token') || null,
@@ -723,7 +728,16 @@
   async function selectAccount(id, name) {
     S.selectedAccountId = id;
     S.selectedAccountName = name;
+    S.selectedCampaignId = null;
+    S.selectedCampaignName = null;
+    S.selectedAdsetId = null;
+    S.selectedAdsetName = null;
+    S.campaigns = []; S.adsets = []; S.ads = [];
+    document.getElementById('countCampaigns').textContent = '0';
+    document.getElementById('countAdsets').textContent = '0';
+    document.getElementById('countAds').textContent = '0';
     toast(`Đã chọn: ${name}`, 'info');
+    updateContextBar();
     // Auto switch to campaigns tab
     switchTab('campaigns');
     await loadCampaigns(id);
@@ -789,6 +803,14 @@
   }
 
   async function selectCampaign(id, name) {
+    S.selectedCampaignId = id;
+    S.selectedCampaignName = name;
+    S.selectedAdsetId = null;
+    S.selectedAdsetName = null;
+    S.adsets = []; S.ads = [];
+    document.getElementById('countAdsets').textContent = '0';
+    document.getElementById('countAds').textContent = '0';
+    updateContextBar();
     switchTab('adsets');
     await loadAdsets(id, name);
   }
@@ -844,6 +866,9 @@
   }
 
   async function selectAdset(id, name) {
+    S.selectedAdsetId = id;
+    S.selectedAdsetName = name;
+    updateContextBar();
     switchTab('ads');
     await loadAds(id, name);
   }
@@ -902,6 +927,22 @@
     }
   }
 
+  // ── Context bar ──
+  function updateContextBar() {
+    const bar = document.getElementById('contextBar');
+    if (!bar) return;
+    const parts = [];
+    if (S.selectedAccountName) parts.push(`<i class="bi bi-credit-card" style="color:#00d4ff"></i> <span style="color:#00d4ff">${S.selectedAccountName}</span>`);
+    if (S.selectedCampaignName) parts.push(`<i class="bi bi-chevron-right" style="font-size:10px;color:rgba(255,255,255,.3)"></i> <i class="bi bi-flag" style="color:#fbbf24"></i> <span style="color:#fbbf24">${S.selectedCampaignName}</span>`);
+    if (S.selectedAdsetName) parts.push(`<i class="bi bi-chevron-right" style="font-size:10px;color:rgba(255,255,255,.3)"></i> <i class="bi bi-collection" style="color:#4ade80"></i> <span style="color:#4ade80">${S.selectedAdsetName}</span>`);
+    if (parts.length) {
+      bar.innerHTML = parts.join(' ');
+      bar.style.display = 'flex';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
   // ── Tab switching ──
   function switchTab(tab) {
     S.currentTab = tab;
@@ -909,12 +950,141 @@
       document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
       document.getElementById(`panel-${t}`).style.display = t === tab ? 'block' : 'none';
     });
-    if (tab === 'rules') renderRules();
+    // Auto-load data when switching tabs
+    if (tab === 'campaigns') {
+      if (S.selectedAccountId) {
+        if (!S.campaigns.length) loadCampaigns(S.selectedAccountId);
+      } else {
+        document.getElementById('tbody-campaigns').innerHTML = '<tr class="loading-row"><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy chọn một Tài khoản quảng cáo trước</p></div></td></tr>';
+      }
+    } else if (tab === 'adsets') {
+      if (S.selectedCampaignId) {
+        if (!S.adsets.length) loadAdsets(S.selectedCampaignId, S.selectedCampaignName);
+      } else if (S.selectedAccountId) {
+        // Load all adsets for the account
+        loadAllAdsets(S.selectedAccountId);
+      } else {
+        document.getElementById('tbody-adsets').innerHTML = '<tr class="loading-row"><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy chọn một Tài khoản quảng cáo trước</p></div></td></tr>';
+      }
+    } else if (tab === 'ads') {
+      if (S.selectedAdsetId) {
+        if (!S.ads.length) loadAds(S.selectedAdsetId, S.selectedAdsetName);
+      } else if (S.selectedAccountId) {
+        loadAllAds(S.selectedAccountId);
+      } else {
+        document.getElementById('tbody-ads').innerHTML = '<tr class="loading-row"><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy chọn một Tài khoản quảng cáo trước</p></div></td></tr>';
+      }
+    } else if (tab === 'rules') {
+      renderRules();
+    }
+  }
+
+  // Load all adsets directly from account (bypass campaign selection)
+  async function loadAllAdsets(accountId) {
+    const tbody = document.getElementById('tbody-adsets');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải tất cả nhóm quảng cáo...</td></tr>';
+    const datePreset = document.getElementById('datePreset').value;
+    try {
+      if (!S.token) throw new Error('Cần token để xem nhóm quảng cáo');
+      const r = await fetch(`${FB_GRAPH}/${accountId}/adsets?fields=id,name,status,daily_budget,campaign_id,campaign{name},optimization_goal&limit=100&access_token=${S.token}`);
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      const adsets = d.data || [];
+      await Promise.all(adsets.map(async a => {
+        try {
+          const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
+          a._ins = ins.data?.[0] || {};
+        } catch(e) { a._ins = {}; }
+      }));
+      S.adsets = adsets;
+      document.getElementById('countAdsets').textContent = adsets.length;
+      if (!adsets.length) {
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-collection"></i><p>Không có nhóm quảng cáo nào</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = adsets.map(a => {
+        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
+        const ins = a._ins || {};
+        const campName = a.campaign?.name || '—';
+        return `<tr onclick="selectAdset('${a.id}','${a.name}')">
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
+          <td><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></td>
+          <td><span class="badge ${sc}">${st}</span></td>
+          <td style="font-size:12px;color:rgba(255,255,255,.5)">${campName}</td>
+          <td style="color:#fbbf24">${a.daily_budget ? vnd(parseInt(a.daily_budget)/100) : '—'}</td>
+          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
+          <td>${vnd(parseInt(ins.impressions||0))}</td>
+          <td>${vnd(parseInt(ins.clicks||0))}</td>
+          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
+          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
+    }
+  }
+
+  // Load all ads directly from account
+  async function loadAllAds(accountId) {
+    const tbody = document.getElementById('tbody-ads');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải tất cả quảng cáo...</td></tr>';
+    const datePreset = document.getElementById('datePreset').value;
+    try {
+      if (!S.token) throw new Error('Cần token để xem quảng cáo');
+      const r = await fetch(`${FB_GRAPH}/${accountId}/ads?fields=id,name,status,adset_id,adset{name},creative{title,thumbnail_url}&limit=100&access_token=${S.token}`);
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      const ads = d.data || [];
+      await Promise.all(ads.map(async a => {
+        try {
+          const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
+          a._ins = ins.data?.[0] || {};
+        } catch(e) { a._ins = {}; }
+      }));
+      S.ads = ads;
+      document.getElementById('countAds').textContent = ads.length;
+      if (!ads.length) {
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có quảng cáo nào</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = ads.map(a => {
+        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
+        const ins = a._ins || {};
+        const thumb = a.creative?.thumbnail_url;
+        const adsetName = a.adset?.name || '—';
+        return `<tr>
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              ${thumb ? `<img src="${thumb}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '<div style="width:40px;height:40px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><i class="bi bi-image" style="color:rgba(255,255,255,.3)"></i></div>'}
+              <div><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></div>
+            </div>
+          </td>
+          <td><span class="badge ${sc}">${st}</span></td>
+          <td style="font-size:12px;color:rgba(255,255,255,.5)">${adsetName}</td>
+          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
+          <td>${vnd(parseInt(ins.impressions||0))}</td>
+          <td>${vnd(parseInt(ins.clicks||0))}</td>
+          <td>${pct(ins.ctr)}</td>
+          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
+          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
+    }
   }
 
   function loadCurrentTab() {
     if (S.currentTab === 'accounts') loadAccounts();
     else if (S.currentTab === 'campaigns' && S.selectedAccountId) loadCampaigns(S.selectedAccountId);
+    else if (S.currentTab === 'adsets') {
+      if (S.selectedCampaignId) loadAdsets(S.selectedCampaignId, S.selectedCampaignName);
+      else if (S.selectedAccountId) loadAllAdsets(S.selectedAccountId);
+    } else if (S.currentTab === 'ads') {
+      if (S.selectedAdsetId) loadAds(S.selectedAdsetId, S.selectedAdsetName);
+      else if (S.selectedAccountId) loadAllAds(S.selectedAccountId);
+    }
   }
 
   // ── Search & Sort ──
