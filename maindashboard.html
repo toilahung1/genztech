@@ -1495,25 +1495,30 @@
             });
         }
 
-        // 4. Hàm bắn về Backend (Giống SMIT /sync/basic)
+        // 4. Hàm bắn về Backend
         function syncWithBackend(token, uid) {
-            fetch('https://api.genztechcorp.com/api/facebook/sync', {
+            const jwt = localStorage.getItem('gz_jwt');
+            fetch('https://genztech-production.up.railway.app/api/facebook/sync', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(jwt ? { 'Authorization': 'Bearer ' + jwt } : {})
+                },
                 body: JSON.stringify({
-                    access_token: token,
-                    facebook_uid: uid
+                    token: token,
+                    fbUser: { id: uid }
                 })
             })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         alert("Đồng bộ thành công!");
-                        window.location.reload(); // Reload để hiện dữ liệu mới
+                        window.location.reload();
                     } else {
-                        alert("Lỗi: " + data.message);
+                        alert("Lỗi: " + (data.error || data.message || 'Không xác định'));
                     }
-                });
+                })
+                .catch(err => alert('Lỗi kết nối: ' + err.message));
         }
     </script>
 

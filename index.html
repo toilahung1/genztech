@@ -2378,7 +2378,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Đăng nhập thất bại');
         localStorage.setItem('gz_jwt', data.token);
-        localStorage.setItem('gz_username', data.username || user);
+        localStorage.setItem('gz_username', data.user?.username || data.username || user);
         window.location.href = 'auto-post.html';
       } catch(e) {
         errEl.textContent = e.message;
@@ -2410,7 +2410,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Đăng ký thất bại');
         localStorage.setItem('gz_jwt', data.token);
-        localStorage.setItem('gz_username', data.username || user);
+        localStorage.setItem('gz_username', data.user?.username || data.username || user);
         window.location.href = 'auto-post.html';
       } catch(e) {
         errEl.textContent = e.message;
