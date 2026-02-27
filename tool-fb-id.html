@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tìm Facebook ID — Genztech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
+    .app-layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
+    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:18px;text-align:center;font-size:15px}
+    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .btn-primary{background:#1877f2;color:#fff}
+    .btn-primary:hover{background:#1565d8;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#00d4ff;color:#00d4ff}
+    .btn-success{background:#22c55e;color:#fff}
+    .page-body{padding:28px;flex:1}
+    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#38bdf8}
+    .card-body{padding:20px}
+    .form-group{margin-bottom:16px}
+    .form-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px;display:block}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
+    .form-control:focus{outline:none;border-color:#0ea5e9}
+    .form-control::placeholder{color:rgba(255,255,255,.25)}
+    textarea.form-control{resize:vertical;min-height:120px}
+    .tab-bar{display:flex;gap:4px;padding:4px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:20px}
+    .tab-btn{flex:1;padding:8px 12px;border:none;border-radius:7px;background:transparent;color:rgba(255,255,255,.5);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+    .tab-btn.active{background:rgba(14,165,233,.15);color:#38bdf8}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+    .result-card{background:rgba(0,0,0,.3);border:1px solid rgba(14,165,233,.2);border-radius:12px;padding:20px;margin-bottom:12px}
+    .result-id{font-size:28px;font-weight:800;color:#38bdf8;letter-spacing:1px;margin-bottom:8px;font-family:monospace}
+    .result-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+    .result-key{color:rgba(255,255,255,.4);min-width:100px}
+    .result-val{color:#fff;font-weight:600}
+    .history-item{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .15s}
+    .history-item:hover{border-color:rgba(14,165,233,.3);background:rgba(14,165,233,.05)}
+    .history-input{font-size:12.5px;color:rgba(255,255,255,.6)}
+    .history-id{font-size:13px;font-weight:700;color:#38bdf8;font-family:monospace}
+    .history-time{font-size:11px;color:rgba(255,255,255,.3)}
+    .bulk-row{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 14px;margin-bottom:6px}
+    .bulk-input{font-size:12.5px;color:rgba(255,255,255,.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bulk-id{font-size:13px;font-weight:700;color:#38bdf8;font-family:monospace}
+    .bulk-status{font-size:11px}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#38bdf8;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
+    .toast.success{border-left:3px solid #22c55e}
+    .toast.error{border-left:3px solid #ef4444}
+    .toast.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}}
+  </style>
+</head>
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-layout relative z-10">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo"><img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span></a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng quan</div>
+        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <div class="nav-group-label">Công cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
+        <div class="nav-sub">
+          <a href="tool-ad-account.html" class="nav-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-item active"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <div class="nav-group-label">Hệ thống</div>
+        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Tìm Facebook ID</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-sm btn-outline" onclick="clearHistory()"><i class="bi bi-trash"></i> Xóa lịch sử</button>
+          <button class="btn-sm btn-primary" onclick="doFind()"><i class="bi bi-search"></i> Tìm ID</button>
+        </div>
+      </header>
+
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-person-badge" style="color:#38bdf8"></i> Tìm Facebook ID</h1>
+        <p class="page-subtitle">Tra cứu UID của tài khoản, Page, Group qua link hoặc username. Hỗ trợ tra cứu hàng loạt và lưu lịch sử</p>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('single')" id="tabSingle"><i class="bi bi-person"></i> Tra Cứu Đơn Lẻ</button>
+          <button class="tab-btn" onclick="switchTab('bulk')" id="tabBulk"><i class="bi bi-people"></i> Tra Cứu Hàng Loạt</button>
+          <button class="tab-btn" onclick="switchTab('history')" id="tabHistory"><i class="bi bi-clock-history"></i> Lịch Sử (<span id="historyCount">0</span>)</button>
+        </div>
+
+        <!-- Single lookup -->
+        <div id="paneSingle" class="tab-pane active">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-header"><div class="card-title"><i class="bi bi-search"></i> Nhập Link / Username</div></div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">Link Facebook hoặc Username</label>
+                    <input type="text" class="form-control" id="fbInput" placeholder="https://facebook.com/username hoặc username" onkeydown="if(event.key==='Enter')doFind()">
+                  </div>
+                  <div style="margin-bottom:14px">
+                    <div style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:8px">Ví dụ hợp lệ:</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <span onclick="setExample('https://facebook.com/zuck')" style="font-size:11px;padding:3px 9px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:6px;cursor:pointer;color:#7dd3fc">facebook.com/zuck</span>
+                      <span onclick="setExample('https://www.facebook.com/groups/123456')" style="font-size:11px;padding:3px 9px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:6px;cursor:pointer;color:#7dd3fc">facebook.com/groups/ID</span>
+                      <span onclick="setExample('https://fb.com/pages/name/123')" style="font-size:11px;padding:3px 9px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:6px;cursor:pointer;color:#7dd3fc">fb.com/pages/name/ID</span>
+                    </div>
+                  </div>
+                  <button class="btn-sm btn-primary" style="width:100%;justify-content:center" onclick="doFind()" id="findBtn">
+                    <i class="bi bi-search"></i> Tìm Facebook ID
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="card" id="resultCard" style="display:none">
+                <div class="card-header">
+                  <div class="card-title"><i class="bi bi-check-circle" style="color:#4ade80"></i> Kết Quả</div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-sm btn-outline" style="font-size:11px" onclick="copyId()"><i class="bi bi-clipboard"></i> Copy ID</button>
+                    <button class="btn-sm btn-outline" style="font-size:11px" onclick="openProfile()"><i class="bi bi-box-arrow-up-right"></i> Mở</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="result-card">
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px">Facebook ID</div>
+                    <div class="result-id" id="resultId">—</div>
+                    <div class="result-row"><span class="result-key">Tên</span><span class="result-val" id="resultName">—</span></div>
+                    <div class="result-row"><span class="result-key">Loại</span><span class="result-val" id="resultType">—</span></div>
+                    <div class="result-row"><span class="result-key">Username</span><span class="result-val" id="resultUsername">—</span></div>
+                    <div class="result-row" id="resultCategoryRow" style="display:none"><span class="result-key">Danh mục</span><span class="result-val" id="resultCategory">—</span></div>
+                    <div class="result-row" id="resultLikesRow" style="display:none"><span class="result-key">Lượt thích</span><span class="result-val" id="resultLikes">—</span></div>
+                  </div>
+                  <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px 12px;font-size:11.5px;color:rgba(255,255,255,.4)">
+                    <strong style="color:rgba(255,255,255,.6)">Cách dùng ID này:</strong><br>
+                    Dùng trong Facebook Ads Manager để nhắm mục tiêu, exclude hoặc tạo Custom Audience từ trang/nhóm cụ thể.
+                  </div>
+                </div>
+              </div>
+
+              <div id="loadingCard" style="display:none">
+                <div class="card">
+                  <div class="card-body" style="display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.4);font-size:13px">
+                    <span class="spinner"></span> Đang tra cứu Facebook ID...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk lookup -->
+        <div id="paneBulk" class="tab-pane">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-people"></i> Tra Cứu Hàng Loạt</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn-sm btn-outline" style="font-size:11px" onclick="exportBulk()"><i class="bi bi-download"></i> Xuất CSV</button>
+                <button class="btn-sm btn-primary" onclick="doBulkFind()" id="bulkBtn"><i class="bi bi-search"></i> Tra Cứu Tất Cả</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Danh sách link/username (mỗi dòng một link)</label>
+                <textarea class="form-control" id="bulkInput" placeholder="https://facebook.com/page1&#10;https://facebook.com/page2&#10;username3&#10;..." style="min-height:140px;font-size:12px;font-family:monospace"></textarea>
+              </div>
+              <div style="font-size:12px;color:rgba(255,255,255,.35)">Tối đa 50 link mỗi lần tra cứu</div>
+            </div>
+          </div>
+          <div id="bulkResults"></div>
+        </div>
+
+        <!-- History -->
+        <div id="paneHistory" class="tab-pane">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-clock-history"></i> Lịch Sử Tra Cứu</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn-sm btn-outline" style="font-size:11px" onclick="exportHistory()"><i class="bi bi-download"></i> Xuất CSV</button>
+                <button class="btn-sm btn-outline" style="font-size:11px;color:#f87171;border-color:rgba(239,68,68,.3)" onclick="clearHistory()"><i class="bi bi-trash"></i> Xóa tất cả</button>
+              </div>
+            </div>
+            <div class="card-body" id="historyList">
+              <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px"><i class="bi bi-clock-history" style="font-size:32px;display:block;margin-bottom:10px"></i>Chưa có lịch sử tra cứu</div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/ads-shared.js"></script>
+  <script>
+  let history = JSON.parse(localStorage.getItem('genz_fbid_history') || '[]');
+  let lastResult = null;
+
+  function switchTab(tab) {
+    ['single','bulk','history'].forEach(t => {
+      document.getElementById('pane'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+      document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+    });
+    if (tab === 'history') renderHistory();
+  }
+
+  function setExample(val) {
+    document.getElementById('fbInput').value = val;
+    document.getElementById('fbInput').focus();
+  }
+
+  function extractUsername(link) {
+    try {
+      const url = new URL(link.startsWith('http') ? link : 'https://facebook.com/' + link);
+      const parts = url.pathname.split('/').filter(Boolean);
+      if (parts[0] === 'groups') return parts[1];
+      if (parts[0] === 'pages') return parts[parts.length - 1];
+      return parts[parts.length - 1] || parts[0];
+    } catch { return link.replace(/^@/, '').trim(); }
+  }
+
+  async function lookupId(link) {
+    const username = extractUsername(link);
+    if (!username) throw new Error('Link không hợp lệ');
+
+    if (GZ.isFbConnected()) {
+      const data = await GZ.fbApi(username, {
+        fields: 'id,name,category,fan_count,username,link'
+      });
+      return {
+        id: data.id,
+        name: data.name || username,
+        type: data.category ? 'Page' : 'Tài khoản / Group',
+        username: data.username || username,
+        category: data.category || null,
+        likes: data.fan_count || null,
+        link: data.link || `https://facebook.com/${username}`
+      };
+    } else {
+      // Demo
+      await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+      const isPage = link.includes('page') || Math.random() > 0.5;
+      return {
+        id: Math.floor(Math.random() * 9e14 + 1e14).toString(),
+        name: username.replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),
+        type: isPage ? 'Page' : 'Tài khoản cá nhân',
+        username: username,
+        category: isPage ? 'Dịch vụ & Sản phẩm' : null,
+        likes: isPage ? Math.floor(Math.random() * 50000 + 1000) : null,
+        link: `https://facebook.com/${username}`,
+        demo: true
+      };
+    }
+  }
+
+  async function doFind() {
+    const input = document.getElementById('fbInput').value.trim();
+    if (!input) { GZ.toast('Vui lòng nhập link hoặc username', 'error'); return; }
+
+    const btn = document.getElementById('findBtn');
+    btn.innerHTML = '<span class="spinner"></span> Đang tìm...';
+    btn.disabled = true;
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('loadingCard').style.display = 'block';
+
+    try {
+      const result = await lookupId(input);
+      lastResult = result;
+
+      document.getElementById('resultId').textContent = result.id;
+      document.getElementById('resultName').textContent = result.name;
+      document.getElementById('resultType').textContent = result.type;
+      document.getElementById('resultUsername').textContent = result.username;
+
+      if (result.category) {
+        document.getElementById('resultCategoryRow').style.display = 'flex';
+        document.getElementById('resultCategory').textContent = result.category;
+      }
+      if (result.likes) {
+        document.getElementById('resultLikesRow').style.display = 'flex';
+        document.getElementById('resultLikes').textContent = GZ.num(result.likes) + ' lượt thích';
+      }
+
+      document.getElementById('loadingCard').style.display = 'none';
+      document.getElementById('resultCard').style.display = 'block';
+
+      // Save to history
+      history.unshift({ input, ...result, time: Date.now() });
+      if (history.length > 100) history.pop();
+      localStorage.setItem('genz_fbid_history', JSON.stringify(history));
+      document.getElementById('historyCount').textContent = history.length;
+
+      GZ.toast(result.demo ? 'ID ước tính (demo mode)' : 'Tìm thấy ID!', result.demo ? 'info' : 'success');
+    } catch(e) {
+      document.getElementById('loadingCard').style.display = 'none';
+      GZ.toast('Lỗi: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-search"></i> Tìm Facebook ID';
+      btn.disabled = false;
+    }
+  }
+
+  function copyId() {
+    if (!lastResult) return;
+    navigator.clipboard.writeText(lastResult.id);
+    GZ.toast('Đã copy ID: ' + lastResult.id, 'success');
+  }
+
+  function openProfile() {
+    if (!lastResult) return;
+    window.open(lastResult.link, '_blank');
+  }
+
+  async function doBulkFind() {
+    const lines = document.getElementById('bulkInput').value.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) { GZ.toast('Vui lòng nhập danh sách link', 'error'); return; }
+    if (lines.length > 50) { GZ.toast('Tối đa 50 link mỗi lần', 'error'); return; }
+
+    const btn = document.getElementById('bulkBtn');
+    btn.innerHTML = '<span class="spinner"></span> Đang tra cứu...';
+    btn.disabled = true;
+
+    const resultsDiv = document.getElementById('bulkResults');
+    resultsDiv.innerHTML = '';
+    const results = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const row = document.createElement('div');
+      row.className = 'bulk-row';
+      row.innerHTML = `<div class="bulk-input">${line}</div><span class="spinner"></span><span class="bulk-status" style="color:rgba(255,255,255,.3)">Đang tra...</span><span></span>`;
+      resultsDiv.appendChild(row);
+
+      try {
+        const r = await lookupId(line);
+        results.push({ input: line, ...r });
+        row.innerHTML = `
+          <div class="bulk-input" title="${line}">${line}</div>
+          <div class="bulk-id">${r.id}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5)">${r.name}</div>
+          <div style="display:flex;gap:5px">
+            <button onclick="navigator.clipboard.writeText('${r.id}');GZ.toast('Đã copy!','success')" style="background:rgba(14,165,233,.15);border:none;border-radius:5px;padding:3px 8px;color:#38bdf8;cursor:pointer;font-size:11px"><i class="bi bi-clipboard"></i></button>
+          </div>`;
+        row.style.borderColor = 'rgba(34,197,94,.2)';
+      } catch(e) {
+        row.innerHTML = `<div class="bulk-input">${line}</div><div style="color:#f87171;font-size:12px">Lỗi</div><div style="font-size:11px;color:#f87171">${e.message}</div><span></span>`;
+        row.style.borderColor = 'rgba(239,68,68,.2)';
+      }
+    }
+
+    btn.innerHTML = '<i class="bi bi-search"></i> Tra Cứu Tất Cả';
+    btn.disabled = false;
+    GZ.toast(`Hoàn thành ${results.length}/${lines.length} tra cứu`, 'success');
+  }
+
+  function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (!history.length) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px"><i class="bi bi-clock-history" style="font-size:32px;display:block;margin-bottom:10px"></i>Chưa có lịch sử tra cứu</div>';
+      return;
+    }
+    el.innerHTML = history.map((h, i) => `
+      <div class="history-item" onclick="reuseHistory(${i})">
+        <div>
+          <div class="history-input">${h.input}</div>
+          <div class="history-id">${h.id}</div>
+          <div class="history-time">${h.name} • ${new Date(h.time).toLocaleString('vi-VN')}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="event.stopPropagation();navigator.clipboard.writeText('${h.id}');GZ.toast('Đã copy!','success')" style="background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:6px;padding:4px 10px;color:#38bdf8;cursor:pointer;font-size:11px"><i class="bi bi-clipboard"></i></button>
+        </div>
+      </div>`).join('');
+  }
+
+  function reuseHistory(i) {
+    document.getElementById('fbInput').value = history[i].input;
+    switchTab('single');
+    doFind();
+  }
+
+  function clearHistory() {
+    history = [];
+    localStorage.removeItem('genz_fbid_history');
+    document.getElementById('historyCount').textContent = '0';
+    renderHistory();
+    GZ.toast('Đã xóa lịch sử', 'info');
+  }
+
+  function exportHistory() {
+    if (!history.length) { GZ.toast('Không có dữ liệu để xuất', 'error'); return; }
+    const csv = 'Input,ID,Tên,Loại,Username,Thời gian\n' + history.map(h => `"${h.input}","${h.id}","${h.name}","${h.type}","${h.username}","${new Date(h.time).toLocaleString('vi-VN')}"`).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fbid_history_${Date.now()}.csv`; a.click();
+    GZ.toast('Đã xuất CSV!', 'success');
+  }
+
+  function exportBulk() {
+    const rows = document.querySelectorAll('.bulk-row');
+    if (!rows.length) { GZ.toast('Không có dữ liệu để xuất', 'error'); return; }
+    const csv = 'Input,ID\n' + Array.from(rows).map(r => {
+      const cells = r.querySelectorAll('div');
+      return `"${cells[0]?.textContent || ''}","${cells[1]?.textContent || ''}"`;
+    }).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fbid_bulk_${Date.now()}.csv`; a.click();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('historyCount').textContent = history.length;
+  });
+  </script>
+  <script>
+  const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
+  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));const ss=[];let lt=0;function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
+  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(14,165,233,'+po+')');g.addColorStop(.5,'rgba(0,212,255,'+(po*.5)+')');g.addColorStop(1,'rgba(0,212,255,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+  </script>
+</body>
+</html>
