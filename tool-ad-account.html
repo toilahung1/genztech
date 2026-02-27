@@ -648,29 +648,43 @@
   function goLogin() { window.location.href = 'auto-post.html'; }
 
   async function initAuth() {
-    if (S.jwt) {
-      try {
-        const r = await fetch(`${API_BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${S.jwt}` } });
-        if (r.ok) {
-          S.user = await r.json();
-          document.getElementById('userBadge').style.display = 'flex';
-          document.getElementById('userAvatar').textContent = (S.user.username || S.user.email || 'U')[0].toUpperCase();
-          document.getElementById('userName').textContent = S.user.username || S.user.email || '';
-          // loginBtn/loginBanner removed
-          // Update sidebar conn status
-          document.getElementById('connDot').classList.add('online');
-          document.getElementById('connText').textContent = S.user.username || 'Đã đăng nhập';
-        } else {
-          showLoginBanner();
-        }
-      } catch(e) { showLoginBanner(); }
-    } else {
-      showLoginBanner();
-    }
-    // Token indicator
+    // Token indicator - show first so token users don't need to wait for JWT check
     if (S.token) {
       document.getElementById('tokenIndicator').style.display = 'inline';
       document.getElementById('tokenBanner').style.display = 'flex';
+    }
+    // JWT auth check - wrapped in try/catch so failure never blocks the page
+    if (S.jwt) {
+      try {
+        const r = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${S.jwt}` },
+          signal: AbortSignal.timeout(5000) // 5s timeout
+        });
+        if (r.ok) {
+          const data = await r.json();
+          // Only use data if it has user info (not an error object)
+          if (data && (data.username || data.email || data.id)) {
+            S.user = data;
+            document.getElementById('userBadge').style.display = 'flex';
+            document.getElementById('userAvatar').textContent = (data.username || data.email || 'U')[0].toUpperCase();
+            document.getElementById('userName').textContent = data.username || data.email || '';
+            document.getElementById('connDot').classList.add('online');
+            document.getElementById('connText').textContent = data.username || 'Đã đăng nhập';
+          } else {
+            // Route not found or invalid response - silently ignore
+            S.jwt = null;
+          }
+        } else {
+          // 404 or other error - silently clear JWT, don't block
+          S.jwt = null;
+        }
+      } catch(e) {
+        // Network error or timeout - silently ignore, don't block
+        S.jwt = null;
+      }
+    }
+    if (!S.token && !S.jwt) {
+      showLoginBanner();
     }
   }
 
@@ -1377,7 +1391,11 @@
 
   // ── Init ──
   async function init() {
-    await initAuth();
+    try {
+      await initAuth();
+    } catch(e) {
+      console.warn('[GenZTech] initAuth error (non-fatal):', e.message);
+    }
     // Auto load if has token or jwt
     if (S.token || S.jwt) {
       loadAccounts();
