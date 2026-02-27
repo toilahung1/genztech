@@ -4,7 +4,7 @@
   "description": "GenzTech Backend API - Node.js/Express/PostgreSQL",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "sh start.sh",
     "dev": "nodemon src/server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
