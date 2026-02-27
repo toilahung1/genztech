@@ -167,22 +167,33 @@ async function autoRefreshExpiring() {
 // ============================================================
 async function postToPage(pageId, pageToken, content, linkUrl = null, photoIds = null, videoId = null) {
   const endpoint = `${FB_GRAPH}/${pageId}/feed`;
-  const params = { message: content, access_token: pageToken };
 
-  if (linkUrl) params.link = linkUrl;
-
-  if (photoIds && photoIds.length > 0) {
-    params.attached_media = JSON.stringify(photoIds.map(id => ({ media_fbid: id })));
-  }
-
+  // Video: publish video đã upload trước
   if (videoId) {
-    await axios.post(`${FB_GRAPH}/${videoId}`, null, {
-      params: { description: content, published: 'true', access_token: pageToken },
-    });
-    return { id: videoId };
+    const body = {
+      message:        content,
+      attached_media: [{ media_fbid: videoId }],
+      access_token:   pageToken,
+    };
+    const res = await axios.post(endpoint, body);
+    return res.data;
   }
 
-  const res = await axios.post(endpoint, null, { params });
+  // Ảnh: gửi dạng body POST với attached_media array
+  if (photoIds && photoIds.length > 0) {
+    const body = {
+      message:        content,
+      attached_media: photoIds.map(id => ({ media_fbid: id })),
+      access_token:   pageToken,
+    };
+    const res = await axios.post(endpoint, body);
+    return res.data;
+  }
+
+  // Text + link
+  const body = { message: content, access_token: pageToken };
+  if (linkUrl) body.link = linkUrl;
+  const res = await axios.post(endpoint, body);
   return res.data;
 }
 
