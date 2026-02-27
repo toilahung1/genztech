@@ -126,7 +126,7 @@ router.post('/sync', authMiddleware, async (req, res) => {
 });
 
 // POST /api/facebook/disconnect
-router.post('/disconnect', authMiddleware, async (req, res) => {
+const disconnectHandler = async (req, res) => {
   try {
     await prisma.user.update({
       where: { id: req.user.id },
@@ -136,7 +136,9 @@ router.post('/disconnect', authMiddleware, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
-});
+};
+router.post('/disconnect', authMiddleware, disconnectHandler);
+router.delete('/disconnect', authMiddleware, disconnectHandler);
 
 // POST /api/facebook/refresh — Extend token
 router.post('/refresh', authMiddleware, async (req, res) => {
