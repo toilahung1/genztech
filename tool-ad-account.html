@@ -196,7 +196,7 @@
         <div class="topbar-right">
           <button class="btn-icon" onclick="refreshData()" title="Làm mới"><i class="bi bi-arrow-clockwise"></i></button>
           <button class="btn-icon" onclick="openTokenModal()" title="Cài đặt token"><i class="bi bi-key"></i> <span id="tokenIndicator" style="font-size:11px;display:none;color:#4ade80">●</span></button>
-          <button class="btn btn-primary btn-sm" id="loginBtn" onclick="goLogin()" style="display:none"><i class="bi bi-person"></i> Đăng nhập</button>
+
           <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px">
             <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1877f2,#00d4ff);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px" id="userAvatar">?</div>
             <span id="userName" style="color:rgba(255,255,255,.8)"></span>
@@ -205,14 +205,7 @@
       </div>
 
       <div class="page-body">
-        <!-- Token / Login banner -->
-        <div id="loginBanner" class="token-banner" style="display:none">
-          <i class="bi bi-exclamation-triangle" style="color:#fbbf24;font-size:16px"></i>
-          <div style="flex:1">
-            <strong>Chưa đăng nhập GenZTech</strong> — Đăng nhập để xem dữ liệu TKQC của bạn.
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="goLogin()">Đăng nhập ngay</button>
-        </div>
+
         <div id="tokenBanner" class="token-banner success" style="display:none">
           <i class="bi bi-key-fill" style="color:#4ade80;font-size:16px"></i>
           <div style="flex:1;font-size:12px">
@@ -249,6 +242,10 @@
             <button class="tab-btn" id="tab-ads" onclick="switchTab('ads')">
               <i class="bi bi-megaphone"></i> Quảng cáo
               <span class="tab-count" id="countAds">0</span>
+            </button>
+            <button class="tab-btn" id="tab-rules" onclick="switchTab('rules')">
+              <i class="bi bi-robot"></i> Quy Tắc Tự Động
+              <span class="tab-count" id="countRules" style="background:rgba(168,85,247,.2);color:#c084fc">0</span>
             </button>
           </div>
 
@@ -362,9 +359,114 @@
               </table>
             </div>
 
+            <!-- Tab: Rules -->
+            <div id="panel-rules" style="display:none">
+              <div style="padding:20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                  <div>
+                    <div style="font-size:15px;font-weight:700"><i class="bi bi-robot" style="color:#c084fc"></i> Quy Tắc Tự Động</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:3px">Kiểm tra mỗi 15 phút. Tự động tắt/cảnh báo khi điều kiện xảy ra.</div>
+                  </div>
+                  <button class="btn btn-primary" onclick="openRuleModal()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+                    <i class="bi bi-plus-lg"></i> Tạo Quy Tắc
+                  </button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px" id="presetCards">
+                  <div class="preset-card" onclick="applyPreset('spend_spike')">
+                    <div class="preset-icon" style="background:rgba(239,68,68,.1);color:#f87171"><i class="bi bi-lightning-charge-fill"></i></div>
+                    <div class="preset-info"><div class="preset-title">Tắt khi thốc tiền đột ngột</div><div class="preset-desc">Chi tiêu tăng &gt;50% so với trung bình 3 ngày trước</div></div>
+                    <span class="preset-badge" style="background:rgba(239,68,68,.15);color:#f87171">Nhanh</span>
+                  </div>
+                  <div class="preset-card" onclick="applyPreset('high_cpc')">
+                    <div class="preset-icon" style="background:rgba(251,191,36,.1);color:#fbbf24"><i class="bi bi-currency-dollar"></i></div>
+                    <div class="preset-info"><div class="preset-title">Tắt khi CPC quá đắt</div><div class="preset-desc">CPC vượt ngưỡng tự đặt, hiệu quả kém</div></div>
+                    <span class="preset-badge" style="background:rgba(251,191,36,.15);color:#fbbf24">Phổ biến</span>
+                  </div>
+                  <div class="preset-card" onclick="applyPreset('low_balance')">
+                    <div class="preset-icon" style="background:rgba(34,197,94,.1);color:#4ade80"><i class="bi bi-wallet2"></i></div>
+                    <div class="preset-info"><div class="preset-title">Cảnh báo sắp hết tiền</div><div class="preset-desc">Số dư TKQC xuống dưới ngưỡng đặt</div></div>
+                    <span class="preset-badge" style="background:rgba(34,197,94,.15);color:#4ade80">Quan trọng</span>
+                  </div>
+                  <div class="preset-card" onclick="applyPreset('account_disabled')">
+                    <div class="preset-icon" style="background:rgba(168,85,247,.1);color:#c084fc"><i class="bi bi-shield-x"></i></div>
+                    <div class="preset-info"><div class="preset-title">Tài khoản bị vô hiệu hóa</div><div class="preset-desc">Dừng tất cả chiến dịch khi TKQC bị khóa</div></div>
+                    <span class="preset-badge" style="background:rgba(168,85,247,.15);color:#c084fc">Tự động</span>
+                  </div>
+                </div>
+                <div id="rulesList"></div>
+              </div>
+            </div>
+
             <div class="pagination" id="pagination" style="display:none"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rule Modal -->
+  <div class="modal-overlay" id="ruleModal">
+    <div class="modal-box" style="width:560px">
+      <div class="modal-title"><i class="bi bi-robot" style="color:#c084fc"></i> Tạo Quy Tắc Tự Động</div>
+      <div class="modal-sub">Hệ thống kiểm tra mỗi 15 phút và thực hiện hành động khi điều kiện được thỏa mãn.</div>
+      <div class="form-group">
+        <label class="form-label">Tên quy tắc</label>
+        <input type="text" class="form-control" id="ruleName" placeholder="Ví dụ: Tắt ads khi thốc tiền">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Loại điều kiện</label>
+          <select class="form-control" id="ruleCondType" onchange="updateCondUnit()">
+            <option value="spend_spike">Chi tiêu tăng đột ngột (%)</option>
+            <option value="cpc_above">CPC vượt ngưỡng (VND)</option>
+            <option value="cpm_above">CPM vượt ngưỡng (VND)</option>
+            <option value="ctr_below">CTR dưới ngưỡng (%)</option>
+            <option value="balance_below">Số dư dưới ngưỡng (VND)</option>
+            <option value="spend_above">Tổng chi tiêu vượt giới hạn (VND)</option>
+            <option value="account_disabled">Tài khoản bị vô hiệu hóa</option>
+            <option value="no_conversion">Không có chuyển đổi sau X giờ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="condValueLabel">Giá trị ngưỡng</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" class="form-control" id="ruleCondValue" placeholder="50" style="flex:1">
+            <span id="condUnit" style="font-size:12px;color:rgba(255,255,255,.4);white-space:nowrap">%</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Hành động</label>
+          <select class="form-control" id="ruleAction">
+            <option value="pause_campaign">Tạm dừng chiến dịch</option>
+            <option value="pause_adset">Tạm dừng nhóm QC</option>
+            <option value="pause_ad">Tạm dừng quảng cáo</option>
+            <option value="notify_only">Chỉ cảnh báo (không tắt)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Áp dụng cho</label>
+          <select class="form-control" id="ruleScope">
+            <option value="all">Tất cả TKQC</option>
+            <option value="selected">TKQC đang chọn</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Thông báo khi kích hoạt</label>
+        <div style="display:flex;gap:16px;align-items:center">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="ruleNotifyBrowser" checked style="accent-color:#c084fc"> Thông báo trình duyệt
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="ruleNotifyLog" checked style="accent-color:#c084fc"> Ghi log
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <button class="btn btn-outline" onclick="closeRuleModal()">Hủy</button>
+        <button class="btn" onclick="saveRule()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff"><i class="bi bi-check-lg"></i> Lưu Quy Tắc</button>
       </div>
     </div>
   </div>
@@ -377,6 +479,44 @@
   const STATUS_MAP = {1:['Hoạt động','badge-green'],2:['Vô hiệu hóa','badge-red'],3:['Chưa xác nhận','badge-yellow'],7:['Bị khóa','badge-red'],9:['Đóng cửa','badge-gray'],100:['Đang xem xét','badge-yellow']};
   const CAMPAIGN_STATUS = {ACTIVE:['Đang chạy','badge-green'],PAUSED:['Tạm dừng','badge-yellow'],DELETED:['Đã xóa','badge-red'],ARCHIVED:['Lưu trữ','badge-gray']};
   const OBJECTIVE_MAP = {OUTCOME_TRAFFIC:'Lưu lượng',OUTCOME_AWARENESS:'Nhận thức',OUTCOME_ENGAGEMENT:'Tương tác',OUTCOME_LEADS:'Khách hàng tiềm năng',OUTCOME_SALES:'Doanh số',OUTCOME_APP_PROMOTION:'Ứng dụng',LINK_CLICKS:'Lượt click',CONVERSIONS:'Chuyển đổi',BRAND_AWARENESS:'Nhận thức thương hiệu',REACH:'Tiếp cận',VIDEO_VIEWS:'Xem video',MESSAGES:'Tin nhắn'};
+
+  // ── CSS Rules ──
+  (function(){
+    const s=document.createElement('style');
+    s.textContent=`
+      .preset-card{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .2s}
+      .preset-card:hover{background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.3);transform:translateY(-1px)}
+      .preset-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+      .preset-info{flex:1}
+      .preset-title{font-size:13px;font-weight:600;color:#fff}
+      .preset-desc{font-size:11.5px;color:rgba(255,255,255,.4);margin-top:2px}
+      .preset-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
+      .rule-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:all .2s}
+      .rule-card:hover{border-color:rgba(168,85,247,.3)}
+      .rule-card.active-rule{border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.04)}
+      .rule-card.triggered{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.04)}
+      .rule-toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+      .rule-toggle input{opacity:0;width:0;height:0}
+      .rule-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.15);border-radius:20px;transition:.3s}
+      .rule-slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+      .rule-toggle input:checked+.rule-slider{background:#7c3aed}
+      .rule-toggle input:checked+.rule-slider:before{transform:translateX(16px)}
+      .rule-info{flex:1}
+      .rule-name{font-size:13px;font-weight:600;color:#fff}
+      .rule-meta{font-size:11.5px;color:rgba(255,255,255,.4);margin-top:3px}
+      .rule-log{font-size:11px;color:#c084fc;margin-top:4px}
+      .rule-actions{display:flex;gap:6px}
+      .log-section{margin-top:16px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px}
+      .log-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+      .log-item{font-size:11.5px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:10px;align-items:flex-start}
+      .log-item:last-child{border-bottom:none}
+      .log-time{color:rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0}
+      .log-msg{color:rgba(255,255,255,.7)}
+      .log-msg.triggered{color:#f87171}
+      .log-msg.ok{color:#4ade80}
+    `;
+    document.head.appendChild(s);
+  })();
 
   // ── State ──
   let S = {
@@ -420,8 +560,7 @@
           document.getElementById('userBadge').style.display = 'flex';
           document.getElementById('userAvatar').textContent = (S.user.username || S.user.email || 'U')[0].toUpperCase();
           document.getElementById('userName').textContent = S.user.username || S.user.email || '';
-          document.getElementById('loginBtn').style.display = 'none';
-          document.getElementById('loginBanner').style.display = 'none';
+          // loginBtn/loginBanner removed
           // Update sidebar conn status
           document.getElementById('connDot').classList.add('online');
           document.getElementById('connText').textContent = S.user.username || 'Đã đăng nhập';
@@ -440,9 +579,9 @@
   }
 
   function showLoginBanner() {
-    if (!S.token) {
-      document.getElementById('loginBanner').style.display = 'flex';
-      document.getElementById('loginBtn').style.display = 'flex';
+    // No login banner UI — user is redirected to auto-post.html if needed
+    if (!S.token && !S.jwt) {
+      toast('Vui lòng đăng nhập tại trang Tự Động Đăng Bài hoặc nhập token thủ công', 'info');
     }
   }
 
@@ -462,7 +601,6 @@
     localStorage.setItem('gz_manual_fb_token', t);
     document.getElementById('tokenIndicator').style.display = 'inline';
     document.getElementById('tokenBanner').style.display = 'flex';
-    document.getElementById('loginBanner').style.display = 'none';
     closeTokenModal();
     toast('Lưu token thành công! Đang tải dữ liệu...', 'success');
     loadAccounts();
@@ -473,7 +611,7 @@
     document.getElementById('tokenIndicator').style.display = 'none';
     document.getElementById('tokenBanner').style.display = 'none';
     toast('Đã xóa token thủ công', 'info');
-    if (!S.jwt) showLoginBanner();
+    if (!S.jwt && !S.token) toast('Nhập token để tiếp tục sử dụng', 'info');
   }
 
   // ── API calls ──
@@ -767,10 +905,11 @@
   // ── Tab switching ──
   function switchTab(tab) {
     S.currentTab = tab;
-    ['accounts','campaigns','adsets','ads'].forEach(t => {
+    ['accounts','campaigns','adsets','ads','rules'].forEach(t => {
       document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
       document.getElementById(`panel-${t}`).style.display = t === tab ? 'block' : 'none';
     });
+    if (tab === 'rules') renderRules();
   }
 
   function loadCurrentTab() {
@@ -908,7 +1047,242 @@
     window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; canvasData.width=window.innerWidth; canvasData.height=window.innerHeight; });
   })();
 
+  // ── RULE ENGINE ──
+  let rules = JSON.parse(localStorage.getItem('gz_ad_rules') || '[]');
+  let ruleEditId = null;
+  let ruleCheckInterval = null;
+  let ruleLogs = JSON.parse(localStorage.getItem('gz_rule_logs') || '[]');
+
+  const COND_UNITS = {
+    spend_spike: '%', cpc_above: 'VND', cpm_above: 'VND', ctr_below: '%',
+    balance_below: 'VND', spend_above: 'VND', account_disabled: '', no_conversion: 'giờ'
+  };
+  const COND_LABELS = {
+    spend_spike: 'Tăng % so với trung bình', cpc_above: 'CPC tối đa (VND)',
+    cpm_above: 'CPM tối đa (VND)', ctr_below: 'CTR tối thiểu (%)',
+    balance_below: 'Số dư tối thiểu (VND)', spend_above: 'Giới hạn chi tiêu (VND)',
+    account_disabled: 'Không cần giá trị', no_conversion: 'Sau bao nhiêu giờ'
+  };
+  const ACTION_LABELS = {
+    pause_campaign: 'Tạm dừng chiến dịch', pause_adset: 'Tạm dừng nhóm QC',
+    pause_ad: 'Tạm dừng quảng cáo', notify_only: 'Chỉ cảnh báo'
+  };
+
+  function saveRules() {
+    localStorage.setItem('gz_ad_rules', JSON.stringify(rules));
+    document.getElementById('countRules').textContent = rules.filter(r=>r.enabled).length;
+  }
+
+  function addRuleLog(ruleId, msg, type='ok') {
+    const log = { id: Date.now(), ruleId, msg, type, time: new Date().toLocaleString('vi-VN') };
+    ruleLogs.unshift(log);
+    if (ruleLogs.length > 100) ruleLogs = ruleLogs.slice(0, 100);
+    localStorage.setItem('gz_rule_logs', JSON.stringify(ruleLogs));
+  }
+
+  function openRuleModal(editId) {
+    ruleEditId = editId || null;
+    if (editId) {
+      const r = rules.find(x=>x.id===editId);
+      if (!r) return;
+      document.getElementById('ruleName').value = r.name;
+      document.getElementById('ruleCondType').value = r.condType;
+      document.getElementById('ruleCondValue').value = r.condValue || '';
+      document.getElementById('ruleAction').value = r.action;
+      document.getElementById('ruleScope').value = r.scope;
+      document.getElementById('ruleNotifyBrowser').checked = r.notifyBrowser !== false;
+      document.getElementById('ruleNotifyLog').checked = r.notifyLog !== false;
+    } else {
+      document.getElementById('ruleName').value = '';
+      document.getElementById('ruleCondType').value = 'spend_spike';
+      document.getElementById('ruleCondValue').value = '';
+      document.getElementById('ruleAction').value = 'pause_campaign';
+      document.getElementById('ruleScope').value = 'all';
+      document.getElementById('ruleNotifyBrowser').checked = true;
+      document.getElementById('ruleNotifyLog').checked = true;
+    }
+    updateCondUnit();
+    document.getElementById('ruleModal').style.display = 'flex';
+  }
+  function closeRuleModal() { document.getElementById('ruleModal').style.display = 'none'; }
+
+  function updateCondUnit() {
+    const t = document.getElementById('ruleCondType').value;
+    document.getElementById('condUnit').textContent = COND_UNITS[t] || '';
+    document.getElementById('condValueLabel').textContent = COND_LABELS[t] || 'Giá trị ngưỡng';
+    const noVal = t === 'account_disabled';
+    document.getElementById('ruleCondValue').disabled = noVal;
+    document.getElementById('ruleCondValue').placeholder = noVal ? 'Không cần' : '50';
+  }
+
+  function saveRule() {
+    const name = document.getElementById('ruleName').value.trim();
+    if (!name) { toast('Vui lòng nhập tên quy tắc', 'error'); return; }
+    const condType = document.getElementById('ruleCondType').value;
+    const condValue = parseFloat(document.getElementById('ruleCondValue').value) || 0;
+    const action = document.getElementById('ruleAction').value;
+    const scope = document.getElementById('ruleScope').value;
+    const notifyBrowser = document.getElementById('ruleNotifyBrowser').checked;
+    const notifyLog = document.getElementById('ruleNotifyLog').checked;
+
+    if (ruleEditId) {
+      const idx = rules.findIndex(r=>r.id===ruleEditId);
+      if (idx >= 0) rules[idx] = { ...rules[idx], name, condType, condValue, action, scope, notifyBrowser, notifyLog };
+    } else {
+      rules.push({ id: Date.now(), name, condType, condValue, action, scope, notifyBrowser, notifyLog, enabled: true, createdAt: new Date().toISOString(), lastTriggered: null, triggerCount: 0 });
+    }
+    saveRules();
+    closeRuleModal();
+    renderRules();
+    toast('Lưu quy tắc thành công!', 'success');
+  }
+
+  function toggleRule(id) {
+    const r = rules.find(x=>x.id===id);
+    if (r) { r.enabled = !r.enabled; saveRules(); renderRules(); }
+  }
+
+  function deleteRule(id) {
+    if (!confirm('Xóa quy tắc này?')) return;
+    rules = rules.filter(r=>r.id!==id);
+    saveRules(); renderRules();
+    toast('Dạ xóa rồi!', 'info');
+  }
+
+  function applyPreset(type) {
+    const presets = {
+      spend_spike: { name: 'Tắt khi thốc tiền đột ngột', condType: 'spend_spike', condValue: 50, action: 'pause_campaign', scope: 'all' },
+      high_cpc: { name: 'Tắt khi CPC quá đắt', condType: 'cpc_above', condValue: 50000, action: 'pause_campaign', scope: 'all' },
+      low_balance: { name: 'Cảnh báo sắp hết tiền', condType: 'balance_below', condValue: 500000, action: 'notify_only', scope: 'all' },
+      account_disabled: { name: 'Tài khoản bị vô hiệu hóa', condType: 'account_disabled', condValue: 0, action: 'pause_campaign', scope: 'all' }
+    };
+    const p = presets[type];
+    if (!p) return;
+    rules.push({ id: Date.now(), ...p, notifyBrowser: true, notifyLog: true, enabled: true, createdAt: new Date().toISOString(), lastTriggered: null, triggerCount: 0 });
+    saveRules(); renderRules();
+    toast(`Đã thêm quy tắc: ${p.name}`, 'success');
+  }
+
+  function renderRules() {
+    const el = document.getElementById('rulesList');
+    if (!rules.length) {
+      el.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">
+        <i class="bi bi-robot" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3"></i>
+        Chưa có quy tắc nào. Chọn mẫu có sẵn hoặc tạo mới.
+      </div>`;
+      return;
+    }
+    const logsHtml = ruleLogs.length ? `
+      <div class="log-section">
+        <div class="log-title"><i class="bi bi-journal-text"></i> Lịch sử kích hoạt (${ruleLogs.length})</div>
+        ${ruleLogs.slice(0,10).map(l=>`<div class="log-item"><span class="log-time">${l.time}</span><span class="log-msg ${l.type}">${l.msg}</span></div>`).join('')}
+      </div>` : '';
+
+    el.innerHTML = rules.map(r => {
+      const lastT = r.lastTriggered ? `Kích hoạt lần cuối: ${new Date(r.lastTriggered).toLocaleString('vi-VN')}` : 'Chưa kích hoạt';
+      const condText = COND_LABELS[r.condType] + (r.condValue ? ` ≥ ${r.condValue.toLocaleString('vi-VN')} ${COND_UNITS[r.condType]}` : '');
+      return `<div class="rule-card ${r.enabled ? 'active-rule' : ''}" id="rule-${r.id}">
+        <label class="rule-toggle"><input type="checkbox" ${r.enabled?'checked':''} onchange="toggleRule(${r.id})"><span class="rule-slider"></span></label>
+        <div class="rule-info">
+          <div class="rule-name">${r.name}</div>
+          <div class="rule-meta"><i class="bi bi-funnel" style="color:#c084fc"></i> ${condText} &nbsp;•&nbsp; <i class="bi bi-lightning" style="color:#fbbf24"></i> ${ACTION_LABELS[r.action]} &nbsp;•&nbsp; <i class="bi bi-people"></i> ${r.scope==='all'?'Tất cả TKQC':'TKQC đang chọn'}</div>
+          <div class="rule-log">⚡ ${lastT} &nbsp;•&nbsp; Kích hoạt ${r.triggerCount||0} lần</div>
+        </div>
+        <div class="rule-actions">
+          <button class="btn-icon btn-sm" onclick="openRuleModal(${r.id})" title="Sửa"><i class="bi bi-pencil"></i></button>
+          <button class="btn-icon btn-sm" onclick="deleteRule(${r.id})" title="Xóa" style="color:#f87171"><i class="bi bi-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('') + logsHtml;
+  }
+
+  // Rule checker - runs every 15 minutes
+  async function checkRules() {
+    const enabledRules = rules.filter(r => r.enabled);
+    if (!enabledRules.length) return;
+    if (!S.token && !S.jwt) return;
+
+    try {
+      let accounts = S.accounts;
+      if (!accounts.length) {
+        // Load minimal account data for rule checking
+        if (S.token) {
+          const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,amount_spent&limit=50&access_token=${S.token}`);
+          const d = await r.json();
+          accounts = d.data || [];
+        }
+      }
+
+      for (const rule of enabledRules) {
+        for (const acc of accounts) {
+          let triggered = false;
+          let triggerMsg = '';
+
+          if (rule.condType === 'account_disabled') {
+            if ([2,7,9].includes(acc.account_status)) {
+              triggered = true;
+              triggerMsg = `TKQC "${acc.name}" bị vô hiệu hóa (trạng thái: ${acc.account_status})`;
+            }
+          } else if (rule.condType === 'balance_below') {
+            const bal = parseFloat(acc.balance || 0);
+            if (bal < rule.condValue) {
+              triggered = true;
+              triggerMsg = `TKQC "${acc.name}" số dư ${bal.toLocaleString('vi-VN')} VND dưới ngưỡng ${rule.condValue.toLocaleString('vi-VN')} VND`;
+            }
+          } else if (rule.condType === 'spend_above') {
+            const spent = parseFloat(acc.amount_spent || 0);
+            if (spent > rule.condValue) {
+              triggered = true;
+              triggerMsg = `TKQC "${acc.name}" chi tiêu ${spent.toLocaleString('vi-VN')} VND vượt giới hạn ${rule.condValue.toLocaleString('vi-VN')} VND`;
+            }
+          }
+          // CPC/CPM/CTR checks require insights data (loaded separately)
+          else if (rule.condType === 'cpc_above' && acc._insights) {
+            const cpc = parseFloat(acc._insights.cpc || 0);
+            if (cpc > rule.condValue) {
+              triggered = true;
+              triggerMsg = `TKQC "${acc.name}" CPC ${cpc.toLocaleString('vi-VN')} VND vượt ngưỡng ${rule.condValue.toLocaleString('vi-VN')} VND`;
+            }
+          }
+
+          if (triggered) {
+            rule.lastTriggered = new Date().toISOString();
+            rule.triggerCount = (rule.triggerCount || 0) + 1;
+            if (rule.notifyLog) addRuleLog(rule.id, `[${rule.name}] ${triggerMsg}`, 'triggered');
+            if (rule.notifyBrowser && 'Notification' in window) {
+              Notification.requestPermission().then(p => {
+                if (p === 'granted') new Notification('GenZTech Alert ⚡', { body: triggerMsg, icon: 'https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff' });
+              });
+            }
+            toast(`⚡ Quy tắc kích hoạt: ${triggerMsg}`, 'error');
+            // Execute action
+            if (rule.action !== 'notify_only' && S.jwt) {
+              try {
+                await fetch(`${API_BASE}/api/facebook/proxy/pause-campaigns`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${S.jwt}` },
+                  body: JSON.stringify({ accountId: acc.id, level: rule.action.replace('pause_',''), reason: rule.name })
+                });
+                addRuleLog(rule.id, `→ Đã thực hiện: ${ACTION_LABELS[rule.action]} cho ${acc.name}`, 'ok');
+              } catch(e) { addRuleLog(rule.id, `Lỗi thực hiện: ${e.message}`, 'triggered'); }
+            }
+          }
+        }
+      }
+      saveRules();
+      if (S.currentTab === 'rules') renderRules();
+    } catch(e) { console.warn('Rule check error:', e); }
+  }
+
+  // Start rule checker
+  function startRuleChecker() {
+    if (ruleCheckInterval) clearInterval(ruleCheckInterval);
+    ruleCheckInterval = setInterval(checkRules, 15 * 60 * 1000); // 15 min
+    document.getElementById('countRules').textContent = rules.filter(r=>r.enabled).length;
+  }
+
   init();
+  startRuleChecker();
   </script>
 </body>
 </html>
