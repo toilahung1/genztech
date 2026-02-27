@@ -843,22 +843,7 @@
         </td>
       </tr>`;
     }).join('');
-    // Attach click events via JS (avoid HTML escaping issues)
-    document.querySelectorAll('.acc-row').forEach(row => {
-      row.addEventListener('click', () => {
-        const id = row.dataset.accid;
-        const acc = window._accMap[id];
-        if (acc) selectAccount(id, acc.name || id);
-      });
-    });
-    document.querySelectorAll('.edit-tz-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.accid;
-        const acc = window._accMap[id];
-        if (acc) openEditTzModal(id, acc.name || id, acc.timezone_name || '', acc.country || '');
-      });
-    });
+    // Click events handled by event delegation in init()
   }
 
   // ── Select Account → Load Campaigns ──
@@ -1400,6 +1385,23 @@
     if (S.token || S.jwt) {
       loadAccounts();
     }
+    // Event delegation for account rows (survives re-renders)
+    document.getElementById('tbody-accounts').addEventListener('click', function(e) {
+      const btn = e.target.closest('.edit-tz-btn');
+      if (btn) {
+        e.stopPropagation();
+        const id = btn.dataset.accid;
+        const acc = window._accMap && window._accMap[id];
+        if (acc) openEditTzModal(id, acc.name || id, acc.timezone_name || '', acc.country || '');
+        return;
+      }
+      const row = e.target.closest('.acc-row');
+      if (row) {
+        const id = row.dataset.accid;
+        const acc = window._accMap && window._accMap[id];
+        if (acc) selectAccount(id, acc.name || id);
+      }
+    });
   }
 
   // ── Background ──
