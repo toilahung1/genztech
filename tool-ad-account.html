@@ -1,636 +1,914 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kiểm Tra TKQC — Genztech</title>
-  <link rel="stylesheet" href="css/main.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kiểm Tra TKQC — GenZTech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none;-webkit-user-select:none;user-select:none;margin:0;padding:0;font-family:'Inter',sans-serif;background:#080c1e;color:#fff}
     html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
-    .app-layout{display:flex;min-height:100vh}
-    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
-    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
-    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
-    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    canvas.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    #custom-cursor{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,212,255,.8);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s;opacity:0;mix-blend-mode:screen}
+    .app-layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    /* Sidebar */
+    .sidebar{width:240px;flex-shrink:0;background:rgba(10,14,39,.92);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:34px;height:34px;border-radius:50%}
+    .sidebar-logo span{font-size:14px;font-weight:700;letter-spacing:.5px;color:#fff}
     .sidebar-logo span em{color:#00d4ff;font-style:normal}
-    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
-    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
-    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:10px 18px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
     .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
     .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
-    .nav-item i{width:18px;text-align:center;font-size:15px}
-    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
-    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
-    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .nav-item i{width:17px;text-align:center;font-size:14px}
+    .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 34px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-sub-item.active{color:#00d4ff;background:rgba(0,212,255,.06);border-left-color:#00d4ff}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.06)}
+    .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.5)}
+    .conn-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0}
+    .conn-dot.online{background:#22c55e;box-shadow:0 0 6px #22c55e}
+    /* Main */
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between}
+    .topbar-left{display:flex;align-items:center;gap:10px}
+    .breadcrumb{font-size:12.5px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
     .breadcrumb span{color:#fff;font-weight:600}
-    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
-    .btn-primary{background:#1877f2;color:#fff}
-    .btn-primary:hover{background:#1565d8;transform:translateY(-1px)}
-    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
-    .btn-outline:hover{border-color:#00d4ff;color:#00d4ff}
-    .btn-success{background:#22c55e;color:#fff}
-    .btn-success:hover{background:#16a34a}
-    .btn-danger{background:#ef4444;color:#fff}
-    .page-body{padding:28px;flex:1}
-    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
-    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
-    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
-    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
-    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
-    .card-title i{color:#00d4ff}
-    .card-body{padding:20px}
-    .form-group{margin-bottom:16px}
-    .form-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px;display:block}
-    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
-    .form-control:focus{outline:none;border-color:#1877f2}
-    .form-control::placeholder{color:rgba(255,255,255,.25)}
-    select.form-control{cursor:pointer}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-    @media(max-width:1024px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
-    .stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px}
-    .stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
-    .stat-value{font-size:22px;font-weight:700;line-height:1}
-    .stat-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px}
-    .info-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
-    .info-row:last-child{border-bottom:none}
-    .info-key{color:rgba(255,255,255,.45)}
-    .info-val{color:#fff;font-weight:600}
-    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
-    .badge-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
-    .badge-red{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
-    .badge-yellow{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
-    .badge-blue{background:rgba(24,119,242,.15);color:#60a5fa;border:1px solid rgba(24,119,242,.3)}
-    .badge-gray{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)}
-    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#00d4ff;border-radius:50%;animation:spin .6s linear infinite}
+    .topbar-right{display:flex;align-items:center;gap:8px}
+    .btn{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+    .btn-primary{background:#1877f2;color:#fff}.btn-primary:hover{background:#1565d8}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}.btn-outline:hover{border-color:#00d4ff;color:#00d4ff}
+    .btn-sm{padding:5px 12px;font-size:12px}
+    .btn-icon{padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);border-radius:8px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:5px;transition:all .2s}.btn-icon:hover{background:rgba(255,255,255,.1);color:#fff}
+    /* Page */
+    .page-body{padding:20px 24px;flex:1}
+    /* Token banner */
+    .token-banner{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:12.5px}
+    .token-banner.success{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.15)}
+    /* Tabs */
+    .tabs-bar{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:0;background:rgba(255,255,255,.02);border-radius:12px 12px 0 0;overflow:hidden}
+    .tab-btn{padding:12px 20px;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;border-bottom:2px solid transparent;white-space:nowrap}
+    .tab-btn:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .tab-btn.active{color:#00d4ff;border-bottom-color:#00d4ff;background:rgba(0,212,255,.06)}
+    .tab-btn .tab-count{background:rgba(0,212,255,.15);color:#00d4ff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px}
+    /* Table */
+    .table-wrap{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:0 0 12px 12px;overflow:hidden}
+    .table-toolbar{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .search-box{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;flex:1;max-width:320px}
+    .search-box input{background:none;border:none;outline:none;color:#fff;font-size:12.5px;width:100%}
+    .search-box input::placeholder{color:rgba(255,255,255,.3)}
+    .search-box i{color:rgba(255,255,255,.3);font-size:13px}
+    table{width:100%;border-collapse:collapse}
+    thead tr{border-bottom:1px solid rgba(255,255,255,.07)}
+    thead th{padding:10px 14px;font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.7px;text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
+    thead th:hover{color:rgba(255,255,255,.7)}
+    thead th i{font-size:10px;margin-left:4px}
+    tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;cursor:pointer}
+    tbody tr:hover{background:rgba(255,255,255,.04)}
+    tbody tr:last-child{border-bottom:none}
+    tbody td{padding:11px 14px;font-size:13px;color:rgba(255,255,255,.85)}
+    .td-name{font-weight:600;color:#fff}
+    .td-id{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+    .badge-green{background:rgba(34,197,94,.12);color:#4ade80}
+    .badge-red{background:rgba(239,68,68,.12);color:#f87171}
+    .badge-yellow{background:rgba(251,191,36,.12);color:#fbbf24}
+    .badge-gray{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+    .badge-blue{background:rgba(24,119,242,.15);color:#60a5fa}
+    .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+    /* Checkbox */
+    input[type=checkbox]{accent-color:#00d4ff;width:14px;height:14px;cursor:pointer}
+    /* Empty / loading */
+    .empty-state{text-align:center;padding:60px 20px;color:rgba(255,255,255,.3)}
+    .empty-state i{font-size:48px;margin-bottom:12px;display:block;opacity:.3}
+    .empty-state p{font-size:13.5px}
+    .loading-row td{text-align:center;padding:40px;color:rgba(255,255,255,.3)}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#00d4ff;border-radius:50%;animation:spin .7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
-    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
-    .toast.success{border-left:3px solid #22c55e}
-    .toast.error{border-left:3px solid #ef4444}
-    .toast.info{border-left:3px solid #60a5fa}
-    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-    .progress-wrap{background:rgba(255,255,255,.08);border-radius:4px;height:8px;overflow:hidden;margin-top:6px}
-    .progress-bar{height:100%;border-radius:4px;transition:width .8s ease}
-    .empty-state{text-align:center;padding:40px 20px;color:rgba(255,255,255,.3)}
-    .empty-state i{font-size:40px;margin-bottom:12px;display:block}
-    .empty-state p{font-size:13px}
-    .risk-item{background:rgba(0,0,0,.2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
-    .risk-icon{font-size:18px;flex-shrink:0;margin-top:1px}
-    .risk-title{font-size:13px;font-weight:700;margin-bottom:3px}
-    .risk-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5}
-    .campaign-row{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;margin-bottom:8px}
-    .campaign-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .campaign-name{font-size:13px;font-weight:700}
-    .campaign-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
-    .metric-box{background:rgba(255,255,255,.04);border-radius:7px;padding:8px;text-align:center}
-    .metric-val{font-size:14px;font-weight:700;color:#00d4ff}
-    .metric-key{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
-    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.grid-2{grid-template-columns:1fr}}
+    /* Detail panel */
+    .detail-panel{background:rgba(10,14,39,.95);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;margin-top:16px;display:none}
+    .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .detail-item{background:rgba(255,255,255,.04);border-radius:8px;padding:12px 14px}
+    .detail-label{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
+    .detail-value{font-size:14px;font-weight:700}
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+    .stat-mini{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 14px}
+    .stat-mini .lbl{font-size:10.5px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
+    .stat-mini .val{font-size:18px;font-weight:700}
+    /* Token modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal-box{background:#0f1535;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;width:500px;max-width:95vw}
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:6px}
+    .modal-sub{font-size:12.5px;color:rgba(255,255,255,.4);margin-bottom:20px}
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;display:block;font-weight:600}
+    .form-control{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;color:#fff;font-size:13px;outline:none;box-sizing:border-box;transition:border-color .2s}
+    .form-control:focus{border-color:#00d4ff}
+    /* Toast */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast-item{background:#1e2a4a;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;min-width:260px}
+    .toast-item.success{border-left:3px solid #22c55e}
+    .toast-item.error{border-left:3px solid #ef4444}
+    .toast-item.info{border-left:3px solid #00d4ff}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+    /* Pagination */
+    .pagination{display:flex;align-items:center;gap:6px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.06)}
+    .page-btn{padding:5px 10px;border-radius:6px;font-size:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);cursor:pointer;transition:all .2s}
+    .page-btn:hover,.page-btn.active{background:rgba(0,212,255,.15);border-color:#00d4ff;color:#00d4ff}
+    .page-btn:disabled{opacity:.3;cursor:not-allowed}
+    /* Responsive */
+    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-row{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
-<body class="bg-space-black text-white antialiased overflow-x-hidden" data-require-fb="1">
-  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
-  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
-  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
-  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
-    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
-  </div>
-  <div class="toast-container" id="toastContainer"></div>
+<body>
+  <canvas class="bg-canvas" id="stars-canvas"></canvas>
+  <canvas class="bg-canvas" id="data-particles"></canvas>
+  <div id="custom-cursor"></div>
+  <div id="toast"></div>
 
-  <div class="app-layout relative z-10">
+  <!-- Token Modal -->
+  <div class="modal-overlay" id="tokenModal">
+    <div class="modal-box">
+      <div class="modal-title"><i class="bi bi-key" style="color:#fbbf24"></i> Nhập Access Token Thủ Công</div>
+      <div class="modal-sub">Dùng khi Facebook cấm OAuth. Lấy token tại <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:#1877f2">Graph API Explorer</a> → chọn quyền <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font-size:11px">ads_read, ads_management</code></div>
+      <div class="form-group">
+        <label class="form-label">Facebook Access Token</label>
+        <input type="password" class="form-control" id="tokenInput" placeholder="EAAxxxxxxxxxxxxxxx..." autocomplete="off">
+        <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:5px">Token sẽ được lưu vào trình duyệt, không gửi lên server</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <button class="btn btn-outline" onclick="closeTokenModal()">Hủy</button>
+        <button class="btn btn-primary" onclick="saveToken()"><i class="bi bi-save"></i> Lưu Token</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
     <aside class="sidebar">
       <a href="index.html" class="sidebar-logo">
-        <img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span>
+        <img src="https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff&bold=true" alt="logo">
+        <span>GENZ<em>TECH</em></span>
       </a>
       <nav class="sidebar-nav">
-        <div class="nav-group-label">Tổng quan</div>
+        <div class="nav-group-label">Công Cụ</div>
         <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-        <div class="nav-group-label">Công cụ</div>
-        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
-        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
-        <div class="nav-sub">
-          <a href="tool-ad-account.html" class="nav-item active"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
-          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
-          <a href="tool-budget.html" class="nav-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
-          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
-          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
-          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
-          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item" onclick="toggleSubNav(event,'subNavAds')">
+          <i class="bi bi-megaphone"></i> Trợ Lý Quảng Cáo
+          <i class="bi bi-chevron-down" id="subNavAdsArrow" style="margin-left:auto;font-size:11px;transition:transform .2s"></i>
+        </a>
+        <div id="subNavAds" style="display:block">
+          <a href="tool-ad-account.html" class="nav-sub-item active"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-sub-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-sub-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-sub-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-sub-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-sub-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-sub-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
         </div>
-        <div class="nav-group-label">Hệ thống</div>
-        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+        <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
       </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status" id="connStatus">
+          <div class="conn-dot" id="connDot"></div>
+          <span id="connText">Chưa kết nối</span>
+        </div>
+      </div>
     </aside>
 
+    <!-- Main -->
     <div class="main-content">
-      <header class="topbar">
-        <div class="breadcrumb">
-          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
-          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
-          <i class="bi bi-chevron-right" style="font-size:10px"></i>
-          <span>Kiểm Tra TKQC</span>
-        </div>
-        <div style="display:flex;gap:10px">
-          <button class="btn-sm btn-outline" onclick="clearResult()"><i class="bi bi-x-circle"></i> Xóa</button>
-          <button class="btn-sm btn-primary" onclick="checkAccount()"><i class="bi bi-search"></i> Kiểm Tra</button>
-        </div>
-      </header>
-
-      <main class="page-body">
-        <h1 class="page-title"><i class="bi bi-shield-check" style="color:#60a5fa"></i> Kiểm Tra Tài Khoản Quảng Cáo</h1>
-        <p class="page-subtitle">Xem đầy đủ thông tin TKQC: trạng thái, số dư, ngưỡng chi tiêu, chiến dịch đang chạy và cảnh báo rủi ro</p>
-
-        <!-- Search -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><i class="bi bi-search"></i> Nhập Thông Tin TKQC</div>
-            <div id="fbConnWarn" style="font-size:12px;color:#fbbf24;display:none"><i class="bi bi-exclamation-triangle"></i> Chưa kết nối Facebook</div>
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="breadcrumb">
+            <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+            <i class="bi bi-chevron-right" style="font-size:10px"></i>
+            <span>Kiểm Tra TKQC</span>
           </div>
-          <div class="card-body">
-            <div class="grid-2">
-              <div class="form-group" style="margin:0">
-                <label class="form-label">ID Tài Khoản Quảng Cáo</label>
-                <input type="text" class="form-control" id="adAccountId" placeholder="act_XXXXXXXXXXXXXXXXX hoặc chỉ số ID" oninput="formatAccountId(this)">
-                <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:5px">Tìm trong Facebook Ads Manager → Cài đặt tài khoản</div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn-icon" onclick="refreshData()" title="Làm mới"><i class="bi bi-arrow-clockwise"></i></button>
+          <button class="btn-icon" onclick="openTokenModal()" title="Cài đặt token"><i class="bi bi-key"></i> <span id="tokenIndicator" style="font-size:11px;display:none;color:#4ade80">●</span></button>
+          <button class="btn btn-primary btn-sm" id="loginBtn" onclick="goLogin()" style="display:none"><i class="bi bi-person"></i> Đăng nhập</button>
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px">
+            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1877f2,#00d4ff);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px" id="userAvatar">?</div>
+            <span id="userName" style="color:rgba(255,255,255,.8)"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <!-- Token / Login banner -->
+        <div id="loginBanner" class="token-banner" style="display:none">
+          <i class="bi bi-exclamation-triangle" style="color:#fbbf24;font-size:16px"></i>
+          <div style="flex:1">
+            <strong>Chưa đăng nhập GenZTech</strong> — Đăng nhập để xem dữ liệu TKQC của bạn.
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="goLogin()">Đăng nhập ngay</button>
+        </div>
+        <div id="tokenBanner" class="token-banner success" style="display:none">
+          <i class="bi bi-key-fill" style="color:#4ade80;font-size:16px"></i>
+          <div style="flex:1;font-size:12px">
+            <strong style="color:#4ade80">Token thủ công đang dùng</strong> — Đang gọi thẳng Facebook Graph API.
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openTokenModal()">Đổi token</button>
+          <button class="btn btn-sm" onclick="clearToken()" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#f87171">Xóa</button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="stats-row" id="statsRow" style="display:none">
+          <div class="stat-mini"><div class="lbl">Tổng TKQC</div><div class="val" id="sTotalAcc">—</div></div>
+          <div class="stat-mini"><div class="lbl">Đang hoạt động</div><div class="val" style="color:#4ade80" id="sActiveAcc">—</div></div>
+          <div class="stat-mini"><div class="lbl">Bị khóa / Vô hiệu</div><div class="val" style="color:#f87171" id="sLockedAcc">—</div></div>
+          <div class="stat-mini"><div class="lbl">Tổng chi tiêu</div><div class="val" style="color:#60a5fa;font-size:14px" id="sTotalSpend">—</div></div>
+          <div class="stat-mini"><div class="lbl">Số dư khả dụng</div><div class="val" style="color:#4ade80;font-size:14px" id="sTotalBalance">—</div></div>
+        </div>
+
+        <!-- Tabs + Table -->
+        <div>
+          <div class="tabs-bar">
+            <button class="tab-btn active" id="tab-accounts" onclick="switchTab('accounts')">
+              <i class="bi bi-credit-card"></i> Tài khoản quảng cáo
+              <span class="tab-count" id="countAccounts">0</span>
+            </button>
+            <button class="tab-btn" id="tab-campaigns" onclick="switchTab('campaigns')">
+              <i class="bi bi-flag"></i> Chiến dịch
+              <span class="tab-count" id="countCampaigns">0</span>
+            </button>
+            <button class="tab-btn" id="tab-adsets" onclick="switchTab('adsets')">
+              <i class="bi bi-collection"></i> Nhóm quảng cáo
+              <span class="tab-count" id="countAdsets">0</span>
+            </button>
+            <button class="tab-btn" id="tab-ads" onclick="switchTab('ads')">
+              <i class="bi bi-megaphone"></i> Quảng cáo
+              <span class="tab-count" id="countAds">0</span>
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-toolbar">
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" placeholder="Tìm kiếm..." oninput="filterTable()">
               </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Khoảng thời gian xem thống kê</label>
-                <select class="form-control" id="dateRange">
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span id="selectedCount" style="font-size:12px;color:rgba(255,255,255,.4);display:none"></span>
+                <select class="form-control" id="datePreset" onchange="loadCurrentTab()" style="width:auto;font-size:12px;padding:5px 10px">
                   <option value="today">Hôm nay</option>
                   <option value="yesterday">Hôm qua</option>
                   <option value="last_7d" selected>7 ngày qua</option>
                   <option value="last_30d">30 ngày qua</option>
-                  <option value="last_90d">90 ngày qua</option>
                   <option value="this_month">Tháng này</option>
                   <option value="last_month">Tháng trước</option>
                 </select>
-              </div>
-            </div>
-            <!-- Manual Token (fallback) -->
-            <div id="manualTokenSection" style="margin-top:14px;padding:12px 14px;background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.12);border-radius:10px">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <div style="font-size:12px;color:#fbbf24;font-weight:600"><i class="bi bi-key"></i> Phương Án Dự Phòng — Nhập Access Token Thủ Công</div>
-                <button onclick="toggleManualToken()" id="toggleTokenBtn" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:11px;cursor:pointer">▼ Mở rộng</button>
-              </div>
-              <div id="manualTokenBody" style="display:none">
-                <div style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:8px">Dùng khi Facebook cấm OAuth. Lấy token tại <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:#1877f2">Graph API Explorer</a> → chọn quyền <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px">ads_read</code></div>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <input type="password" class="form-control" id="manualToken" placeholder="EAAxxxxxxxxxxxxxxx..." style="flex:1;font-size:12px">
-                  <button class="btn-sm btn-outline" onclick="saveManualToken()" style="white-space:nowrap"><i class="bi bi-save"></i> Lưu Token</button>
-                  <button class="btn-sm" onclick="clearManualToken()" style="white-space:nowrap;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#f87171"><i class="bi bi-trash"></i></button>
-                </div>
-                <div id="tokenStatus" style="font-size:11px;margin-top:6px;color:rgba(255,255,255,.35)"></div>
+                <button class="btn-icon btn-sm" onclick="exportCSV()"><i class="bi bi-download"></i> Xuất CSV</button>
               </div>
             </div>
 
-            <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
-              <button class="btn-sm btn-primary" onclick="checkAccount()" id="checkBtn">
-                <i class="bi bi-search"></i> Kiểm Tra TKQC
-              </button>
-              <button class="btn-sm btn-outline" onclick="loadMyAccounts()">
-                <i class="bi bi-collection"></i> Tải TKQC Của Tôi
-              </button>
-              <span style="font-size:12px;color:rgba(255,255,255,.3)" id="lastChecked"></span>
+            <!-- Tab: Accounts -->
+            <div id="panel-accounts">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px"><input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"></th>
+                    <th onclick="sortTable('accounts','name')">Tài khoản quảng cáo <i class="bi bi-arrow-down-up"></i></th>
+                    <th onclick="sortTable('accounts','account_status')">Trạng thái tài khoản <i class="bi bi-arrow-down-up"></i></th>
+                    <th>Quyền sở hữu</th>
+                    <th>Loại tài khoản</th>
+                    <th onclick="sortTable('accounts','currency')">Tiền tệ <i class="bi bi-arrow-down-up"></i></th>
+                    <th onclick="sortTable('accounts','balance')">Số dư <i class="bi bi-arrow-down-up"></i></th>
+                    <th onclick="sortTable('accounts','amount_spent')">Chi tiêu <i class="bi bi-arrow-down-up"></i></th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-accounts">
+                  <tr class="loading-row"><td colspan="8"><span class="spinner"></span> Đang tải...</td></tr>
+                </tbody>
+              </table>
             </div>
+
+            <!-- Tab: Campaigns -->
+            <div id="panel-campaigns" style="display:none">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px"><input type="checkbox"></th>
+                    <th>Chiến dịch</th>
+                    <th>Trạng thái</th>
+                    <th>Mục tiêu</th>
+                    <th>Ngân sách ngày</th>
+                    <th>Chi tiêu</th>
+                    <th>Lượt hiển thị</th>
+                    <th>Lượt click</th>
+                    <th>CTR</th>
+                    <th>CPC</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-campaigns">
+                  <tr class="loading-row"><td colspan="10"><span class="spinner"></span> Chọn TKQC để xem chiến dịch</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Tab: Ad Sets -->
+            <div id="panel-adsets" style="display:none">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px"><input type="checkbox"></th>
+                    <th>Nhóm quảng cáo</th>
+                    <th>Trạng thái</th>
+                    <th>Chiến dịch</th>
+                    <th>Ngân sách ngày</th>
+                    <th>Chi tiêu</th>
+                    <th>Lượt hiển thị</th>
+                    <th>Lượt click</th>
+                    <th>CPM</th>
+                    <th>CPC</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-adsets">
+                  <tr class="loading-row"><td colspan="10"><span class="spinner"></span> Chọn TKQC để xem nhóm quảng cáo</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Tab: Ads -->
+            <div id="panel-ads" style="display:none">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px"><input type="checkbox"></th>
+                    <th>Quảng cáo</th>
+                    <th>Trạng thái</th>
+                    <th>Nhóm QC</th>
+                    <th>Chi tiêu</th>
+                    <th>Lượt hiển thị</th>
+                    <th>Lượt click</th>
+                    <th>CTR</th>
+                    <th>CPC</th>
+                    <th>CPM</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-ads">
+                  <tr class="loading-row"><td colspan="10"><span class="spinner"></span> Chọn TKQC để xem quảng cáo</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination" id="pagination" style="display:none"></div>
           </div>
         </div>
-
-        <!-- Results (hidden by default) -->
-        <div id="resultSection" style="display:none">
-
-          <!-- Stats -->
-          <div class="grid-4" style="margin-bottom:20px" id="statsGrid">
-            <div class="stat-card">
-              <div class="stat-label">Trạng Thái</div>
-              <div class="stat-value" id="statStatus" style="font-size:16px">—</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Số Dư Hiện Tại</div>
-              <div class="stat-value" id="statBalance" style="color:#4ade80">—</div>
-              <div class="stat-sub" id="statCurrency">VND</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Đã Chi (kỳ chọn)</div>
-              <div class="stat-value" id="statSpent" style="color:#60a5fa">—</div>
-              <div class="stat-sub">chi tiêu thực tế</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Ngưỡng Chi Tiêu</div>
-              <div class="stat-value" id="statThreshold" style="color:#fbbf24">—</div>
-              <div class="stat-sub" id="statThresholdSub">giới hạn tài khoản</div>
-            </div>
-          </div>
-
-          <div class="grid-2">
-            <!-- Account Info -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title"><i class="bi bi-info-circle"></i> Thông Tin Chi Tiết</div>
-                <button class="btn-sm btn-outline" style="font-size:11px" onclick="copyAccountInfo()"><i class="bi bi-clipboard"></i> Copy</button>
-              </div>
-              <div class="card-body" id="accountInfoBody">
-                <div class="info-row"><span class="info-key">Tên tài khoản</span><span class="info-val" id="infoName">—</span></div>
-                <div class="info-row"><span class="info-key">Account ID</span><span class="info-val" id="infoId">—</span></div>
-                <div class="info-row"><span class="info-key">Trạng thái</span><span class="info-val" id="infoStatus">—</span></div>
-                <div class="info-row"><span class="info-key">Tiền tệ</span><span class="info-val" id="infoCurrency">—</span></div>
-                <div class="info-row"><span class="info-key">Múi giờ</span><span class="info-val" id="infoTimezone">—</span></div>
-                <div class="info-row"><span class="info-key">Ngưỡng chi tiêu</span><span class="info-val" id="infoSpendCap">—</span></div>
-                <div class="info-row"><span class="info-key">Giới hạn ngày</span><span class="info-val" id="infoDailyLimit">—</span></div>
-                <div class="info-row"><span class="info-key">Tổng đã chi (all time)</span><span class="info-val" id="infoTotalSpent">—</span></div>
-                <div class="info-row"><span class="info-key">Phương thức thanh toán</span><span class="info-val" id="infoPayment">—</span></div>
-                <div class="info-row"><span class="info-key">Ngày tạo</span><span class="info-val" id="infoCreated">—</span></div>
-              </div>
-            </div>
-
-            <!-- Risk Assessment -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title"><i class="bi bi-exclamation-triangle" style="color:#fbbf24"></i> Đánh Giá Rủi Ro</div>
-                <span class="badge" id="riskBadge">—</span>
-              </div>
-              <div class="card-body" id="riskBody">
-                <div class="empty-state"><i class="bi bi-shield"></i><p>Kiểm tra TKQC để xem đánh giá rủi ro</p></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Spend Chart -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title"><i class="bi bi-bar-chart"></i> Biểu Đồ Chi Tiêu</div>
-              <div style="display:flex;gap:8px">
-                <span class="badge badge-blue" id="chartTotalLabel">—</span>
-                <span class="badge badge-green" id="chartAvgLabel">—</span>
-              </div>
-            </div>
-            <div class="card-body">
-              <canvas id="spendChart" height="120"></canvas>
-            </div>
-          </div>
-
-          <!-- Campaigns -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title"><i class="bi bi-megaphone"></i> Chiến Dịch Đang Chạy</div>
-              <span class="badge badge-blue" id="campaignCount">0 chiến dịch</span>
-            </div>
-            <div class="card-body" id="campaignBody">
-              <div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có chiến dịch nào đang chạy</p></div>
-            </div>
-          </div>
-
-        </div><!-- /resultSection -->
-
-        <!-- My Accounts List -->
-        <div id="myAccountsSection" style="display:none">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title"><i class="bi bi-collection"></i> Tài Khoản Quảng Cáo Của Tôi</div>
-              <button class="btn-sm btn-outline" style="font-size:11px" onclick="document.getElementById('myAccountsSection').style.display='none'">Đóng</button>
-            </div>
-            <div class="card-body" id="myAccountsList"></div>
-          </div>
-        </div>
-
-      </main>
+      </div>
     </div>
   </div>
 
   <script src="js/ads-shared.js"></script>
   <script>
-  let spendChartInstance = null;
+  // ── Constants ──
+  const API_BASE = 'https://genztech-production.up.railway.app';
+  const FB_GRAPH = 'https://graph.facebook.com/v19.0';
+  const STATUS_MAP = {1:['Hoạt động','badge-green'],2:['Vô hiệu hóa','badge-red'],3:['Chưa xác nhận','badge-yellow'],7:['Bị khóa','badge-red'],9:['Đóng cửa','badge-gray'],100:['Đang xem xét','badge-yellow']};
+  const CAMPAIGN_STATUS = {ACTIVE:['Đang chạy','badge-green'],PAUSED:['Tạm dừng','badge-yellow'],DELETED:['Đã xóa','badge-red'],ARCHIVED:['Lưu trữ','badge-gray']};
+  const OBJECTIVE_MAP = {OUTCOME_TRAFFIC:'Lưu lượng',OUTCOME_AWARENESS:'Nhận thức',OUTCOME_ENGAGEMENT:'Tương tác',OUTCOME_LEADS:'Khách hàng tiềm năng',OUTCOME_SALES:'Doanh số',OUTCOME_APP_PROMOTION:'Ứng dụng',LINK_CLICKS:'Lượt click',CONVERSIONS:'Chuyển đổi',BRAND_AWARENESS:'Nhận thức thương hiệu',REACH:'Tiếp cận',VIDEO_VIEWS:'Xem video',MESSAGES:'Tin nhắn'};
 
-  // Format input
-  function formatAccountId(el) {
-    let v = el.value.replace(/[^0-9]/g, '');
-    if (v && !el.value.startsWith('act_')) el.value = v;
+  // ── State ──
+  let S = {
+    accounts: [], campaigns: [], adsets: [], ads: [],
+    selectedAccountId: null, selectedAccountName: null,
+    currentTab: 'accounts', sortField: null, sortAsc: true,
+    page: 1, perPage: 20, searchQ: '',
+    token: localStorage.getItem('gz_manual_fb_token') || null,
+    jwt: localStorage.getItem('gz_jwt') || null,
+    user: null
+  };
+
+  // ── Helpers ──
+  function vnd(n) {
+    if (!n && n !== 0) return '—';
+    n = parseFloat(n);
+    if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+    return n.toLocaleString('vi-VN');
+  }
+  function pct(n) { return n ? parseFloat(n).toFixed(2) + '%' : '—'; }
+  function toast(msg, type='info') {
+    const el = document.createElement('div');
+    el.className = `toast-item ${type}`;
+    const icons = {success:'check-circle-fill',error:'x-circle-fill',info:'info-circle-fill'};
+    el.innerHTML = `<i class="bi bi-${icons[type]||'info-circle-fill'}" style="color:${type==='success'?'#4ade80':type==='error'?'#f87171':'#00d4ff'}"></i> ${msg}`;
+    document.getElementById('toast').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
   }
 
-  // ── Manual Token helpers ──
-  function toggleManualToken() {
-    const body = document.getElementById('manualTokenBody');
-    const btn = document.getElementById('toggleTokenBtn');
-    const open = body.style.display === 'none';
-    body.style.display = open ? 'block' : 'none';
-    btn.textContent = open ? '▲ Thu gọn' : '▼ Mở rộng';
-    if (open) {
-      const saved = localStorage.getItem('gz_manual_fb_token');
-      if (saved) {
-        document.getElementById('manualToken').value = saved;
-        document.getElementById('tokenStatus').innerHTML = '<i class="bi bi-check-circle" style="color:#4ade80"></i> Token đã lưu — sẽ ưu tiên dùng khi kiểm tra';
-      }
+  // ── Auth ──
+  function goLogin() { window.location.href = 'auto-post.html'; }
+
+  async function initAuth() {
+    if (S.jwt) {
+      try {
+        const r = await fetch(`${API_BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${S.jwt}` } });
+        if (r.ok) {
+          S.user = await r.json();
+          document.getElementById('userBadge').style.display = 'flex';
+          document.getElementById('userAvatar').textContent = (S.user.username || S.user.email || 'U')[0].toUpperCase();
+          document.getElementById('userName').textContent = S.user.username || S.user.email || '';
+          document.getElementById('loginBtn').style.display = 'none';
+          document.getElementById('loginBanner').style.display = 'none';
+          // Update sidebar conn status
+          document.getElementById('connDot').classList.add('online');
+          document.getElementById('connText').textContent = S.user.username || 'Đã đăng nhập';
+        } else {
+          showLoginBanner();
+        }
+      } catch(e) { showLoginBanner(); }
+    } else {
+      showLoginBanner();
+    }
+    // Token indicator
+    if (S.token) {
+      document.getElementById('tokenIndicator').style.display = 'inline';
+      document.getElementById('tokenBanner').style.display = 'flex';
     }
   }
 
-  function saveManualToken() {
-    const token = document.getElementById('manualToken').value.trim();
-    if (!token) { GZ.toast('Vui lòng nhập token', 'error'); return; }
-    if (!token.startsWith('EAA') && !token.startsWith('EAB')) {
-      GZ.toast('Token không hợp lệ — phải bắt đầu bằng EAA', 'error'); return;
+  function showLoginBanner() {
+    if (!S.token) {
+      document.getElementById('loginBanner').style.display = 'flex';
+      document.getElementById('loginBtn').style.display = 'flex';
     }
-    localStorage.setItem('gz_manual_fb_token', token);
-    document.getElementById('tokenStatus').innerHTML = '<i class="bi bi-check-circle" style="color:#4ade80"></i> Đã lưu! Token sẽ ưu tiên dùng khi kiểm tra TKQC';
-    GZ.toast('Lưu token thành công!', 'success');
   }
 
-  function clearManualToken() {
+  // ── Token Modal ──
+  function openTokenModal() {
+    document.getElementById('tokenInput').value = S.token || '';
+    document.getElementById('tokenModal').classList.add('open');
+  }
+  function closeTokenModal() { document.getElementById('tokenModal').classList.remove('open'); }
+  function saveToken() {
+    const t = document.getElementById('tokenInput').value.trim();
+    if (!t) { toast('Vui lòng nhập token', 'error'); return; }
+    if (!t.startsWith('EAA') && !t.startsWith('EAB') && !t.startsWith('EAAG')) {
+      toast('Token không hợp lệ — phải bắt đầu bằng EAA', 'error'); return;
+    }
+    S.token = t;
+    localStorage.setItem('gz_manual_fb_token', t);
+    document.getElementById('tokenIndicator').style.display = 'inline';
+    document.getElementById('tokenBanner').style.display = 'flex';
+    document.getElementById('loginBanner').style.display = 'none';
+    closeTokenModal();
+    toast('Lưu token thành công! Đang tải dữ liệu...', 'success');
+    loadAccounts();
+  }
+  function clearToken() {
+    S.token = null;
     localStorage.removeItem('gz_manual_fb_token');
-    document.getElementById('manualToken').value = '';
-    document.getElementById('tokenStatus').innerHTML = '<i class="bi bi-x-circle" style="color:#f87171"></i> Đã xóa token thủ công';
-    GZ.toast('Xóa token thành công', 'info');
+    document.getElementById('tokenIndicator').style.display = 'none';
+    document.getElementById('tokenBanner').style.display = 'none';
+    toast('Đã xóa token thủ công', 'info');
+    if (!S.jwt) showLoginBanner();
   }
 
-  function getActiveToken() {
-    return localStorage.getItem('gz_manual_fb_token') || null;
+  // ── API calls ──
+  async function fbGet(path) {
+    if (S.token) {
+      const sep = path.includes('?') ? '&' : '?';
+      const r = await fetch(`${FB_GRAPH}/${path}${sep}access_token=${S.token}`);
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      return d;
+    } else if (S.jwt) {
+      const r = await fetch(`${API_BASE}/api/facebook/proxy/${path}`, {
+        headers: { Authorization: `Bearer ${S.jwt}` }
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Lỗi server');
+      return d;
+    } else {
+      throw new Error('Chưa đăng nhập hoặc chưa có token');
+    }
   }
 
-  // Check if logged in (not FB connected — backend proxy handles FB token)
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!GZ.isLoggedIn()) {
-      document.getElementById('fbConnWarn').style.display = 'flex';
-      document.getElementById('fbConnWarn').innerHTML = '<i class="bi bi-exclamation-triangle"></i> Chưa đăng nhập GenZTech — <a href="auto-post.html" style="color:#fbbf24;text-decoration:none;font-weight:600">Đăng nhập ngay</a>';
-    }
-    // Show token status if saved
-    const saved = localStorage.getItem('gz_manual_fb_token');
-    if (saved) {
-      const warn = document.getElementById('fbConnWarn');
-      warn.style.display = 'flex';
-      warn.style.color = '#4ade80';
-      warn.innerHTML = '<i class="bi bi-key-fill" style="color:#4ade80"></i> Token thủ công đã sẵn sàng — <button onclick="toggleManualToken()" style="background:none;border:none;color:#4ade80;cursor:pointer;font-size:12px;text-decoration:underline">Xem / Đổi token</button>';
-    }
-  });
+  // ── Load Accounts ──
+  async function loadAccounts() {
+    const tbody = document.getElementById('tbody-accounts');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8"><span class="spinner"></span> Đang tải danh sách TKQC...</td></tr>';
+    document.getElementById('statsRow').style.display = 'none';
 
-  // Load my ad accounts — gọi qua backend proxy hoặc manual token
-  async function loadMyAccounts() {
-    const section = document.getElementById('myAccountsSection');
-    const list = document.getElementById('myAccountsList');
-    section.style.display = 'block';
-    list.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.4);font-size:13px"><span class="spinner"></span> Đang tải danh sách TKQC...</div>';
-
-    const manualToken = getActiveToken();
     try {
-      let data;
-      if (manualToken) {
-        // Dùng manual token: gọi thẳng Graph API
-        const r = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name,account_status,balance,currency&access_token=${manualToken}`).then(r=>r.json());
-        if (r.error) throw new Error(r.error.message);
-        data = { data: r.data || [] };
-      } else {
-        const resp = await GZ.api('/api/facebook/proxy/my-ad-accounts');
-        data = { data: resp.accounts || [] };
+      let accounts = [];
+      if (S.token) {
+        const datePreset = document.getElementById('datePreset').value;
+        const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,currency,amount_spent,spend_cap,account_id,owner,business,account_type&limit=50&access_token=${S.token}`);
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        accounts = d.data || [];
+        // Get insights for each account
+        await Promise.all(accounts.map(async acc => {
+          try {
+            const ins = await fetch(`${FB_GRAPH}/${acc.id}/insights?fields=spend,impressions,clicks,reach&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
+            acc._insights = ins.data?.[0] || {};
+          } catch(e) { acc._insights = {}; }
+        }));
+      } else if (S.jwt) {
+        const r = await fetch(`${API_BASE}/api/facebook/proxy/my-ad-accounts`, {
+          headers: { Authorization: `Bearer ${S.jwt}` }
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Lỗi server');
+        accounts = d.accounts || [];
       }
 
-      if (!data.data || !data.data.length) {
-        list.innerHTML = '<div class="empty-state"><i class="bi bi-collection"></i><p>Không tìm thấy tài khoản quảng cáo nào</p></div>';
+      S.accounts = accounts;
+      document.getElementById('countAccounts').textContent = accounts.length;
+
+      // Stats
+      const active = accounts.filter(a => a.account_status === 1).length;
+      const locked = accounts.filter(a => [2,7,9].includes(a.account_status)).length;
+      const totalSpend = accounts.reduce((s, a) => s + parseFloat(a._insights?.spend || a.amount_spent || 0), 0);
+      const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance || 0), 0);
+      document.getElementById('sTotalAcc').textContent = accounts.length;
+      document.getElementById('sActiveAcc').textContent = active;
+      document.getElementById('sLockedAcc').textContent = locked;
+      document.getElementById('sTotalSpend').textContent = vnd(totalSpend);
+      document.getElementById('sTotalBalance').textContent = vnd(totalBalance);
+      document.getElementById('statsRow').style.display = 'grid';
+
+      renderAccounts(accounts);
+    } catch(e) {
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="8" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
+      toast(e.message, 'error');
+    }
+  }
+
+  function renderAccounts(list) {
+    const tbody = document.getElementById('tbody-accounts');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><p>Không tìm thấy tài khoản quảng cáo nào</p></div></td></tr>';
+      return;
+    }
+    // Apply search
+    const q = S.searchQ.toLowerCase();
+    const filtered = q ? list.filter(a => (a.name||'').toLowerCase().includes(q) || (a.id||'').includes(q)) : list;
+
+    tbody.innerHTML = filtered.map(acc => {
+      const [statusText, statusClass] = STATUS_MAP[acc.account_status] || ['Không rõ','badge-gray'];
+      const isAdmin = acc.account_type === 1 || acc.owner ? 'ADMIN' : 'GENERAL_USER';
+      const spend = acc._insights?.spend || acc.amount_spent || 0;
+      return `<tr onclick="selectAccount('${acc.id}','${acc.name||acc.id}')">
+        <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${acc.id}"></td>
+        <td>
+          <div class="td-name">${acc.name || acc.id}</div>
+          <div class="td-id">${acc.id}</div>
+        </td>
+        <td><span class="badge ${statusClass}">${statusText}</span></td>
+        <td style="font-size:12px;color:rgba(255,255,255,.5)">${isAdmin}</td>
+        <td style="font-size:12px;color:rgba(255,255,255,.5)">Doanh nghiệp</td>
+        <td>
+          <div style="font-size:13px;font-weight:600">${acc.currency || 'VND'}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35)">Trả sau</div>
+        </td>
+        <td style="color:#4ade80;font-weight:600">${vnd(parseFloat(acc.balance||0))}</td>
+        <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(spend))}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Select Account → Load Campaigns ──
+  async function selectAccount(id, name) {
+    S.selectedAccountId = id;
+    S.selectedAccountName = name;
+    toast(`Đã chọn: ${name}`, 'info');
+    // Auto switch to campaigns tab
+    switchTab('campaigns');
+    await loadCampaigns(id);
+  }
+
+  async function loadCampaigns(accountId) {
+    const tbody = document.getElementById('tbody-campaigns');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải chiến dịch...</td></tr>';
+    const datePreset = document.getElementById('datePreset').value;
+
+    try {
+      let campaigns = [];
+      if (S.token) {
+        const r = await fetch(`${FB_GRAPH}/${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time&limit=50&access_token=${S.token}`);
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        campaigns = d.data || [];
+        // Get insights
+        await Promise.all(campaigns.map(async c => {
+          try {
+            const ins = await fetch(`${FB_GRAPH}/${c.id}/insights?fields=spend,impressions,clicks,ctr,cpc,reach&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
+            c._ins = ins.data?.[0] || {};
+          } catch(e) { c._ins = {}; }
+        }));
+      } else if (S.jwt) {
+        const r = await fetch(`${API_BASE}/api/facebook/proxy/ad-account/${accountId}?date_preset=${datePreset}`, {
+          headers: { Authorization: `Bearer ${S.jwt}` }
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Lỗi server');
+        campaigns = d.campaigns || [];
+      }
+
+      S.campaigns = campaigns;
+      document.getElementById('countCampaigns').textContent = campaigns.length;
+
+      if (!campaigns.length) {
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-flag"></i><p>Không có chiến dịch nào</p></div></td></tr>';
         return;
       }
 
-      const statusMap = {1:'Đang hoạt động',2:'Vô hiệu hóa',3:'Chưa xác nhận',7:'Bị khóa',9:'Đóng cửa',100:'Đang xem xét'};
-      list.innerHTML = data.data.map(acc => `
-        <div style="background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="selectAccount('${acc.id}','${acc.name}')">
-          <div>
-            <div style="font-size:13px;font-weight:700;margin-bottom:4px">${acc.name}</div>
-            <div style="font-size:11.5px;color:rgba(255,255,255,.4)">${acc.id} • ${acc.currency}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="text-align:right">
-              <div style="font-size:13px;font-weight:700;color:#4ade80">${GZ.vnd(parseInt(acc.balance || 0))}</div>
-              <div style="font-size:11px;color:rgba(255,255,255,.35)">Số dư</div>
-            </div>
-            <span class="badge ${acc.account_status === 1 ? 'badge-green' : 'badge-red'}">${statusMap[acc.account_status] || 'Không rõ'}</span>
-          </div>
-        </div>`).join('');
+      tbody.innerHTML = campaigns.map(c => {
+        const [st, sc] = CAMPAIGN_STATUS[c.status] || ['Không rõ','badge-gray'];
+        const obj = OBJECTIVE_MAP[c.objective] || c.objective || '—';
+        const ins = c._ins || c.insights?.data?.[0] || {};
+        return `<tr onclick="selectCampaign('${c.id}','${c.name}')">
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${c.id}"></td>
+          <td><div class="td-name">${c.name}</div><div class="td-id">${c.id}</div></td>
+          <td><span class="badge ${sc}">${st}</span></td>
+          <td style="font-size:12px;color:rgba(255,255,255,.6)">${obj}</td>
+          <td style="color:#fbbf24">${c.daily_budget ? vnd(parseInt(c.daily_budget)/100) : '—'}</td>
+          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
+          <td>${vnd(parseInt(ins.impressions||0))}</td>
+          <td>${vnd(parseInt(ins.clicks||0))}</td>
+          <td>${pct(ins.ctr)}</td>
+          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
+        </tr>`;
+      }).join('');
     } catch(e) {
-      const msg = e.message.includes('403') || e.message.includes('Chưa kết nối')
-        ? 'Chưa kết nối Facebook. Vui lòng kết nối tại trang Tự Động Đăng Bài.'
-        : e.message;
-      list.innerHTML = `<div style="color:#f87171;font-size:13px;padding:12px"><i class="bi bi-x-circle"></i> ${msg}</div>`;
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
+      toast(e.message, 'error');
     }
   }
 
-  function selectAccount(id, name) {
-    document.getElementById('adAccountId').value = id;
-    document.getElementById('myAccountsSection').style.display = 'none';
-    GZ.toast(`Đã chọn: ${name}`, 'success');
-    checkAccount();
+  async function selectCampaign(id, name) {
+    switchTab('adsets');
+    await loadAdsets(id, name);
   }
 
-  // Main check function
-  async function checkAccount() {
-    let id = document.getElementById('adAccountId').value.trim();
-    if (!id) { GZ.toast('Vui lòng nhập ID tài khoản quảng cáo', 'error'); return; }
-    if (!id.startsWith('act_')) id = 'act_' + id.replace(/[^0-9]/g, '');
-
-    const btn = document.getElementById('checkBtn');
-    btn.innerHTML = '<span class="spinner"></span> Đang kiểm tra...';
-    btn.disabled = true;
-
-    const dateRange = document.getElementById('dateRange').value;
-    const manualToken = getActiveToken();
+  async function loadAdsets(campaignId, campaignName) {
+    const tbody = document.getElementById('tbody-adsets');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải nhóm quảng cáo...</td></tr>';
+    const datePreset = document.getElementById('datePreset').value;
 
     try {
-      let resp;
-
-      if (manualToken) {
-        // Phương án dự phòng: gọi thẳng Facebook Graph API bằng manual token
-        const fields = 'id,name,account_status,balance,currency,amount_spent,spend_cap,daily_spend_limit,timezone_name,created_time,funding_source_details';
-        const [accRes, insRes, campRes] = await Promise.all([
-          fetch(`https://graph.facebook.com/v19.0/${id}?fields=${fields}&access_token=${manualToken}`).then(r=>r.json()),
-          fetch(`https://graph.facebook.com/v19.0/${id}/insights?fields=spend,impressions,clicks,reach,cpm,cpc,ctr&date_preset=${dateRange}&access_token=${manualToken}`).then(r=>r.json()),
-          fetch(`https://graph.facebook.com/v19.0/${id}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,insights{spend,impressions,clicks}&limit=10&access_token=${manualToken}`).then(r=>r.json())
-        ]);
-        if (accRes.error) throw new Error(accRes.error.message);
-        resp = { account: accRes, insights: insRes.data?.[0] || null, campaigns: campRes.data || [] };
-      } else {
-        // Phương án chính: gọi qua backend proxy
-        resp = await GZ.api(`/api/facebook/proxy/ad-account/${id}?date_preset=${dateRange}`);
+      if (!S.token && !S.jwt) throw new Error('Chưa đăng nhập hoặc chưa có token');
+      let adsets = [];
+      if (S.token) {
+        const r = await fetch(`${FB_GRAPH}/${campaignId}/adsets?fields=id,name,status,daily_budget,lifetime_budget,targeting,optimization_goal&limit=50&access_token=${S.token}`);
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        adsets = d.data || [];
+        await Promise.all(adsets.map(async a => {
+          try {
+            const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
+            a._ins = ins.data?.[0] || {};
+          } catch(e) { a._ins = {}; }
+        }));
       }
 
-      renderResult(resp.account, { data: resp.insights ? [resp.insights] : [] }, { data: resp.campaigns || [] }, dateRange);
-      document.getElementById('lastChecked').textContent = (manualToken ? '🔑 Token thủ công — ' : '') + 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
+      S.adsets = adsets;
+      document.getElementById('countAdsets').textContent = adsets.length;
 
+      if (!adsets.length) {
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="bi bi-collection"></i><p>Không có nhóm quảng cáo nào trong chiến dịch "${campaignName}"</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = adsets.map(a => {
+        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
+        const ins = a._ins || {};
+        return `<tr onclick="selectAdset('${a.id}','${a.name}')">
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
+          <td><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></td>
+          <td><span class="badge ${sc}">${st}</span></td>
+          <td style="font-size:12px;color:rgba(255,255,255,.5)">${campaignName || '—'}</td>
+          <td style="color:#fbbf24">${a.daily_budget ? vnd(parseInt(a.daily_budget)/100) : '—'}</td>
+          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
+          <td>${vnd(parseInt(ins.impressions||0))}</td>
+          <td>${vnd(parseInt(ins.clicks||0))}</td>
+          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
+          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
+        </tr>`;
+      }).join('');
     } catch(e) {
-      GZ.toast('Lỗi: ' + e.message, 'error');
-    } finally {
-      btn.innerHTML = '<i class="bi bi-search"></i> Kiểm Tra TKQC';
-      btn.disabled = false;
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
     }
   }
 
-  function renderResult(acc, insights, campaigns, dateRange) {
-    document.getElementById('resultSection').style.display = 'block';
-
-    const statusMap = {1:['Đang hoạt động','badge-green'],2:['Vô hiệu hóa','badge-red'],3:['Chưa xác nhận','badge-yellow'],7:['Bị khóa','badge-red'],9:['Đóng cửa','badge-gray'],100:['Đang xem xét','badge-yellow']};
-    const [statusText, statusClass] = statusMap[acc.account_status] || ['Không rõ','badge-gray'];
-
-    // Stats
-    document.getElementById('statStatus').innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
-    document.getElementById('statBalance').textContent = GZ.vnd(parseInt(acc.balance || 0));
-    document.getElementById('statCurrency').textContent = acc.currency || 'VND';
-
-    const ins = insights.data && insights.data[0] ? insights.data[0] : {};
-    document.getElementById('statSpent').textContent = ins.spend ? GZ.vnd(parseInt(ins.spend)) : GZ.vnd(parseInt(acc.amount_spent || 0));
-    document.getElementById('statThreshold').textContent = acc.spend_cap ? GZ.vnd(parseInt(acc.spend_cap)) : 'Không giới hạn';
-
-    // Info
-    document.getElementById('infoName').textContent = acc.name || '—';
-    document.getElementById('infoId').textContent = acc.id || '—';
-    document.getElementById('infoStatus').innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
-    document.getElementById('infoCurrency').textContent = acc.currency || '—';
-    document.getElementById('infoTimezone').textContent = acc.timezone_name || '—';
-    document.getElementById('infoSpendCap').textContent = acc.spend_cap ? GZ.vnd(parseInt(acc.spend_cap)) : 'Không giới hạn';
-    document.getElementById('infoDailyLimit').textContent = acc.daily_spend_limit ? GZ.vnd(parseInt(acc.daily_spend_limit)) : 'Không giới hạn';
-    document.getElementById('infoTotalSpent').textContent = acc.amount_spent ? GZ.vnd(parseInt(acc.amount_spent)) : '—';
-    document.getElementById('infoPayment').textContent = acc.funding_source_details?.display_string || 'Chưa thiết lập';
-    document.getElementById('infoCreated').textContent = acc.created_time ? new Date(acc.created_time).toLocaleDateString('vi-VN') : '—';
-
-    // Risk assessment
-    renderRisk(acc, ins);
-
-    // Chart
-    renderSpendChart(ins, dateRange);
-
-    // Campaigns
-    renderCampaigns(campaigns.data || []);
+  async function selectAdset(id, name) {
+    switchTab('ads');
+    await loadAds(id, name);
   }
 
-  function renderRisk(acc, ins) {
-    const risks = [];
-    const balance = parseInt(acc.balance || 0);
-    const spendCap = parseInt(acc.spend_cap || 0);
-    const spent = parseInt(acc.amount_spent || 0);
+  async function loadAds(adsetId, adsetName) {
+    const tbody = document.getElementById('tbody-ads');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải quảng cáo...</td></tr>';
+    const datePreset = document.getElementById('datePreset').value;
 
-    if (acc.account_status !== 1) risks.push({ level: 'danger', icon: '🚫', title: 'Tài khoản không hoạt động', desc: 'TKQC đang bị vô hiệu hóa hoặc khóa. Cần kiểm tra và khiếu nại với Facebook.' });
-    if (balance < 100000) risks.push({ level: 'danger', icon: '💸', title: 'Số dư thấp', desc: `Số dư chỉ còn ${GZ.vnd(balance)}. Cần nạp tiền ngay để tránh gián đoạn chiến dịch.` });
-    else if (balance < 500000) risks.push({ level: 'warn', icon: '⚠️', title: 'Số dư sắp hết', desc: `Số dư còn ${GZ.vnd(balance)}. Nên nạp thêm để đảm bảo chiến dịch chạy liên tục.` });
-    if (spendCap > 0 && spent > 0) {
-      const pct = (spent / spendCap) * 100;
-      if (pct > 90) risks.push({ level: 'danger', icon: '📊', title: 'Gần đạt ngưỡng chi tiêu', desc: `Đã chi ${pct.toFixed(1)}% ngưỡng. Cần tăng ngưỡng hoặc giảm ngân sách chiến dịch.` });
-      else if (pct > 70) risks.push({ level: 'warn', icon: '📈', title: 'Chi tiêu cao', desc: `Đã chi ${pct.toFixed(1)}% ngưỡng chi tiêu. Theo dõi chặt chẽ.` });
-    }
-    if (!acc.funding_source_details) risks.push({ level: 'warn', icon: '💳', title: 'Chưa thiết lập thanh toán', desc: 'Chưa có phương thức thanh toán. Cần thêm thẻ hoặc tài khoản ngân hàng.' });
-    if (risks.length === 0) risks.push({ level: 'success', icon: '✅', title: 'Tài khoản ổn định', desc: 'Không phát hiện rủi ro nào. TKQC đang hoạt động bình thường.' });
+    try {
+      if (!S.token) throw new Error('Cần token thủ công để xem quảng cáo chi tiết');
+      const r = await fetch(`${FB_GRAPH}/${adsetId}/ads?fields=id,name,status,creative{title,body,thumbnail_url}&limit=50&access_token=${S.token}`);
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      const ads = d.data || [];
 
-    const riskLevel = risks.some(r => r.level === 'danger') ? ['Rủi ro cao','badge-red'] : risks.some(r => r.level === 'warn') ? ['Cần chú ý','badge-yellow'] : ['An toàn','badge-green'];
-    document.getElementById('riskBadge').className = `badge ${riskLevel[1]}`;
-    document.getElementById('riskBadge').textContent = riskLevel[0];
+      await Promise.all(ads.map(async a => {
+        try {
+          const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
+          a._ins = ins.data?.[0] || {};
+        } catch(e) { a._ins = {}; }
+      }));
 
-    const colors = { danger: '#f87171', warn: '#fbbf24', success: '#4ade80', info: '#60a5fa' };
-    document.getElementById('riskBody').innerHTML = risks.map(r => `
-      <div class="risk-item" style="border-left:3px solid ${colors[r.level] || '#60a5fa'}">
-        <div class="risk-icon">${r.icon}</div>
-        <div>
-          <div class="risk-title" style="color:${colors[r.level]}">${r.title}</div>
-          <div class="risk-desc">${r.desc}</div>
-        </div>
-      </div>`).join('');
-  }
+      S.ads = ads;
+      document.getElementById('countAds').textContent = ads.length;
 
-  function renderSpendChart(ins, dateRange) {
-    const ctx = document.getElementById('spendChart').getContext('2d');
-    if (spendChartInstance) spendChartInstance.destroy();
-
-    const labels = ['T2','T3','T4','T5','T6','T7','CN'];
-    const totalSpend = parseInt(ins.spend || 0);
-    const baseVal = totalSpend / 7;
-    const data = labels.map(() => Math.round(baseVal * (0.7 + Math.random() * 0.6)));
-
-    document.getElementById('chartTotalLabel').textContent = `Tổng: ${GZ.vnd(totalSpend)}`;
-    document.getElementById('chartAvgLabel').textContent = `TB/ngày: ${GZ.vnd(Math.round(totalSpend/7))}`;
-
-    spendChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Chi tiêu (VNĐ)',
-          data,
-          backgroundColor: 'rgba(24,119,242,0.4)',
-          borderColor: '#1877f2',
-          borderWidth: 1,
-          borderRadius: 5
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => GZ.vnd(ctx.raw) } } },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 }, callback: v => GZ.vnd(v) } }
-        }
+      if (!ads.length) {
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có quảng cáo nào trong nhóm "${adsetName}"</p></div></td></tr>`;
+        return;
       }
+
+      tbody.innerHTML = ads.map(a => {
+        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
+        const ins = a._ins || {};
+        const thumb = a.creative?.thumbnail_url;
+        return `<tr>
+          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              ${thumb ? `<img src="${thumb}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '<div style="width:40px;height:40px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><i class="bi bi-image" style="color:rgba(255,255,255,.3)"></i></div>'}
+              <div><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></div>
+            </div>
+          </td>
+          <td><span class="badge ${sc}">${st}</span></td>
+          <td style="font-size:12px;color:rgba(255,255,255,.5)">${adsetName || '—'}</td>
+          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
+          <td>${vnd(parseInt(ins.impressions||0))}</td>
+          <td>${vnd(parseInt(ins.clicks||0))}</td>
+          <td>${pct(ins.ctr)}</td>
+          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
+          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
+    }
+  }
+
+  // ── Tab switching ──
+  function switchTab(tab) {
+    S.currentTab = tab;
+    ['accounts','campaigns','adsets','ads'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+      document.getElementById(`panel-${t}`).style.display = t === tab ? 'block' : 'none';
     });
   }
 
-  function renderCampaigns(campaigns) {
-    document.getElementById('campaignCount').textContent = campaigns.length + ' chiến dịch';
-    if (!campaigns.length) {
-      document.getElementById('campaignBody').innerHTML = '<div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có chiến dịch nào</p></div>';
-      return;
+  function loadCurrentTab() {
+    if (S.currentTab === 'accounts') loadAccounts();
+    else if (S.currentTab === 'campaigns' && S.selectedAccountId) loadCampaigns(S.selectedAccountId);
+  }
+
+  // ── Search & Sort ──
+  function filterTable() {
+    S.searchQ = document.getElementById('searchInput').value;
+    if (S.currentTab === 'accounts') renderAccounts(S.accounts);
+  }
+
+  function sortTable(tab, field) {
+    if (S.sortField === field) S.sortAsc = !S.sortAsc;
+    else { S.sortField = field; S.sortAsc = true; }
+    if (tab === 'accounts') {
+      S.accounts.sort((a,b) => {
+        let va = a[field] || 0, vb = b[field] || 0;
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        return S.sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+      });
+      renderAccounts(S.accounts);
     }
-    const objMap = { CONVERSIONS:'Chuyển đổi', REACH:'Tiếp cận', BRAND_AWARENESS:'Nhận thức thương hiệu', TRAFFIC:'Lưu lượng', LEAD_GENERATION:'Thu thập khách hàng', VIDEO_VIEWS:'Lượt xem video', MESSAGES:'Tin nhắn', APP_INSTALLS:'Cài đặt ứng dụng' };
-    document.getElementById('campaignBody').innerHTML = campaigns.map(c => `
-      <div class="campaign-row">
-        <div class="campaign-header">
-          <div>
-            <div class="campaign-name">${c.name}</div>
-            <div style="font-size:11.5px;color:rgba(255,255,255,.4);margin-top:2px">${objMap[c.objective] || c.objective} • ID: ${c.id}</div>
-          </div>
-          <span class="badge ${c.status === 'ACTIVE' ? 'badge-green' : 'badge-yellow'}">${c.status === 'ACTIVE' ? 'Đang chạy' : 'Tạm dừng'}</span>
-        </div>
-        <div style="font-size:12px;color:rgba(255,255,255,.4)">
-          Ngân sách ngày: <strong style="color:#fbbf24">${c.daily_budget ? GZ.vnd(parseInt(c.daily_budget)) : 'Không giới hạn'}</strong>
-          ${c.start_time ? ` • Bắt đầu: ${new Date(c.start_time).toLocaleDateString('vi-VN')}` : ''}
-        </div>
-      </div>`).join('');
   }
 
-  function clearResult() {
-    document.getElementById('resultSection').style.display = 'none';
-    document.getElementById('myAccountsSection').style.display = 'none';
-    document.getElementById('adAccountId').value = '';
-    document.getElementById('lastChecked').textContent = '';
+  // ── Checkbox ──
+  function toggleCheckAll(el) {
+    document.querySelectorAll('.row-check').forEach(c => c.checked = el.checked);
+    updateSelectedCount();
+  }
+  function updateSelectedCount() {
+    const n = document.querySelectorAll('.row-check:checked').length;
+    const el = document.getElementById('selectedCount');
+    el.style.display = n ? 'block' : 'none';
+    el.textContent = `Đã chọn ${n} mục`;
+  }
+  document.addEventListener('change', e => { if (e.target.classList.contains('row-check')) updateSelectedCount(); });
+
+  // ── Export CSV ──
+  function exportCSV() {
+    const tab = S.currentTab;
+    const data = S[tab] || [];
+    if (!data.length) { toast('Không có dữ liệu để xuất', 'error'); return; }
+    const headers = Object.keys(data[0]).filter(k => !k.startsWith('_'));
+    const rows = data.map(r => headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+    a.download = `genztech_${tab}_${Date.now()}.csv`;
+    a.click();
+    toast('Xuất CSV thành công!', 'success');
   }
 
-  function copyAccountInfo() {
-    const info = {
-      name: document.getElementById('infoName').textContent,
-      id: document.getElementById('infoId').textContent,
-      status: document.getElementById('infoStatus').textContent,
-      currency: document.getElementById('infoCurrency').textContent,
-      timezone: document.getElementById('infoTimezone').textContent,
-      balance: document.getElementById('statBalance').textContent,
-      spent: document.getElementById('statSpent').textContent
-    };
-    navigator.clipboard.writeText(JSON.stringify(info, null, 2));
-    GZ.toast('Đã copy thông tin TKQC!', 'success');
+  // ── Refresh ──
+  function refreshData() { loadCurrentTab(); toast('Đang làm mới dữ liệu...', 'info'); }
+
+  // ── Sidebar toggle ──
+  function toggleSubNav(e, id) {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(id + 'Arrow');
+    const open = el.style.display === 'none';
+    el.style.display = open ? 'block' : 'none';
+    if (arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
   }
-  </script>
-  <script>
-  // Background engine
-  const isMobile = window.innerWidth < 768;
-  const cursor = document.getElementById('custom-cursor');
-  if (cursor && !('ontouchstart' in window)) {
-    let m = false;
-    document.addEventListener('mousemove', e => { cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; if(!m){cursor.style.opacity='1';m=true;} });
-    document.addEventListener('mouseleave', () => { cursor.style.opacity='0'; m=false; });
+
+  function openSettings() { toast('Cài đặt đang phát triển', 'info'); }
+
+  // ── Init ──
+  async function init() {
+    await initAuth();
+    // Auto load if has token or jwt
+    if (S.token || S.jwt) {
+      loadAccounts();
+    }
   }
-  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');
-  [cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});
-  window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});
-  const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');
-  const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));
-  const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));
-  const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));
-  const ss=[];let lt=0;
-  function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
-  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(24,119,242,'+po+')');g.addColorStop(.5,'rgba(0,212,255,'+(po*.5)+')');g.addColorStop(1,'rgba(0,212,255,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+
+  // ── Background ──
+  (function() {
+    const isMobile = window.innerWidth < 768;
+    const isTouchDevice = 'ontouchstart' in window;
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const stars = [];
+    for (let i = 0; i < (isMobile ? 80 : 180); i++) {
+      stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5+0.3, a: Math.random(), da: (Math.random()-0.5)*0.005, vx: (Math.random()-0.5)*0.08, vy: (Math.random()-0.5)*0.08 });
+    }
+    function animStars() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      stars.forEach(s => {
+        s.x += s.vx; s.y += s.vy; s.a += s.da;
+        if (s.a < 0.1) s.da = Math.abs(s.da);
+        if (s.a > 1) s.da = -Math.abs(s.da);
+        if (s.x < 0) s.x = canvas.width; if (s.x > canvas.width) s.x = 0;
+        if (s.y < 0) s.y = canvas.height; if (s.y > canvas.height) s.y = 0;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${s.a * 0.7})`; ctx.fill();
+      });
+      requestAnimationFrame(animStars);
+    }
+    animStars();
+    // Data particles
+    const canvasData = document.getElementById('data-particles');
+    const ctxData = canvasData.getContext('2d');
+    canvasData.width = window.innerWidth; canvasData.height = window.innerHeight;
+    const particles = [];
+    for (let i = 0; i < (isMobile ? 10 : 20); i++) {
+      particles.push({ x:0, y:0, r: Math.random()*2+1, path:{ cx:Math.random()*canvasData.width, cy:Math.random()*canvasData.height, rx:Math.random()*100+50, ry:Math.random()*100+50, angle:Math.random()*Math.PI*2, speed:Math.random()*0.01+0.005 }, pulse:Math.random()*Math.PI*2, ps:Math.random()*0.02+0.01 });
+    }
+    function animPart() {
+      ctxData.clearRect(0,0,canvasData.width,canvasData.height);
+      particles.forEach(p => {
+        p.path.angle += p.path.speed; p.x = p.path.cx + Math.cos(p.path.angle)*p.path.rx; p.y = p.path.cy + Math.sin(p.path.angle)*p.path.ry;
+        p.pulse += p.ps; const ps = 1 + Math.sin(p.pulse)*0.5;
+        const g = ctxData.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*ps*3);
+        g.addColorStop(0,'rgba(24,119,242,'+(0.7*ps)+')'); g.addColorStop(0.5,'rgba(0,212,255,'+(0.3*ps)+')'); g.addColorStop(1,'rgba(0,212,255,0)');
+        ctxData.fillStyle = g; ctxData.beginPath(); ctxData.arc(p.x,p.y,p.r*ps*3,0,Math.PI*2); ctxData.fill();
+      });
+      requestAnimationFrame(animPart);
+    }
+    animPart();
+    // Cursor
+    const cursor = document.getElementById('custom-cursor');
+    if (cursor && !isTouchDevice) {
+      let mx=0,my=0,cx=0,cy=0,mv=false;
+      document.body.style.cursor='none';
+      document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; if(!mv){mv=true;cursor.style.opacity='1';} });
+      document.addEventListener('mouseleave', () => { mv=false; cursor.style.opacity='0'; });
+      function animCursor() { if(mv){ cx+=(mx-cx)*0.15; cy+=(my-cy)*0.15; cursor.style.left=cx+'px'; cursor.style.top=cy+'px'; } requestAnimationFrame(animCursor); }
+      animCursor();
+    }
+    window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; canvasData.width=window.innerWidth; canvasData.height=window.innerHeight; });
+  })();
+
+  init();
   </script>
 </body>
 </html>
