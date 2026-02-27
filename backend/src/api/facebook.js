@@ -245,4 +245,106 @@ router.post('/check-cookie', async (req, res) => {
   }
 });
 
+// GET /api/facebook/scrape-id?url=...
+// Scrape Facebook ID từ URL public, không cần access token
+router.get('/scrape-id', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'Thiếu tham số url' });
+
+    const raw = url.trim();
+    const fullUrl = raw.startsWith('http') ? raw : 'https://www.facebook.com/' + raw;
+
+    // Bước 1: Thử trích xuất ID số trực tiếp từ URL
+    try {
+      const u = new URL(fullUrl);
+      const path = u.pathname.replace(/\/$/, '');
+      const parts = path.split('/').filter(Boolean);
+
+      // profile.php?id=XXXXXXX
+      const qid = u.searchParams.get('id');
+      if (qid && /^\d+$/.test(qid)) {
+        return res.json({ id: qid, name: null, type: 'unknown', source: 'url_extract', url: fullUrl });
+      }
+      // /groups/XXXXXXX (số)
+      if (parts[0] === 'groups' && parts[1] && /^\d+$/.test(parts[1])) {
+        return res.json({ id: parts[1], name: null, type: 'group', source: 'url_extract', url: fullUrl });
+      }
+      // /pages/Name/XXXXXXX (số)
+      if (parts[0] === 'pages' && parts.length >= 3) {
+        const last = parts[parts.length - 1];
+        if (/^\d+$/.test(last)) {
+          return res.json({ id: last, name: parts[1]?.replace(/-/g,' ') || null, type: 'page', source: 'url_extract', url: fullUrl });
+        }
+      }
+      // /<số>
+      if (parts.length === 1 && /^\d+$/.test(parts[0])) {
+        return res.json({ id: parts[0], name: null, type: 'unknown', source: 'url_extract', url: fullUrl });
+      }
+    } catch(_) {}
+
+    // Bước 2: Scrape HTML của trang Facebook để tìm entity_id / pageID
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'no-cache',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'none'
+    };
+
+    const resp = await axios.get(fullUrl, { headers, timeout: 10000, maxRedirects: 5 });
+    const html = resp.data;
+
+    // Pattern matching để tìm Facebook ID trong HTML
+    const patterns = [
+      /"entity_id":"(\d+)"/,
+      /"pageID":"(\d+)"/,
+      /"userID":"(\d+)"/,
+      /"actorID":"(\d+)"/,
+      /"profileID":"(\d+)"/,
+      /"ownerID":"(\d+)"/,
+      /"groupID":"(\d+)"/,
+      /\"id\":\"(\d{5,})\"/,
+      /content=\"https:\/\/www\.facebook\.com\/(\d+)\"/,
+      /\"profile_id\":(\d+)/,
+      /\"page_id\":\"(\d+)\"/,
+      /__bbox.*?"id":"(\d{10,})"/s
+    ];
+
+    let foundId = null;
+    for (const pat of patterns) {
+      const m = html.match(pat);
+      if (m && m[1] && m[1].length >= 5) {
+        foundId = m[1];
+        break;
+      }
+    }
+
+    // Tìm tên trang
+    let name = null;
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+    if (titleMatch) {
+      name = titleMatch[1].replace(' | Facebook', '').replace(' - Facebook', '').trim();
+    }
+
+    // Xác định loại
+    let type = 'profile';
+    if (fullUrl.includes('/groups/')) type = 'group';
+    else if (fullUrl.includes('/pages/') || html.includes('"page_id"')) type = 'page';
+
+    if (!foundId) {
+      return res.status(404).json({ error: 'Không tìm thấy ID. Trang có thể đã đặt chế độ riêng tư hoặc yêu cầu đăng nhập.' });
+    }
+
+    res.json({ id: foundId, name, type, source: 'html_scrape', url: fullUrl });
+  } catch (e) {
+    if (e.response?.status === 404) return res.status(404).json({ error: 'Không tìm thấy trang Facebook này' });
+    if (e.response?.status === 403) return res.status(403).json({ error: 'Facebook chặn truy cập. Thử lại sau.' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
