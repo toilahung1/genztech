@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chính Sách Facebook — Genztech</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
+    .app-layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
+    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:18px;text-align:center;font-size:15px}
+    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .btn-primary{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#38bdf8;color:#38bdf8}
+    .page-body{padding:28px;flex:1}
+    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#38bdf8}
+    .card-body{padding:20px}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
+    .form-control:focus{outline:none;border-color:#38bdf8}
+    .form-control::placeholder{color:rgba(255,255,255,.25)}
+    .policy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+    @media(max-width:1100px){.policy-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:768px){.policy-grid{grid-template-columns:1fr};.sidebar{display:none};.main-content{margin-left:0}}
+    .policy-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
+    .policy-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+    .policy-card.danger{border-left:3px solid #ef4444}
+    .policy-card.warning{border-left:3px solid #fbbf24}
+    .policy-card.info{border-left:3px solid #60a5fa}
+    .policy-card.success{border-left:3px solid #22c55e}
+    .policy-icon{font-size:24px;margin-bottom:10px}
+    .policy-title{font-size:13.5px;font-weight:700;margin-bottom:6px}
+    .policy-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5;margin-bottom:10px}
+    .policy-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;padding:3px 8px;border-radius:12px;font-weight:600}
+    .badge-danger{background:rgba(239,68,68,.15);color:#f87171}
+    .badge-warning{background:rgba(251,191,36,.15);color:#fbbf24}
+    .badge-info{background:rgba(96,165,250,.15);color:#60a5fa}
+    .badge-success{background:rgba(34,197,94,.15);color:#4ade80}
+    .policy-detail{display:none;background:rgba(0,0,0,.3);border-radius:10px;padding:16px;margin-top:12px;font-size:12.5px;line-height:1.7;color:rgba(255,255,255,.6)}
+    .policy-detail.open{display:block}
+    .policy-detail h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:8px}
+    .policy-detail ul{margin:0;padding-left:18px}
+    .policy-detail li{margin-bottom:5px}
+    .policy-detail .do{color:#4ade80}
+    .policy-detail .dont{color:#f87171}
+    .checker-area{width:100%;min-height:100px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;color:#fff;font-size:13.5px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;transition:border-color .2s}
+    .checker-area:focus{outline:none;border-color:#38bdf8}
+    .checker-area::placeholder{color:rgba(255,255,255,.2)}
+    .check-result{margin-top:14px}
+    .check-item{background:rgba(0,0,0,.2);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;font-size:12.5px}
+    .check-item.pass{border-left:3px solid #22c55e}
+    .check-item.fail{border-left:3px solid #ef4444}
+    .check-item.warn{border-left:3px solid #fbbf24}
+    .check-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+    .check-text{flex:1}
+    .check-label{font-weight:700;margin-bottom:2px}
+    .check-detail{color:rgba(255,255,255,.4);font-size:11.5px}
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
+    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+  </style>
+</head>
+<body class="bg-space-black text-white antialiased overflow-x-hidden">
+  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
+  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
+  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
+    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-layout relative z-10">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-logo"><img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span></a>
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Tổng quan</div>
+        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <div class="nav-group-label">Công cụ</div>
+        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
+        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
+        <div class="nav-sub">
+          <a href="tool-ad-account.html" class="nav-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+          <a href="tool-budget.html" class="nav-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+          <a href="tool-policy.html" class="nav-item active"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+        </div>
+        <div class="nav-group-label">Hệ thống</div>
+        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Chính Sách Facebook</span>
+        </div>
+        <div style="display:flex;gap:10px">
+          <a href="https://www.facebook.com/policies/ads/" target="_blank" class="btn-sm btn-outline"><i class="bi bi-box-arrow-up-right"></i> Xem chính sách gốc</a>
+          <a href="https://www.facebook.com/business/help/appeals" target="_blank" class="btn-sm btn-primary"><i class="bi bi-megaphone"></i> Kháng nghị</a>
+        </div>
+      </header>
+
+      <main class="page-body">
+        <h1 class="page-title"><i class="bi bi-journal-text" style="color:#38bdf8"></i> Chính Sách Quảng Cáo Facebook</h1>
+        <p class="page-subtitle">Tổng hợp và cập nhật các chính sách quan trọng nhất. Kiểm tra nội dung quảng cáo trước khi chạy để tránh vi phạm</p>
+
+        <!-- Content checker -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-shield-check"></i> Kiểm Tra Nội Dung Quảng Cáo</div>
+            <button class="btn-sm btn-primary" onclick="checkContent()"><i class="bi bi-search"></i> Kiểm Tra</button>
+          </div>
+          <div class="card-body">
+            <textarea class="checker-area" id="contentToCheck" placeholder="Dán nội dung quảng cáo vào đây để kiểm tra vi phạm chính sách...&#10;&#10;Ví dụ: Giảm cân 10kg trong 7 ngày! Cam kết 100% hiệu quả, không hiệu quả hoàn tiền!"></textarea>
+            <div class="check-result" id="checkResult"></div>
+          </div>
+        </div>
+
+        <!-- Policy categories -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="btn-sm btn-outline" onclick="filterPolicy('all')" id="filterAll" style="border-color:rgba(255,255,255,.3);color:#fff">Tất cả</button>
+          <button class="btn-sm btn-outline" onclick="filterPolicy('danger')" style="border-color:rgba(239,68,68,.4);color:#f87171">🚫 Cấm hoàn toàn</button>
+          <button class="btn-sm btn-outline" onclick="filterPolicy('warning')" style="border-color:rgba(251,191,36,.4);color:#fbbf24">⚠️ Hạn chế</button>
+          <button class="btn-sm btn-outline" onclick="filterPolicy('info')" style="border-color:rgba(96,165,250,.4);color:#60a5fa">ℹ️ Cần lưu ý</button>
+          <button class="btn-sm btn-outline" onclick="filterPolicy('success')" style="border-color:rgba(34,197,94,.4);color:#4ade80">✅ Được phép</button>
+        </div>
+
+        <div class="policy-grid" id="policyGrid"></div>
+
+        <!-- Recent updates -->
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="bi bi-bell"></i> Cập Nhật Chính Sách Gần Đây</div></div>
+          <div class="card-body">
+            <div id="recentUpdates"></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="js/ads-shared.js"></script>
+  <script>
+  const POLICIES = [
+    {
+      id: 'health', type: 'danger', icon: '🏥', title: 'Sản phẩm sức khỏe & giảm cân',
+      desc: 'Nghiêm cấm quảng cáo hứa hẹn kết quả phi thực tế về sức khỏe, giảm cân, hay chữa bệnh.',
+      badge: 'Cấm hoàn toàn',
+      detail: {
+        dont: ['Giảm X kg trong Y ngày', 'Chữa khỏi bệnh X', 'Cam kết 100% hiệu quả', 'Trước/sau với kết quả phi thực tế', 'Thực phẩm chức năng không có giấy phép'],
+        do: ['Mô tả thành phần sản phẩm', 'Chia sẻ lợi ích dựa trên nghiên cứu khoa học', 'Có disclaimer rõ ràng', 'Sản phẩm có giấy phép lưu hành']
+      }
+    },
+    {
+      id: 'financial', type: 'danger', icon: '💰', title: 'Dịch vụ tài chính & đầu tư',
+      desc: 'Cấm quảng cáo hứa hẹn lợi nhuận đảm bảo, sản phẩm tài chính không được cấp phép.',
+      badge: 'Cấm hoàn toàn',
+      detail: {
+        dont: ['Lợi nhuận X%/ngày đảm bảo', 'Không rủi ro', 'Forex/crypto không được cấp phép', 'Mô hình đa cấp', 'Vay nặng lãi'],
+        do: ['Dịch vụ tài chính được cấp phép', 'Có disclaimer về rủi ro', 'Lãi suất minh bạch', 'Tuân thủ quy định địa phương']
+      }
+    },
+    {
+      id: 'adult', type: 'danger', icon: '🔞', title: 'Nội dung người lớn',
+      desc: 'Cấm hoàn toàn nội dung khiêu dâm, gợi dục, hay nhắm mục tiêu vào người dưới 18 tuổi.',
+      badge: 'Cấm hoàn toàn',
+      detail: {
+        dont: ['Hình ảnh khỏa thân/gợi dục', 'Nội dung tình dục', 'Nhắm đến trẻ em', 'Sản phẩm người lớn không được phép'],
+        do: ['Quảng cáo sản phẩm người lớn được phép với đối tượng 18+', 'Nội dung phù hợp với đối tượng']
+      }
+    },
+    {
+      id: 'drugs', type: 'danger', icon: '💊', title: 'Thuốc & chất cấm',
+      desc: 'Cấm quảng cáo thuốc kê đơn không có phép, chất gây nghiện, và sản phẩm liên quan.',
+      badge: 'Cấm hoàn toàn',
+      detail: {
+        dont: ['Thuốc kê đơn không có phép', 'Ma túy và chất cấm', 'Sản phẩm giả mạo dược phẩm', 'Bán thuốc online không phép'],
+        do: ['Nhà thuốc có giấy phép', 'Thực phẩm chức năng hợp lệ', 'Thiết bị y tế được cấp phép']
+      }
+    },
+    {
+      id: 'misleading', type: 'warning', icon: '⚠️', title: 'Nội dung gây hiểu lầm',
+      desc: 'Hạn chế các tuyên bố phóng đại, so sánh không có cơ sở, hoặc thông tin sai lệch.',
+      badge: 'Hạn chế',
+      detail: {
+        dont: ['Số 1 Việt Nam (không có bằng chứng)', 'Tốt nhất/rẻ nhất (không có cơ sở)', 'Thống kê giả mạo', 'Đánh giá fake', 'Hình ảnh chỉnh sửa gây hiểu lầm'],
+        do: ['Tuyên bố có dẫn chứng cụ thể', 'So sánh dựa trên dữ liệu thực', 'Đánh giá thật từ khách hàng', 'Hình ảnh sản phẩm thực tế']
+      }
+    },
+    {
+      id: 'political', type: 'warning', icon: '🗳️', title: 'Nội dung chính trị & xã hội',
+      desc: 'Quảng cáo chính trị cần xác minh danh tính và tuân thủ quy định về minh bạch.',
+      badge: 'Hạn chế',
+      detail: {
+        dont: ['Quảng cáo chính trị không xác minh', 'Nội dung gây chia rẽ xã hội', 'Tin tức giả mạo', 'Kêu gọi bạo lực'],
+        do: ['Xác minh danh tính cho quảng cáo chính trị', 'Thêm "Được tài trợ bởi" rõ ràng', 'Nội dung trung lập và khách quan']
+      }
+    },
+    {
+      id: 'gambling', type: 'warning', icon: '🎰', title: 'Cờ bạc & trò chơi có thưởng',
+      desc: 'Chỉ được phép tại các quốc gia có quy định cho phép và phải có giấy phép hợp lệ.',
+      badge: 'Hạn chế',
+      detail: {
+        dont: ['Cờ bạc online không phép tại VN', 'Hứa hẹn thắng tiền', 'Nhắm đến người dưới 18 tuổi'],
+        do: ['Có giấy phép tại quốc gia được phép', 'Có cảnh báo về cờ bạc có trách nhiệm', 'Tuân thủ quy định địa phương']
+      }
+    },
+    {
+      id: 'targeting', type: 'info', icon: '🎯', title: 'Nhắm mục tiêu đặc biệt',
+      desc: 'Không được phân biệt đối xử dựa trên chủng tộc, tôn giáo, giới tính, tuổi tác trong một số lĩnh vực.',
+      badge: 'Cần lưu ý',
+      detail: {
+        dont: ['Nhắm mục tiêu phân biệt chủng tộc trong tín dụng/nhà ở/việc làm', 'Loại trừ nhóm dân số được bảo vệ', 'Nội dung phân biệt đối xử'],
+        do: ['Nhắm mục tiêu theo sở thích và hành vi', 'Lookalike audience hợp lệ', 'Retargeting khách hàng cũ']
+      }
+    },
+    {
+      id: 'ecommerce', type: 'success', icon: '🛍️', title: 'Thương mại điện tử',
+      desc: 'Được phép quảng cáo sản phẩm hợp lệ với hình ảnh thực tế và thông tin chính xác.',
+      badge: 'Được phép',
+      detail: {
+        do: ['Sản phẩm có nguồn gốc rõ ràng', 'Hình ảnh thực tế của sản phẩm', 'Giá cả minh bạch', 'Chính sách đổi trả rõ ràng', 'Thông tin liên hệ đầy đủ'],
+        dont: ['Hàng giả, hàng nhái', 'Sản phẩm vi phạm bản quyền', 'Giá ảo (gạch giá cao rồi giảm giả tạo)']
+      }
+    },
+    {
+      id: 'education', type: 'success', icon: '📚', title: 'Giáo dục & khóa học',
+      desc: 'Được phép với điều kiện thông tin về khóa học, chứng chỉ và kết quả phải chính xác.',
+      badge: 'Được phép',
+      detail: {
+        do: ['Mô tả khóa học chính xác', 'Chứng chỉ hợp lệ', 'Kết quả học viên thực tế', 'Giảng viên có chuyên môn'],
+        dont: ['Hứa hẹn việc làm 100%', 'Bằng cấp giả mạo', 'Kết quả phi thực tế']
+      }
+    },
+    {
+      id: 'food', type: 'info', icon: '🍜', title: 'Thực phẩm & đồ uống',
+      desc: 'Cần tuân thủ quy định về nhãn mác, thành phần và không được quảng cáo sai sự thật.',
+      badge: 'Cần lưu ý',
+      detail: {
+        do: ['Thành phần rõ ràng', 'Hình ảnh thực tế', 'Thông tin dinh dưỡng chính xác', 'Có giấy phép an toàn thực phẩm'],
+        dont: ['Tuyên bố chữa bệnh', 'Thành phần không được phép', 'Hình ảnh chỉnh sửa quá mức']
+      }
+    },
+    {
+      id: 'beauty', type: 'info', icon: '💄', title: 'Mỹ phẩm & làm đẹp',
+      desc: 'Được phép nhưng không được hứa hẹn kết quả phi thực tế hoặc quảng cáo sản phẩm không có phép.',
+      badge: 'Cần lưu ý',
+      detail: {
+        do: ['Sản phẩm có giấy phép lưu hành', 'Hình ảnh trước/sau thực tế', 'Thành phần rõ ràng', 'Không gây dị ứng'],
+        dont: ['Hứa hẹn trẻ hóa 20 tuổi', 'Trước/sau chỉnh sửa', 'Sản phẩm không có phép', 'Tuyên bố y tế không có cơ sở']
+      }
+    }
+  ];
+
+  const VIOLATIONS = [
+    { pattern: /giảm\s*\d+\s*kg/i, type: 'fail', label: 'Tuyên bố giảm cân cụ thể', detail: 'Facebook cấm quảng cáo hứa hẹn giảm X kg trong Y ngày' },
+    { pattern: /cam kết.*%.*hiệu quả|đảm bảo.*hiệu quả/i, type: 'fail', label: 'Cam kết hiệu quả 100%', detail: 'Không được đảm bảo kết quả tuyệt đối' },
+    { pattern: /chữa\s*(khỏi|bệnh|dứt)/i, type: 'fail', label: 'Tuyên bố chữa bệnh', detail: 'Cấm tuyên bố chữa khỏi bệnh trong quảng cáo' },
+    { pattern: /lợi nhuận.*%.*ngày|x\d+.*lợi nhuận/i, type: 'fail', label: 'Hứa hẹn lợi nhuận đảm bảo', detail: 'Cấm quảng cáo đầu tư với lợi nhuận đảm bảo' },
+    { pattern: /số\s*1\s*(việt nam|vn|toàn quốc)/i, type: 'warn', label: 'Tuyên bố "Số 1"', detail: 'Cần có bằng chứng cụ thể để sử dụng tuyên bố này' },
+    { pattern: /miễn phí.*mãi mãi|free.*forever/i, type: 'warn', label: 'Tuyên bố miễn phí mãi mãi', detail: 'Cần làm rõ điều kiện áp dụng' },
+    { pattern: /click.*ngay|mua.*ngay|đặt.*ngay/i, type: 'pass', label: 'Call-to-action rõ ràng', detail: 'CTA cụ thể được khuyến khích' },
+    { pattern: /\d+[,.]?\d*\s*(vnđ|đồng|k|nghìn)/i, type: 'pass', label: 'Giá cả minh bạch', detail: 'Hiển thị giá rõ ràng là dấu hiệu tốt' },
+    { pattern: /giao hàng.*miễn phí|free ship/i, type: 'pass', label: 'Chính sách giao hàng rõ ràng', detail: 'Thông tin giao hàng minh bạch được đánh giá cao' },
+  ];
+
+  function checkContent() {
+    const text = document.getElementById('contentToCheck').value.trim();
+    if (!text) { GZ.toast('Vui lòng nhập nội dung cần kiểm tra', 'error'); return; }
+
+    const results = [];
+    let hasViolation = false;
+
+    VIOLATIONS.forEach(v => {
+      if (v.pattern.test(text)) {
+        results.push(v);
+        if (v.type === 'fail') hasViolation = true;
+      }
+    });
+
+    // Check length
+    if (text.length > 125) results.push({ type: 'warn', label: 'Văn bản quá dài', detail: `${text.length} ký tự. Facebook khuyến nghị dưới 125 ký tự cho primary text` });
+    else results.push({ type: 'pass', label: 'Độ dài phù hợp', detail: `${text.length} ký tự — trong giới hạn khuyến nghị` });
+
+    // Check emoji
+    const emojiCount = (text.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
+    if (emojiCount > 5) results.push({ type: 'warn', label: 'Quá nhiều emoji', detail: `${emojiCount} emoji. Nên dùng tối đa 3-5 emoji` });
+
+    if (!results.length) results.push({ type: 'pass', label: 'Không phát hiện vi phạm rõ ràng', detail: 'Nội dung có vẻ ổn. Vẫn cần review thủ công trước khi chạy' });
+
+    const icons = { pass: '✅', fail: '❌', warn: '⚠️' };
+    document.getElementById('checkResult').innerHTML = `
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:${hasViolation?'#f87171':'#4ade80'}">
+        ${hasViolation ? '❌ Phát hiện vi phạm tiềm năng' : '✅ Nội dung có vẻ ổn'}
+      </div>` +
+      results.map(r => `
+        <div class="check-item ${r.type}">
+          <span class="check-icon">${icons[r.type]}</span>
+          <div class="check-text">
+            <div class="check-label">${r.label}</div>
+            <div class="check-detail">${r.detail}</div>
+          </div>
+        </div>`).join('');
+
+    GZ.toast('Kiểm tra hoàn tất!', 'success');
+  }
+
+  function filterPolicy(type) {
+    const cards = document.querySelectorAll('.policy-card');
+    cards.forEach(c => {
+      c.style.display = (type === 'all' || c.dataset.type === type) ? '' : 'none';
+    });
+  }
+
+  function toggleDetail(id) {
+    const detail = document.getElementById('detail_' + id);
+    detail.classList.toggle('open');
+  }
+
+  function renderPolicies() {
+    document.getElementById('policyGrid').innerHTML = POLICIES.map(p => {
+      const badgeClass = { danger: 'badge-danger', warning: 'badge-warning', info: 'badge-info', success: 'badge-success' }[p.type];
+      const doList = p.detail.do ? p.detail.do.map(d => `<li class="do">✅ ${d}</li>`).join('') : '';
+      const dontList = p.detail.dont ? p.detail.dont.map(d => `<li class="dont">❌ ${d}</li>`).join('') : '';
+      return `<div class="policy-card ${p.type}" data-type="${p.type}">
+        <div class="policy-icon">${p.icon}</div>
+        <div class="policy-title">${p.title}</div>
+        <div class="policy-desc">${p.desc}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="policy-badge ${badgeClass}">${p.badge}</span>
+          <button onclick="toggleDetail('${p.id}')" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:12px">Chi tiết ▾</button>
+        </div>
+        <div class="policy-detail" id="detail_${p.id}">
+          ${doList ? `<h4>✅ Được phép:</h4><ul>${doList}</ul>` : ''}
+          ${dontList ? `<h4 style="margin-top:10px">❌ Không được phép:</h4><ul>${dontList}</ul>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderRecentUpdates() {
+    const updates = [
+      { date: '01/2026', title: 'Siết chặt quảng cáo AI-generated content', desc: 'Facebook yêu cầu gắn nhãn rõ ràng cho nội dung được tạo bởi AI trong quảng cáo.', type: 'warning' },
+      { date: '12/2025', title: 'Cập nhật chính sách quảng cáo tài chính', desc: 'Tăng cường yêu cầu xác minh cho quảng cáo dịch vụ tài chính tại Đông Nam Á.', type: 'danger' },
+      { date: '11/2025', title: 'Cho phép quảng cáo CBD tại một số quốc gia', desc: 'Facebook mở rộng cho phép quảng cáo sản phẩm CBD hợp pháp tại Mỹ và Canada.', type: 'info' },
+      { date: '10/2025', title: 'Cập nhật chính sách nhắm mục tiêu', desc: 'Loại bỏ một số tùy chọn nhắm mục tiêu nhạy cảm liên quan đến sức khỏe và tôn giáo.', type: 'warning' },
+    ];
+    const colors = { danger: '#f87171', warning: '#fbbf24', info: '#60a5fa' };
+    document.getElementById('recentUpdates').innerHTML = updates.map(u => `
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid ${colors[u.type]}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span style="font-size:11px;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:12px;color:rgba(255,255,255,.5)">${u.date}</span>
+          <span style="font-size:13px;font-weight:700">${u.title}</span>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45)">${u.desc}</div>
+      </div>`).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { renderPolicies(); renderRecentUpdates(); });
+  </script>
+  <script>
+  const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
+  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));const ss=[];let lt=0;function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
+  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(14,165,233,'+po+')');g.addColorStop(.5,'rgba(56,189,248,'+(po*.5)+')');g.addColorStop(1,'rgba(56,189,248,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
+  </script>
+</body>
+</html>
