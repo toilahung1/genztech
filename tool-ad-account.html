@@ -478,7 +478,7 @@
   <script>
   // ── Constants ──
   const API_BASE = 'https://genztech-production.up.railway.app';
-  const FB_GRAPH = 'https://graph.facebook.com/v19.0';
+  const FB_GRAPH = 'https://graph.facebook.com/v25.0';
   const STATUS_MAP = {1:['Hoạt động','badge-green'],2:['Vô hiệu hóa','badge-red'],3:['Chưa xác nhận','badge-yellow'],7:['Bị khóa','badge-red'],9:['Đóng cửa','badge-gray'],100:['Đang xem xét','badge-yellow']};
   const CAMPAIGN_STATUS = {ACTIVE:['Đang chạy','badge-green'],PAUSED:['Tạm dừng','badge-yellow'],DELETED:['Đã xóa','badge-red'],ARCHIVED:['Lưu trữ','badge-gray']};
   const OBJECTIVE_MAP = {OUTCOME_TRAFFIC:'Lưu lượng',OUTCOME_AWARENESS:'Nhận thức',OUTCOME_ENGAGEMENT:'Tương tác',OUTCOME_LEADS:'Khách hàng tiềm năng',OUTCOME_SALES:'Doanh số',OUTCOME_APP_PROMOTION:'Ứng dụng',LINK_CLICKS:'Lượt click',CONVERSIONS:'Chuyển đổi',BRAND_AWARENESS:'Nhận thức thương hiệu',REACH:'Tiếp cận',VIDEO_VIEWS:'Xem video',MESSAGES:'Tin nhắn'};
@@ -705,8 +705,10 @@
       const [statusText, statusClass] = STATUS_MAP[acc.account_status] || ['Không rõ','badge-gray'];
       const isAdmin = acc.account_type === 1 || acc.owner ? 'ADMIN' : 'GENERAL_USER';
       const spend = acc._insights?.spend || acc.amount_spent || 0;
-      return `<tr onclick="selectAccount('${acc.id}','${acc.name||acc.id}')">
-        <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${acc.id}"></td>
+      const safeId = acc.id;
+      const safeName = (acc.name||acc.id).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return `<tr onclick="selectAccount('${safeId}','${safeName}')" style="cursor:pointer">
+        <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${safeId}"></td>
         <td>
           <div class="td-name">${acc.name || acc.id}</div>
           <div class="td-id">${acc.id}</div>
@@ -755,9 +757,13 @@
     try {
       let campaigns = [];
       if (S.token) {
-        const r = await fetch(`${FB_GRAPH}/${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time&limit=50&access_token=${S.token}`);
+        const url = `${FB_GRAPH}/${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time&limit=100&access_token=${S.token}`;
+        console.log('[GenZTech] Load campaigns URL:', url.replace(S.token, 'TOKEN_HIDDEN'));
+        const r = await fetch(url);
         const d = await r.json();
-        if (d.error) throw new Error(d.error.message);
+        console.log('[GenZTech] Campaigns response:', JSON.stringify(d).substring(0, 300));
+        if (d.error) throw new Error(`FB API lỗi ${d.error.code}: ${d.error.message}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
         campaigns = d.data || [];
         // Get insights
         await Promise.all(campaigns.map(async c => {
