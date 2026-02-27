@@ -204,97 +204,225 @@ textarea.form-control{resize:vertical;min-height:70px}
     <!-- ═══ PAGE: BUDGET ═══ -->
     <div id="pageBudget">
       <div class="card">
-        <div class="card-title"><i class="bi bi-input-cursor-text"></i> Nhập Dữ Liệu Chiến Dịch (1 Tháng Thực Tế)</div>
-        <div class="form-grid" style="margin-bottom:12px">
-          <div class="form-group">
-            <label class="form-label">Ngành nghề</label>
-            <select class="form-control" id="industry">
-              <option value="">-- Chọn ngành --</option>
-              <option value="Thời trang & Phụ kiện">Thời trang & Phụ kiện</option>
-              <option value="Ẩm thực & Đồ uống">Ẩm thực & Đồ uống</option>
-              <option value="Sức khỏe & Làm đẹp">Sức khỏe & Làm đẹp</option>
-              <option value="Nội thất & Gia dụng">Nội thất & Gia dụng</option>
-              <option value="Thể thao & Giải trí">Thể thao & Giải trí</option>
-              <option value="Thú cưng">Thú cưng</option>
-              <option value="Giáo dục">Giáo dục</option>
-              <option value="Bất động sản">Bất động sản</option>
-              <option value="Dịch vụ tài chính">Dịch vụ tài chính</option>
-              <option value="Công nghệ">Công nghệ</option>
-              <option value="Dịch vụ khác">Dịch vụ khác</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Mục tiêu chiến dịch</label>
-            <select class="form-control" id="objective">
-              <option value="Chuyển đổi (Conversions)">Chuyển đổi (Conversions)</option>
-              <option value="Tin nhắn (Messages)">Tin nhắn (Messages)</option>
-              <option value="Lưu lượng (Traffic)">Lưu lượng (Traffic)</option>
-              <option value="Tương tác (Engagement)">Tương tác (Engagement)</option>
-              <option value="Nhận thức thương hiệu">Nhận thức thương hiệu</option>
-              <option value="Tạo khách hàng tiềm năng (Leads)">Tạo khách hàng tiềm năng (Leads)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Thời gian chạy</label>
-            <select class="form-control" id="duration">
-              <option value="30">30 ngày</option>
-              <option value="14">14 ngày</option>
-              <option value="7">7 ngày</option>
-            </select>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:0"><i class="bi bi-input-cursor-text"></i> Nhập Dữ Liệu Chiến Dịch</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11.5px;color:rgba(255,255,255,.35)">Dữ liệu càng đầy đủ → phân tích càng chính xác</span>
+            <button class="btn btn-outline" onclick="loadSample()" style="padding:5px 12px;font-size:12px"><i class="bi bi-lightning"></i> Dữ liệu mẫu</button>
           </div>
         </div>
-        <div class="form-grid" style="margin-bottom:12px">
-          <div class="form-group">
-            <label class="form-label">Tổng chi phí (VNĐ)</label>
-            <input type="number" class="form-control" id="totalSpend" placeholder="VD: 15000000">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tổng doanh thu (VNĐ)</label>
-            <input type="number" class="form-control" id="totalRevenue" placeholder="VD: 45000000">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tổng lượt hiển thị</label>
-            <input type="number" class="form-control" id="impressions" placeholder="VD: 500000">
+
+        <!-- BLOCK 1: Bối cảnh chiến dịch -->
+        <div style="background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:#00d4ff;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px"><i class="bi bi-info-circle"></i> Bối Cảnh Chiến Dịch</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Ngành nghề <span style="color:#ef4444">*</span></label>
+              <select class="form-control" id="industry">
+                <option value="">-- Chọn ngành --</option>
+                <option value="Thời trang & Phụ kiện">Thời trang & Phụ kiện</option>
+                <option value="Ẩm thực & Đồ uống">Ẩm thực & Đồ uống</option>
+                <option value="Sức khỏe & Làm đẹp">Sức khỏe & Làm đẹp</option>
+                <option value="Nội thất & Gia dụng">Nội thất & Gia dụng</option>
+                <option value="Thể thao & Giải trí">Thể thao & Giải trí</option>
+                <option value="Thú cưng">Thú cưng</option>
+                <option value="Giáo dục">Giáo dục</option>
+                <option value="Bất động sản">Bất động sản</option>
+                <option value="Dịch vụ tài chính">Dịch vụ tài chính</option>
+                <option value="Công nghệ">Công nghệ</option>
+                <option value="Dịch vụ khác">Dịch vụ khác</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">AI sẽ so sánh với benchmark riêng ngành này</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mục tiêu chiến dịch <span style="color:#ef4444">*</span></label>
+              <select class="form-control" id="objective">
+                <option value="Chuyển đổi (Conversions)">Chuyển đổi (Conversions)</option>
+                <option value="Tin nhắn (Messages)">Tin nhắn (Messages)</option>
+                <option value="Lưu lượng (Traffic)">Lưu lượng (Traffic)</option>
+                <option value="Tương tác (Engagement)">Tương tác (Engagement)</option>
+                <option value="Nhận thức thương hiệu">Nhận thức thương hiệu</option>
+                <option value="Tạo khách hàng tiềm năng (Leads)">Tạo khách hàng tiềm năng (Leads)</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Benchmark KPI khác nhau theo từng mục tiêu</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Thời gian chạy</label>
+              <select class="form-control" id="duration">
+                <option value="30">30 ngày</option>
+                <option value="14">14 ngày</option>
+                <option value="7">7 ngày</option>
+                <option value="60">60 ngày</option>
+                <option value="90">90 ngày</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Dùng để tính tốc độ chi tiêu và dự báo</span>
+            </div>
           </div>
         </div>
-        <div class="form-grid" style="margin-bottom:12px">
-          <div class="form-group">
-            <label class="form-label">Tổng lượt nhấp (Clicks)</label>
-            <input type="number" class="form-control" id="clicks" placeholder="VD: 5000">
+
+        <!-- BLOCK 2: Số liệu tài chính -->
+        <div style="background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.12);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px"><i class="bi bi-currency-dollar"></i> Số Liệu Tài Chính</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Tổng chi phí quảng cáo <span style="color:#ef4444">*</span></label>
+              <input type="number" class="form-control" id="totalSpend" placeholder="VD: 15,000,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Tổng tiền đã chi trên Facebook Ads (VNĐ)</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tổng doanh thu từ quảng cáo <span style="color:#ef4444">*</span></label>
+              <input type="number" class="form-control" id="totalRevenue" placeholder="VD: 45,000,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Doanh thu thực tế từ đơn hàng/leads từ QC (VNĐ)</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Giá trị đơn hàng TB (AOV)</label>
+              <input type="number" class="form-control" id="aov" placeholder="VD: 300,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Giá trung bình mỗi đơn hàng (VNĐ). Dùng tính ROAS thực</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Tổng chuyển đổi / Đơn hàng</label>
-            <input type="number" class="form-control" id="conversions" placeholder="VD: 150">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tần suất (Frequency)</label>
-            <input type="number" step="0.1" class="form-control" id="frequency" placeholder="VD: 2.5">
+          <div class="form-grid" style="margin-top:10px">
+            <div class="form-group">
+              <label class="form-label">Giá vốn hàng bán (COGS)</label>
+              <input type="number" class="form-control" id="cogs" placeholder="VD: 150,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Giá vốn / chi phí sản xuất mỗi sản phẩm (VNĐ). Dùng tính lợi nhuận thực</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngân sách dự kiến tháng tới</label>
+              <input type="number" class="form-control" id="nextBudget" placeholder="Để trống = giữ nguyên">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">AI sẽ dựa vào đây để tính dự báo doanh thu 3 tháng tới</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Biến phí khác / đơn hàng</label>
+              <input type="number" class="form-control" id="otherCost" placeholder="VD: 30,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Phí vận chuyển, đóng gói, xử lý đơn... (VNĐ/đơn)</span>
+            </div>
           </div>
         </div>
-        <div class="form-grid" style="margin-bottom:12px">
-          <div class="form-group">
-            <label class="form-label">Giá trị đơn hàng TB / AOV (VNĐ)</label>
-            <input type="number" class="form-control" id="aov" placeholder="VD: 300000">
+
+        <!-- BLOCK 3: Số liệu hiệu suất -->
+        <div style="background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.12);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px"><i class="bi bi-graph-up-arrow"></i> Số Liệu Hiệu Suất QC</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Tổng lượt hiển thị (Impressions) <span style="color:#ef4444">*</span></label>
+              <input type="number" class="form-control" id="impressions" placeholder="VD: 500,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Lấy từ Facebook Ads Manager → Cột Impressions</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tổng lượt nhấp (Link Clicks) <span style="color:#ef4444">*</span></label>
+              <input type="number" class="form-control" id="clicks" placeholder="VD: 5,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Dùng Link Clicks (không phải All Clicks). Cột “Link Clicks” trong Ads Manager</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tổng chuyển đổi / Đơn hàng <span style="color:#ef4444">*</span></label>
+              <input type="number" class="form-control" id="conversions" placeholder="VD: 150">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Số đơn hàng/leads/tin nhắn thành công từ QC</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Giá vốn hàng bán / COGS (VNĐ)</label>
-            <input type="number" class="form-control" id="cogs" placeholder="VD: 150000">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Ngân sách tháng tới (VNĐ)</label>
-            <input type="number" class="form-control" id="nextBudget" placeholder="Để trống = giữ nguyên">
+          <div class="form-grid" style="margin-top:10px">
+            <div class="form-group">
+              <label class="form-label">Tần suất (Frequency)</label>
+              <input type="number" step="0.1" class="form-control" id="frequency" placeholder="VD: 2.5">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Trung bình mỗi người xem QC bao nhiêu lần. Cột Frequency trong Ads Manager</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tổng lượt tiếp cận (Reach)</label>
+              <input type="number" class="form-control" id="reach" placeholder="VD: 180,000">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Số người được tiếp cận (khác Impressions). Cột Reach trong Ads Manager</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Thêm vào giỏ hàng (Add to Cart)</label>
+              <input type="number" class="form-control" id="addToCart" placeholder="VD: 800">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Số lượt thêm vào giỏ. Dùng phân tích tỷ lệ bỏ giỏ (cart abandonment)</span>
+            </div>
           </div>
         </div>
-        <div class="form-group" style="margin-bottom:14px">
-          <label class="form-label">Mô tả sản phẩm / dịch vụ (để AI phân tích chính xác hơn)</label>
-          <textarea class="form-control" id="businessDesc" placeholder="VD: Bán áo thun in hình custom, giá 200-350k, target 18-35 tuổi, chạy tại TP.HCM và Hà Nội..."></textarea>
+
+        <!-- BLOCK 4: Thông tin chiến lược -->
+        <div style="background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.15);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px"><i class="bi bi-bullseye"></i> Thông Tin Chiến Lược (Giúp AI phân tích sâu hơn)</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Mô tả sản phẩm / dịch vụ <span style="color:#ef4444">*</span></label>
+            <textarea class="form-control" id="businessDesc" rows="3" placeholder="VD: Shop thời trang nữ online, chuyên áo thun in hình custom, giá 200-350k, target 18-35 tuổi, chạy tại TP.HCM và Hà Nội, đối thủ chính là X và Y..."></textarea>
+            <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Càng chi tiết (giá, đối tượng, USP, đối thủ) → phân tích càng chuẩn</span>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Loại creative đang chạy</label>
+              <select class="form-control" id="creativeType">
+                <option value="">-- Chọn --</option>
+                <option value="Video">Video</option>
+                <option value="Hình ảnh tĩnh">Hình ảnh tĩnh</option>
+                <option value="Carousel">Carousel</option>
+                <option value="Collection">Collection</option>
+                <option value="Reels / Short video">Reels / Short video</option>
+                <option value="Hỗn hợp">Hỗn hợp</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Loại nội dung quảng cáo đang chạy chính</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Trang đích (Landing Page)</label>
+              <select class="form-control" id="landingPage">
+                <option value="">-- Chọn --</option>
+                <option value="Website / Landing page riêng">Website / Landing page riêng</option>
+                <option value="Fanpage Facebook">Fanpage Facebook</option>
+                <option value="Messenger / Inbox">Messenger / Inbox</option>
+                <option value="Shopee / Lazada">Shopee / Lazada</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Zalo">Zalo</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Nơi khách hàng đến sau khi click QC</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Giai đoạn kinh doanh</label>
+              <select class="form-control" id="bizStage">
+                <option value="">-- Chọn --</option>
+                <option value="Mới ra mắt (0-3 tháng)">Mới ra mắt (0-3 tháng)</option>
+                <option value="Đang tăng trưởng (3-12 tháng)">Đang tăng trưởng (3-12 tháng)</option>
+                <option value="Ổn định (1-3 năm)">Ổn định (1-3 năm)</option>
+                <option value="Trưởng thành (3+ năm)">Trưởng thành (3+ năm)</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Nhập môn hay đã có thương hiệu? Ảnh hưởng kỳ vọng ROAS</span>
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top:10px">
+            <div class="form-group">
+              <label class="form-label">Vấn đề đang gặp phải</label>
+              <select class="form-control" id="mainProblem">
+                <option value="">-- Chọn vấn đề chính --</option>
+                <option value="Chi phí quá cao, không có lãi">Chi phí quá cao, không có lãi</option>
+                <option value="CTR thấp, ít người click">CTR thấp, ít người click</option>
+                <option value="Nhiều click nhưng ít mua hàng">Nhiều click nhưng ít mua hàng</option>
+                <option value="QC chạy tốt rồi nhưng muốn scale">QC chạy tốt rồi nhưng muốn scale</option>
+                <option value="Hiệu suất giảm dần theo thời gian">Hiệu suất giảm dần theo thời gian</option>
+                <option value="Không biết bắt đầu từ đâu">Không biết bắt đầu từ đâu</option>
+              </select>
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">AI sẽ tập trung phân tích và đề xuất giải quyết vấn đề này</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Số lượng ad set / nhóm QC</label>
+              <input type="number" class="form-control" id="adSetCount" placeholder="VD: 3">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Bao nhiêu nhóm quảng cáo đang chạy? Dùng đánh giá mức độ phân tán ngân sách</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Số lượng mẫu QC (Creatives)</label>
+              <input type="number" class="form-control" id="creativeCount" placeholder="VD: 5">
+              <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Bao nhiêu mẫu quảng cáo khác nhau đang chạy?</span>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label class="form-label">Ghi chú thêm (tùy chọn)</label>
+            <textarea class="form-control" id="extraNotes" rows="2" placeholder="VD: Đang chạy retargeting, đã từng test 3 loại creative khác nhau, mùa cao điểm sắp tới, đối thủ vừa giảm giá mạnh..."></textarea>
+            <span style="font-size:10.5px;color:rgba(255,255,255,.3);margin-top:3px">Bất kỳ thông tin nào bạn nghĩ có thể ảnh hưởng đến kết quả</span>
+          </div>
         </div>
+
         <div style="display:flex;gap:10px">
-          <button class="btn btn-primary" onclick="runAnalysis()" id="btnAnalyze">
+          <button class="btn btn-primary" onclick="runAnalysis()" id="btnAnalyze" style="flex:1;justify-content:center">
             <i class="bi bi-robot"></i> Phân Tích & Dự Báo AI
           </button>
-          <button class="btn btn-outline" onclick="loadSample()">
-            <i class="bi bi-lightning"></i> Dữ liệu mẫu
+          <button class="btn btn-outline" onclick="resetForm()">
+            <i class="bi bi-arrow-counterclockwise"></i> Xóa
           </button>
         </div>
       </div>
@@ -412,36 +540,39 @@ function fmtVnd(n) {
   return n.toLocaleString('vi-VN');
 }
 function fmtPct(n) { return isNaN(n) ? '—' : n.toFixed(2) + '%'; }
-function fmtX(n) { return isNaN(n) ? '—' : n.toFixed(2) + 'x'; }
-
-// ─── Load sample data ─────────────────────────────────────────────────────────
+function fmtX(n) { return isNaN(n) ? '—' : n.toFixe// ─── Load sample data ────────────────────────────────────────────────────────────────────────────────
 function loadSample() {
   document.getElementById('industry').value = 'Thời trang & Phụ kiện';
   document.getElementById('objective').value = 'Chuyển đổi (Conversions)';
+  document.getElementById('duration').value = '30';
   document.getElementById('totalSpend').value = 15000000;
   document.getElementById('totalRevenue').value = 42000000;
+  document.getElementById('aov').value = 300000;
+  document.getElementById('cogs').value = 130000;
+  document.getElementById('nextBudget').value = 18000000;
+  document.getElementById('otherCost').value = 25000;
   document.getElementById('impressions').value = 480000;
   document.getElementById('clicks').value = 5760;
   document.getElementById('conversions').value = 140;
   document.getElementById('frequency').value = 2.8;
-  document.getElementById('aov').value = 300000;
-  document.getElementById('cogs').value = 130000;
-  document.getElementById('businessDesc').value = 'Shop thời trang nữ online, chuyên áo thun in hình custom, giá 200-350k, target 18-35 tuổi, chạy tại TP.HCM và Hà Nội';
-  toast('Đã điền dữ liệu mẫu', 'info');
-}
-
-// ─── Reset form ───────────────────────────────────────────────────────────────
+  document.getElementById('reach').value = 171000;
+  document.getElementById('addToCart').value = 680;
+  document.getElementById('businessDesc').value = 'Shop thời trang nữ online, chuyên áo thun in hình custom, giá 200-350k, target 18-35 tuổi, chạy tại TP.HCM và Hà Nội. USP: in theo yêu cầu, giao 2 ngày.';
+  document.getElementById('creativeType').value = 'Video';
+  document.getElementById('landingPage').value = 'Website / Landing page riêng';
+  document.getElementById('bizStage').value = 'Đang tăng trưởng (3-12 tháng)';
+  document.getElementById('mainProblem').value = 'Nhiều click nhưng ít mua hàng';
+  document.getElementById('adSetCount').value = 3;
+  document.getElementById('creativeCount').value = 5;
+  document.getElementById('extraNotes').value = 'Frequency đang tăng, lo ngại audience fatigue. Mùa hè sắp tới có thể tăng nhu cầu.';
+  toast('Đã điền dữ liệu m// ─── Reset form ────────────────────────────────────────────────────────────────────────────────
 function resetForm() {
-  ['totalSpend','totalRevenue','impressions','clicks','conversions','frequency','aov','cogs','nextBudget','businessDesc'].forEach(id => {
+  ['totalSpend','totalRevenue','impressions','clicks','conversions','frequency','aov','cogs','nextBudget','otherCost','reach','addToCart','adSetCount','creativeCount','businessDesc','extraNotes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   document.getElementById('kpiSummary').style.display = 'none';
-  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
-  charts = {};
-}
-
-// ─── Compute KPIs ─────────────────────────────────────────────────────────────
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){}// ─── Compute KPIs ────────────────────────────────────────────────────────────────────────────────
 function computeKPIs() {
   const spend = +document.getElementById('totalSpend').value || 0;
   const revenue = +document.getElementById('totalRevenue').value || 0;
@@ -451,6 +582,9 @@ function computeKPIs() {
   const frequency = +document.getElementById('frequency').value || 0;
   const aov = +document.getElementById('aov').value || 0;
   const cogs = +document.getElementById('cogs').value || 0;
+  const otherCost = +document.getElementById('otherCost').value || 0;
+  const reach = +document.getElementById('reach').value || 0;
+  const addToCart = +document.getElementById('addToCart').value || 0;
 
   const cpm = impressions > 0 ? (spend / impressions * 1000) : 0;
   const ctr = impressions > 0 ? (clicks / impressions * 100) : 0;
@@ -458,13 +592,14 @@ function computeKPIs() {
   const cvr = clicks > 0 ? (conversions / clicks * 100) : 0;
   const cpa = conversions > 0 ? (spend / conversions) : 0;
   const roas = spend > 0 ? (revenue / spend) : 0;
-  const profit = revenue - spend - (conversions * cogs);
+  const totalCost = spend + (conversions * (cogs + otherCost));
+  const profit = revenue - totalCost;
   const roi = spend > 0 ? (profit / spend * 100) : 0;
+  const cartAbandonment = addToCart > 0 ? ((addToCart - conversions) / addToCart * 100) : 0;
+  const cpm_reach = reach > 0 ? (spend / reach * 1000) : 0;
 
-  return { spend, revenue, impressions, clicks, conversions, frequency, aov, cogs, cpm, ctr, cpc, cvr, cpa, roas, profit, roi };
-}
-
-// ─── Render KPI stats row ─────────────────────────────────────────────────────
+  return { spend, revenue, impressions, clicks, conversions, frequency, aov, cogs, otherCost, reach, addToCart, cpm, ctr, cpc, cvr, cpa, roas, profit, roi, cartAbandonment, cpm_reach };
+} ─── Render KPI stats row ─────────────────────────────────────────────────────
 function renderStats(kpis) {
   const items = [
     { label: 'ROAS', value: fmtX(kpis.roas), sub: kpis.roas >= 3 ? '✓ Tốt' : kpis.roas >= 2 ? '~ Trung bình' : '✗ Yếu', color: kpis.roas >= 3 ? '#22c55e' : kpis.roas >= 2 ? '#f59e0b' : '#ef4444' },
@@ -550,6 +685,10 @@ async function runAnalysis() {
       tan_suat: kpis.frequency,
       gia_tri_don_hang_tb: kpis.aov,
       gia_von: kpis.cogs,
+      bien_phi_khac: kpis.otherCost,
+      luot_tiep_can: kpis.reach,
+      them_vao_gio: kpis.addToCart,
+      ty_le_bo_gio: kpis.cartAbandonment.toFixed(1) + '%',
       ngan_sach_thang_toi: +document.getElementById('nextBudget').value || kpis.spend,
       cpm: Math.round(kpis.cpm),
       ctr: kpis.ctr.toFixed(2) + '%',
@@ -557,9 +696,10 @@ async function runAnalysis() {
       cvr: kpis.cvr.toFixed(2) + '%',
       cpa: Math.round(kpis.cpa),
       roas: kpis.roas.toFixed(2),
-      loi_nhuan: Math.round(kpis.profit)
+      loi_nhuan: Math.round(kpis.profit),
+      loi_nhuan_rong: Math.round(kpis.profit),
+      roi: kpis.roi.toFixed(1) + '%'
     };
-
     const resp = await fetch(`${BACKEND}/api/ai/analyze-budget`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -568,9 +708,17 @@ async function runAnalysis() {
         industry,
         objective: document.getElementById('objective').value,
         currency: 'VNĐ',
-        yourBusiness: document.getElementById('businessDesc').value
+        yourBusiness: document.getElementById('businessDesc').value,
+        creative_type: document.getElementById('creativeType').value,
+        landing_page: document.getElementById('landingPage').value,
+        biz_stage: document.getElementById('bizStage').value,
+        main_problem: document.getElementById('mainProblem').value,
+        ad_set_count: document.getElementById('adSetCount').value,
+        creative_count: document.getElementById('creativeCount').value,
+        extra_notes: document.getElementById('extraNotes').value,
+        duration_days: document.getElementById('duration').value
       })
-    });
+    });;
 
     const data = await resp.json();
     if (!data.success) throw new Error(data.error || 'Lỗi phân tích AI');
@@ -606,7 +754,7 @@ function renderAIResult(a, kpis) {
       return `<div class="kpi-item ${cls}">
         <div class="kpi-name">${k.kpi}</div>
         <div class="kpi-val" style="color:${valColor}">${k.value}</div>
-        <div class="kpi-bench">Benchmark ngành: ${k.benchmark}</div>
+        <div class="kpi-bench">Benchmark ngành: ${k.benchmark_industry || k.benchmark || 'N/A'}</div>
         <div class="kpi-comment">${k.comment}</div>
       </div>`;
     }).join('')}</div>`;
@@ -615,8 +763,8 @@ function renderAIResult(a, kpis) {
   let swHtml = '';
   if (a.strengths?.length || a.weaknesses?.length) {
     swHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">
-      <div class="sw-box"><div class="sw-title str"><i class="bi bi-check-circle-fill"></i> Điểm Mạnh</div>${(a.strengths||[]).map(s=>`<div class="sw-item"><span style="color:#4ade80">✓</span> ${s}</div>`).join('')}</div>
-      <div class="sw-box"><div class="sw-title weak"><i class="bi bi-x-circle-fill"></i> Điểm Yếu / Rủi Ro</div>${(a.weaknesses||[]).map(w=>`<div class="sw-item"><span style="color:#f87171">✗</span> ${w}</div>`).join('')}</div>
+      <div class="sw-box"><div class="sw-title str"><i class="bi bi-check-circle-fill"></i> Điểm Mạnh</div>${(a.strengths||[]).map(s=>{const p=typeof s==='string'?s:(s.point||'');const ev=typeof s==='object'&&s.evidence?`<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">${s.evidence}</div>`:'';return `<div class="sw-item"><span style="color:#4ade80">✓</span><div><strong>${p}</strong>${ev}</div></div>`;}).join('')}</div>
+      <div class="sw-box"><div class="sw-title weak"><i class="bi bi-x-circle-fill"></i> Điểm Yếu / Rủi Ro</div>${(a.weaknesses||[]).map(w=>{const p=typeof w==='string'?w:(w.point||'');const urg=typeof w==='object'&&w.urgency?`<span style="font-size:10px;background:rgba(239,68,68,.2);color:#f87171;padding:1px 5px;border-radius:3px;margin-left:4px">${w.urgency}</span>`:'';return `<div class="sw-item"><span style="color:#f87171">✗</span><div><strong>${p}</strong>${urg}</div></div>`;}).join('')}</div>
     </div>`;
   }
 
@@ -629,7 +777,8 @@ function renderAIResult(a, kpis) {
         const badgeCls = r.priority === 'Cao' ? 'rec-badge-high' : r.priority === 'Trung bình' ? 'rec-badge-mid' : 'rec-badge-low';
         return `<div class="rec-item ${cls}">
           <div class="rec-header"><span class="rec-badge ${badgeCls}">${r.priority}</span><span class="rec-title">${r.title}</span></div>
-          <div class="rec-desc">${r.description}</div>
+          <div class="rec-desc">${r.action||r.description||''}</div>
+          ${r.timeline?`<div style="font-size:11px;color:rgba(255,255,255,.38);margin-top:3px"><i class="bi bi-clock"></i> ${r.timeline}</div>`:''}
           ${r.expected_impact ? `<div class="rec-impact"><i class="bi bi-arrow-up-right"></i> ${r.expected_impact}</div>` : ''}
         </div>`;
       }).join('')}
@@ -648,61 +797,117 @@ function renderAIResult(a, kpis) {
 
 // ─── Render Forecast ──────────────────────────────────────────────────────────
 function renderForecast(a, kpis) {
-  if (!a?.forecast) {
-    document.getElementById('forecastResult').innerHTML = renderLocalForecast(kpis);
-    return;
-  }
+  if (!a?.forecast) { document.getElementById('forecastResult').innerHTML = renderLocalForecast(kpis); return; }
   const f = a.forecast;
-  const rows = f.monthly || [];
 
-  const tableHtml = `
-    <table class="forecast-table">
-      <thead><tr>
-        <th>Tháng</th><th>Ngân sách</th><th>Doanh thu DK</th><th>ROAS DK</th><th>CPA DK</th><th>CTR DK</th><th>Loại</th>
-      </tr></thead>
-      <tbody>${rows.map(r => `
-        <tr>
-          <td><strong>${r.month}</strong></td>
-          <td class="num">${fmtVnd(r.budget)}</td>
-          <td class="num" style="color:${r.label==='Thực tế'?'#fff':'#4ade80'}">${fmtVnd(r.revenue)}</td>
-          <td class="num" style="color:${r.label==='Thực tế'?'#fff':'#00d4ff'}">${typeof r.roas === 'number' ? r.roas.toFixed(2)+'x' : r.roas}</td>
-          <td class="num">${fmtVnd(r.cpa)}</td>
-          <td class="num">${r.ctr || '—'}</td>
-          <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:${r.label==='Thực tế'?'rgba(255,255,255,.08)':'rgba(0,212,255,.12)'};color:${r.label==='Thực tế'?'rgba(255,255,255,.5)':'#00d4ff'}">${r.label}</span></td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  const hasScenarios = f.scenario_optimized && f.scenario_baseline;
+  const optRows = hasScenarios ? (f.scenario_optimized.monthly || []) : (f.monthly || []);
+  const baseRows = hasScenarios ? (f.scenario_baseline.monthly || []) : [];
 
-  const assumptionsHtml = f.key_assumptions?.length
-    ? `<div style="margin-top:14px;background:rgba(255,255,255,.03);border-radius:8px;padding:12px 14px">
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Giả định dự báo</div>
-        ${f.key_assumptions.map(a => `<div style="font-size:12.5px;color:rgba(255,255,255,.55);padding:3px 0;display:flex;gap:6px"><span style="color:#00d4ff">•</span>${a}</div>`).join('')}
-      </div>` : '';
+  const mkTable = (rows, accentColor, extraColLabel) => {
+    const headerExtra = extraColLabel ? `<th style="min-width:120px">${extraColLabel}</th>` : '';
+    const bodyRows = rows.map((r,i) => {
+      const isReal = r.label === 'Thực tế';
+      const roasStr = typeof r.roas === 'number' ? r.roas.toFixed(2)+'x' : (r.roas || '—');
+      const extra = extraColLabel === 'Hành động' ? (r.actions_this_month || r.growth_driver || '—') : (r.decay_reason || '—');
+      const profitColor = (r.profit >= 0) ? '#4ade80' : '#f87171';
+      return `<tr style="${isReal ? '' : 'background:rgba(255,255,255,.02)'}">
+        <td><strong>${r.month}</strong>${isReal ? '<span style="font-size:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);padding:1px 6px;border-radius:10px;margin-left:6px">Thực tế</span>' : ''}</td>
+        <td class="num">${fmtVnd(r.budget)}</td>
+        <td class="num" style="color:${isReal ? '#fff' : accentColor}">${fmtVnd(r.revenue)}</td>
+        <td class="num" style="color:${isReal ? '#fff' : profitColor}">${fmtVnd(r.profit)}</td>
+        <td class="num" style="color:${isReal ? '#fff' : accentColor}">${roasStr}</td>
+        <td class="num">${fmtVnd(r.cpa)}</td>
+        <td class="num">${r.cvr || '—'}</td>
+        <td class="num">${r.ctr || '—'}</td>
+        ${extraColLabel ? `<td style="font-size:11px;color:rgba(255,255,255,.5);line-height:1.4">${extra}</td>` : ''}
+      </tr>`;
+    }).join('');
+    return `<div style="overflow-x:auto"><table class="forecast-table">
+      <thead><tr><th>Tháng</th><th>Ngân sách</th><th>Doanh thu</th><th>Lợi nhuận</th><th>ROAS</th><th>CPA</th><th>CVR</th><th>CTR</th>${headerExtra}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table></div>`;
+  };
 
-  document.getElementById('forecastResult').innerHTML = `
-    <div style="margin-bottom:14px;font-size:13px;color:rgba(255,255,255,.6);line-height:1.6;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:12px 14px">
-      <i class="bi bi-info-circle" style="color:#00d4ff"></i> ${f.summary || 'Dự báo dựa trên dữ liệu thực tế và giả định thực hiện các đề xuất tối ưu.'}
-    </div>
-    ${tableHtml}
-    <div class="chart-box" style="margin-top:16px">
-      <div class="chart-title"><i class="bi bi-graph-up"></i> Biểu Đồ Dự Báo 4 Tháng</div>
+  const mkTotalBox = (rows, color) => {
+    const fc = rows.filter(r => r.label !== 'Thực tế');
+    const totalRev = fc.reduce((s,r) => s + (r.revenue||0), 0);
+    const totalProfit = fc.reduce((s,r) => s + (r.profit||0), 0);
+    const totalSpend = fc.reduce((s,r) => s + (r.budget||0), 0);
+    const avgRoas = totalSpend > 0 ? (totalRev/totalSpend).toFixed(2) : '—';
+    const profitColor = totalProfit >= 0 ? '#4ade80' : '#f87171';
+    return `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px">
+      <div><div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Tổng DT 3 tháng</div><div style="font-size:15px;font-weight:800;color:${color}">${fmtVnd(totalRev)}</div></div>
+      <div><div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Tổng lợi nhuận</div><div style="font-size:15px;font-weight:800;color:${profitColor}">${fmtVnd(totalProfit)}</div></div>
+      <div><div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Tổng chi phí QC</div><div style="font-size:15px;font-weight:800">${fmtVnd(totalSpend)}</div></div>
+      <div><div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">ROAS trung bình</div><div style="font-size:15px;font-weight:800;color:${color}">${avgRoas}x</div></div>
+    </div>`;
+  };
+
+  let compHtml = '';
+  if (hasScenarios && f.comparison) {
+    const revDiff = f.comparison.revenue_difference || 0;
+    const profitDiff = f.comparison.profit_difference || 0;
+    compHtml = `<div style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(0,212,255,.08));border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px"><i class="bi bi-arrow-left-right"></i> So Sánh 2 Kịch Bản (3 Tháng Tới)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="text-align:center;padding:12px;background:rgba(34,197,94,.08);border-radius:8px">
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:6px">Doanh thu thêm nếu làm theo đề xuất</div>
+          <div style="font-size:24px;font-weight:800;color:#4ade80">+${fmtVnd(revDiff)}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:rgba(0,212,255,.08);border-radius:8px">
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:6px">Lợi nhuận thêm nếu làm theo đề xuất</div>
+          <div style="font-size:24px;font-weight:800;color:#00d4ff">+${fmtVnd(profitDiff)}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;border-top:1px solid rgba(255,255,255,.06);padding-top:10px">${f.comparison.verdict || ''}</div>
+    </div>`;
+  }
+
+  const allLabels = optRows.map(r => r.month);
+
+  let html = `
+    ${f.executive_summary ? `<div style="margin-bottom:14px;font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:14px 16px"><i class="bi bi-info-circle" style="color:#00d4ff"></i> <strong>Tóm tắt:</strong> ${f.executive_summary}</div>` : ''}
+    ${compHtml}
+    ${hasScenarios ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+      <div style="background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:12px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:4px"><i class="bi bi-check-circle-fill"></i> Kịch Bản Tối Ưu (Làm theo đề xuất)</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.5">${f.scenario_optimized.description||''}</div>
+        ${mkTable(optRows, '#4ade80', 'Hành động')}
+        ${mkTotalBox(optRows, '#4ade80')}
+        ${f.scenario_optimized.key_assumptions?.length ? `<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Giả định</div>${f.scenario_optimized.key_assumptions.map(x=>`<div style="font-size:11.5px;color:rgba(255,255,255,.5);padding:2px 0;display:flex;gap:6px"><span style="color:#4ade80">✓</span>${x}</div>`).join('')}</div>` : ''}
+      </div>
+      <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:14px">
+        <div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:4px"><i class="bi bi-exclamation-triangle-fill"></i> Kịch Bản Giữ Nguyên (Không thay đổi)</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.5">${f.scenario_baseline.description||''}</div>
+        ${mkTable(baseRows, '#f87171', 'Lý do suy giảm')}
+        ${mkTotalBox(baseRows, '#f87171')}
+        ${f.scenario_baseline.warning ? `<div style="margin-top:10px;padding:8px 10px;background:rgba(239,68,68,.08);border-radius:6px;font-size:11.5px;color:#f87171;line-height:1.5"><i class="bi bi-exclamation-triangle"></i> ${f.scenario_baseline.warning}</div>` : ''}
+      </div>
+    </div>` : mkTable(optRows, '#00d4ff', '')}
+    <div class="chart-box" style="margin-top:4px">
+      <div class="chart-title"><i class="bi bi-graph-up"></i> Biểu Đồ So Sánh 2 Kịch Bản</div>
       <div class="forecast-chart-wrap"><canvas id="chartForecast"></canvas></div>
     </div>
-    ${assumptionsHtml}`;
+    ${f.risk_factors?.length ? `<div style="margin-top:12px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:12px 14px"><div style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px"><i class="bi bi-shield-exclamation"></i> Rủi Ro Cần Lưu Ý</div>${f.risk_factors.map(r=>`<div style="font-size:12.5px;color:rgba(255,255,255,.55);padding:3px 0;display:flex;gap:6px"><span style="color:#fbbf24">⚠</span>${r}</div>`).join('')}</div>` : ''}`;
+
+  document.getElementById('forecastResult').innerHTML = html;
 
   setTimeout(() => {
     const ctx = document.getElementById('chartForecast');
     if (!ctx) return;
     if (charts['forecast']) { try { charts['forecast'].destroy(); } catch(e){} }
+    const datasets = [
+      { label: 'DT Kịch bản Tối ưu', data: optRows.map(r => r.revenue), backgroundColor: optRows.map((r,i) => i===0?'rgba(255,255,255,.2)':'rgba(34,197,94,.65)'), borderRadius: 6 }
+    ];
+    if (hasScenarios) {
+      datasets.push({ label: 'DT Giữ Nguyên', data: baseRows.map(r => r.revenue), backgroundColor: baseRows.map((r,i) => i===0?'rgba(255,255,255,.1)':'rgba(239,68,68,.5)'), borderRadius: 6 });
+    }
+    datasets.push({ label: 'Ngân sách', data: optRows.map(r => r.budget), type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, borderDash: [4,3] });
     charts['forecast'] = new Chart(ctx, {
       type: 'bar',
-      data: {
-        labels: rows.map(r => r.month),
-        datasets: [
-          { label: 'Doanh thu', data: rows.map(r => r.revenue), backgroundColor: rows.map((r,i) => i===0?'rgba(34,197,94,.6)':'rgba(0,212,255,.6)'), borderRadius: 6, order: 2 },
-          { label: 'Ngân sách', data: rows.map(r => r.budget), type: 'line', borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.1)', borderWidth: 2, pointRadius: 4, fill: true, order: 1 }
-        ]
-      },
+      data: { labels: allLabels, datasets },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { labels: { color: 'rgba(255,255,255,.6)', font: { size: 11 } } } },
@@ -715,7 +920,6 @@ function renderForecast(a, kpis) {
   }, 100);
 }
 
-// ─── Local Forecast fallback ──────────────────────────────────────────────────
 function renderLocalForecast(kpis) {
   const rows = [
     { month: 'Tháng hiện tại', roas: kpis.roas, budget: kpis.spend, label: 'Thực tế' },
