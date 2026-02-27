@@ -754,17 +754,37 @@
       let accounts = [];
       if (S.token) {
         const datePreset = document.getElementById('datePreset').value;
-        const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,currency,amount_spent,spend_cap,account_id,owner,business,account_type,timezone_id,timezone_name,country&limit=50&access_token=${S.token}`);
+        // Step 1: Get all ad accounts
+        const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,currency,amount_spent,spend_cap,account_id,timezone_id,timezone_name,country&limit=50&access_token=${S.token}`);
         const d = await r.json();
         if (d.error) throw new Error(d.error.message);
         accounts = d.data || [];
-        // Get insights for each account
-        await Promise.all(accounts.map(async acc => {
+        // Step 2: Batch API - get insights for ALL accounts in 1 single request
+        if (accounts.length > 0) {
           try {
-            const ins = await fetch(`${FB_GRAPH}/${acc.id}/insights?fields=spend,impressions,clicks,reach&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
-            acc._insights = ins.data?.[0] || {};
-          } catch(e) { acc._insights = {}; }
-        }));
+            const batchRequests = accounts.map(acc => ({
+              method: 'GET',
+              relative_url: `${acc.id}/insights?fields=spend,impressions,clicks,reach&date_preset=${datePreset}`
+            }));
+            const batchResp = await fetch(`${FB_GRAPH}/?batch=${encodeURIComponent(JSON.stringify(batchRequests))}&access_token=${S.token}&include_headers=false`, { method: 'POST' });
+            const batchData = await batchResp.json();
+            if (Array.isArray(batchData)) {
+              batchData.forEach((item, i) => {
+                try {
+                  if (item && item.code === 200) {
+                    const body = JSON.parse(item.body);
+                    accounts[i]._insights = body.data?.[0] || {};
+                  } else {
+                    accounts[i]._insights = {};
+                  }
+                } catch(e) { accounts[i]._insights = {}; }
+              });
+            }
+          } catch(e) {
+            // Batch failed - use amount_spent as fallback, no extra requests
+            accounts.forEach(acc => { acc._insights = {}; });
+          }
+        }
       } else if (S.jwt) {
         const r = await fetch(`${API_BASE}/api/facebook/proxy/my-ad-accounts`, {
           headers: { Authorization: `Bearer ${S.jwt}` }
