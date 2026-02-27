@@ -839,7 +839,7 @@
         <td style="color:#4ade80;font-weight:600">${vnd(parseFloat(acc.balance||0))}</td>
         <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(spend))}</td>
         <td onclick="event.stopPropagation()">
-          <button class="btn-icon btn-sm" onclick="event.stopPropagation();openEditTzModal('${acc.id}', ${safeName}, '${(acc.timezone_name||'').replace(/'/g,\"\\'\")}'  , '${acc.country||''}')" title="Sửa múi giờ / quốc gia" style="font-size:11px">
+          <button class="btn-icon btn-sm edit-tz-btn" data-id="${acc.id}" data-tz="${(acc.timezone_name||'').replace(/"/g,'&quot;')}" data-country="${acc.country||''}" title="Sửa múi giờ / quốc gia" style="font-size:11px" onclick="event.stopPropagation();(function(b){openEditTzModal(b.dataset.id,b.dataset.id,b.dataset.tz,b.dataset.country)})(this)">
             <i class="bi bi-pencil-square"></i>
           </button>
         </td>
