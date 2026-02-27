@@ -1203,8 +1203,27 @@
             if (data.warning) {
               toast('⚠️ Token Facebook sắp hết hạn (' + data.daysLeft + ' ngày). Nhấn "Gia Hạn Ngay" trong mục Kết Nối!', 'error');
             }
+          } else {
+            // API trả về connected: false — có thể do Facebook đang cấm API tạm thời
+            // Nếu trước đó đã kết nối (có gz_connected trong localStorage), giữ nguyên trạng thái
+            if (localStorage.getItem('gz_connected')) {
+              S.connected = true;
+              S.fbUser = JSON.parse(localStorage.getItem('gz_fb_user') || 'null');
+              S.pages = JSON.parse(localStorage.getItem('gz_pages') || '[]');
+              if (S.pages.length) renderPageSelect(S.pages);
+              updateConnUI();
+            }
           }
-        } catch(e) { /* silent fail */ }
+        } catch(e) {
+          // API lỗi (network, server down, FB cấm) — giữ nguyên trạng thái đã lưu
+          if (localStorage.getItem('gz_connected')) {
+            S.connected = true;
+            S.fbUser = JSON.parse(localStorage.getItem('gz_fb_user') || 'null');
+            S.pages = JSON.parse(localStorage.getItem('gz_pages') || '[]');
+            if (S.pages.length) renderPageSelect(S.pages);
+            updateConnUI();
+          }
+        }
       }, 500);
     }
   }
