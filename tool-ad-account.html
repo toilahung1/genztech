@@ -1354,31 +1354,20 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Đang cập nhật...';
     try {
-      // Facebook Marketing API: POST /{ad-account-id} with timezone_id or timezone_name
-      // Note: Facebook uses timezone_id (numeric) not timezone_name for updates
-      // We need to map timezone_name to timezone_id
-      const TZ_ID_MAP = {
-        'Asia/Ho_Chi_Minh': 217, 'Asia/Bangkok': 209, 'Asia/Jakarta': 213,
-        'Asia/Singapore': 219, 'Asia/Kuala_Lumpur': 216, 'Asia/Manila': 218,
-        'Asia/Shanghai': 210, 'Asia/Tokyo': 220, 'Asia/Seoul': 218,
-        'Asia/Kolkata': 212, 'Asia/Dubai': 211, 'Asia/Riyadh': 219,
-        'Europe/London': 100, 'Europe/Paris': 101, 'Europe/Berlin': 102,
-        'America/New_York': 1, 'America/Chicago': 2, 'America/Los_Angeles': 4,
-        'America/Toronto': 3, 'America/Sao_Paulo': 20, 'Australia/Sydney': 300,
-        'UTC': 0
-      };
-      const tzId = TZ_ID_MAP[timezone];
+      // Facebook Marketing API: POST /{ad-account-id}
+      // Use timezone_name (string) - Facebook accepts this directly
       const params = new URLSearchParams();
       params.append('access_token', S.token);
-      if (tzId !== undefined) params.append('timezone_id', tzId);
-      params.append('country', country);
+      if (timezone) params.append('timezone_name', timezone);
+      if (country) params.append('country', country);
       const r = await fetch(`${FB_GRAPH}/${_editTzAccId}`, {
         method: 'POST',
         body: params
       });
       const d = await r.json();
       if (d.error) throw new Error(`${d.error.message} (code: ${d.error.code})`);
-      if (d === true || d.success) {
+      // Facebook returns {success: true} or {id: "act_xxx"} on success
+      if (d.success || d.id || d === true) {
         toast('Cập nhật thành công!', 'success');
         // Update local state
         const acc = S.accounts.find(a => a.id === _editTzAccId);
@@ -1386,7 +1375,9 @@
         closeEditTzModal();
         renderAccounts(S.accounts);
       } else {
-        throw new Error('Facebook không xác nhận cập nhật');
+        // Log response for debugging
+        console.warn('[GenZTech] saveTimezone response:', d);
+        throw new Error('Không thể cập nhật. Phản hồi: ' + JSON.stringify(d).substring(0, 100));
       }
     } catch(e) {
       toast(e.message, 'error');
