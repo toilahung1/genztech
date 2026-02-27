@@ -6,11 +6,13 @@ const GZ = {
   API: 'https://genztech-production.up.railway.app',
 
   // ── Auth helpers ──
-  getToken: () => localStorage.getItem('genz_token') || '',
-  getFbToken: () => localStorage.getItem('fbAccessToken') || '',
-  getFbPages: () => JSON.parse(localStorage.getItem('fbPages') || '[]'),
-  isLoggedIn: () => !!localStorage.getItem('genz_token'),
-  isFbConnected: () => !!localStorage.getItem('fbAccessToken'),
+  getToken: () => localStorage.getItem('gz_jwt') || '',
+  getUsername: () => localStorage.getItem('gz_username') || '',
+  getFbToken: () => localStorage.getItem('gz_fb_token') || localStorage.getItem('fbAccessToken') || '',
+  getFbUser: () => JSON.parse(localStorage.getItem('gz_fb_user') || 'null'),
+  getFbPages: () => JSON.parse(localStorage.getItem('gz_pages') || localStorage.getItem('fbPages') || '[]'),
+  isLoggedIn: () => !!localStorage.getItem('gz_jwt'),
+  isFbConnected: () => !!localStorage.getItem('gz_connected'),
   authHeaders: function() {
     const h = { 'Content-Type': 'application/json' };
     const t = this.getToken();
@@ -116,8 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Show FB connection warning if not connected
-  const fbToken = GZ.getFbToken();
-  if (!fbToken) {
+  const fbConnected = GZ.isFbConnected();
+  if (!fbConnected) {
     const subtitle = document.querySelector('.page-subtitle');
     if (subtitle) {
       const notice = document.createElement('div');
