@@ -43,6 +43,9 @@ app.use((req, res) => res.status(404).json({ error: `Route không tồn tại: $
 // ── Global Error Handler ──
 app.use((err, req, res, next) => {
   console.error('[Error]', err.message);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   res.status(err.status || 500).json({ error: err.message || 'Lỗi server nội bộ' });
 });
 

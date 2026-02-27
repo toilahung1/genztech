@@ -176,16 +176,45 @@ Trả về JSON object duy nhất, không có text thừa, không có markdown.
     }
   ],
   "forecast": {
-    "summary": "<Tóm tắt dự báo 2-3 câu với giả định chính và kết quả kỳ vọng>",
-    "model_note": "<Ghi chú về mô hình dự báo và yếu tố không chắc chắn>",
-    "monthly": [
-      { "month": "Tháng hiện tại", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Thực tế" },
-      { "month": "Tháng 2 (Dự báo)", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "growth_driver": "<Yếu tố thúc đẩy tăng trưởng>" },
-      { "month": "Tháng 3 (Dự báo)", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "growth_driver": "<Yếu tố thúc đẩy>" },
-      { "month": "Tháng 4 (Dự báo)", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "growth_driver": "<Yếu tố thúc đẩy>" }
-    ],
-    "key_assumptions": ["<Giả định 1 cụ thể với số liệu>", "<Giả định 2>", "<Giả định 3>"],
-    "risk_factors": ["<Rủi ro 1 có thể làm dự báo sai lệch>", "<Rủi ro 2>"]
+    "executive_summary": "<Tóm tắt 3-4 câu so sánh 2 kịch bản: nếu làm theo đề xuất sẽ đạt X, nếu giữ nguyên sẽ chỉ đạt Y. Phải có số liệu cụ thể.>",
+    "methodology": "<Giải thích cách tính: dựa trên dữ liệu tháng 1, áp dụng hệ số cải thiện từng chỉ số theo đề xuất. Ví dụ: CTR cải thiện 40% → clicks tăng → conversions tăng → ROAS tăng.>",
+    "scenario_optimized": {
+      "label": "Kịch bản Tối ưu (Làm theo đề xuất)",
+      "description": "<Mô tả 2-3 câu: thực hiện những đề xuất nào, kỳ vọng cải thiện gì>",
+      "monthly": [
+        { "month": "Tháng 1 (Thực tế)", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Thực tế", "note": "Dữ liệu thực tế tháng đầu" },
+        { "month": "Tháng 2", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "actions_this_month": "<Hành động cụ thể tháng này: Tuần 1 làm gì, Tuần 2 làm gì...>", "expected_change": "<Thay đổi kỳ vọng so với tháng trước: CTR +X%, CVR +Y%, ROAS +Z>" },
+        { "month": "Tháng 3", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "actions_this_month": "<Hành động tháng 3>", "expected_change": "<Thay đổi kỳ vọng>" },
+        { "month": "Tháng 4", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "actions_this_month": "<Hành động tháng 4>", "expected_change": "<Thay đổi kỳ vọng>" }
+      ],
+      "total_3month_revenue": 0,
+      "total_3month_profit": 0,
+      "total_3month_spend": 0,
+      "avg_roas": 0.0,
+      "key_assumptions": ["<Giả định 1: CTR cải thiện X% nhờ thay creative>", "<Giả định 2: CVR tăng Y% nhờ tối ưu landing page>", "<Giả định 3>"]
+    },
+    "scenario_baseline": {
+      "label": "Kịch bản Giữ Nguyên (Không thay đổi)",
+      "description": "<Mô tả điều gì xảy ra nếu không làm gì: audience fatigue, CPM tăng, CTR giảm dần...>",
+      "monthly": [
+        { "month": "Tháng 1 (Thực tế)", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Thực tế", "note": "Dữ liệu thực tế tháng đầu" },
+        { "month": "Tháng 2", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "decay_reason": "<Lý do suy giảm: audience fatigue, frequency tăng, CTR giảm...>", "expected_change": "<Thay đổi dự kiến: CTR -X%, CPM +Y%...>" },
+        { "month": "Tháng 3", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "decay_reason": "<Lý do tiếp tục suy giảm>", "expected_change": "<Thay đổi dự kiến>" },
+        { "month": "Tháng 4", "budget": 0, "revenue": 0, "profit": 0, "roas": 0.0, "cpa": 0, "cvr": "0%", "ctr": "0%", "conversions": 0, "label": "Dự báo", "decay_reason": "<Lý do>", "expected_change": "<Thay đổi dự kiến>" }
+      ],
+      "total_3month_revenue": 0,
+      "total_3month_profit": 0,
+      "total_3month_spend": 0,
+      "avg_roas": 0.0,
+      "warning": "<Cảnh báo: nếu không thay đổi, điều gì tệ nhất có thể xảy ra trong 3 tháng tới>"
+    },
+    "comparison": {
+      "revenue_difference": 0,
+      "profit_difference": 0,
+      "roas_difference": 0.0,
+      "verdict": "<Kết luận 2-3 câu: làm theo đề xuất mang lại thêm X doanh thu, Y lợi nhuận so với giữ nguyên. Đây là lý do tại sao phải hành động ngay.>"
+    },
+    "risk_factors": ["<Rủi ro 1 ảnh hưởng cả 2 kịch bản>", "<Rủi ro 2>", "<Rủi ro 3>"]
   }
 }
 
@@ -315,6 +344,8 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const result = await callOpenAI(systemPrompt, prompt, 800, false);
     res.json({ success: true, result });
   } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.error('[AI Error]', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -362,6 +393,8 @@ QUAN TRỌNG: Phân tích phải THỰC TẾ, THẲNG THẮN, KHÔNG CHUNG CHUNG
     }
     res.json({ success: true, analysis });
   } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.error('[AI Error]', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -436,6 +469,8 @@ QUAN TRỌNG: Phân tích phải dựa trên bằng chứng từ nội dung HTML
     try { analysis = JSON.parse(raw); } catch { analysis = { raw }; }
     res.json({ success: true, analysis, url: competitorUrl });
   } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.error('[AI Error]', e.message);
     res.status(500).json({ error: e.message });
   }
 });
