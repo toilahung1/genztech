@@ -1,0 +1,159 @@
+const express = require('express');
+const axios = require('axios');
+const { authMiddleware, prisma } = require('../middleware/auth');
+
+const router = express.Router();
+const FB_GRAPH = 'https://graph.facebook.com/v25.0';
+
+// Helper: lấy FB token của user
+async function getUserFbToken(userId) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { fbToken: true } });
+  return user?.fbToken || null;
+}
+
+// Helper: gọi Facebook API
+async function fbGet(path, params) {
+  const r = await axios.get(`${FB_GRAPH}/${path}`, { params, timeout: 15000 });
+  return r.data;
+}
+
+async function fbPost(path, params) {
+  const r = await axios.post(`${FB_GRAPH}/${path}`, null, { params, timeout: 15000 });
+  return r.data;
+}
+
+// GET /api/facebook/proxy/my-ad-accounts
+router.get('/my-ad-accounts', authMiddleware, async (req, res) => {
+  try {
+    const token = await getUserFbToken(req.user.id);
+    if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook. Vui lòng kết nối tại trang Tự Động Đăng Bài.' });
+
+    const datePreset = req.query.date_preset || 'last_30d';
+    const data = await fbGet('me/adaccounts', {
+      fields: 'id,name,account_status,balance,currency,amount_spent,spend_cap,timezone_id,timezone_name,country',
+      limit: 50,
+      access_token: token
+    });
+    res.json({ accounts: data.data || [] });
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+// GET /api/facebook/proxy/ad-account/:accountId — Campaigns của một TKQC
+router.get('/ad-account/:accountId', authMiddleware, async (req, res) => {
+  try {
+    const token = await getUserFbToken(req.user.id);
+    if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
+
+    const { accountId } = req.params;
+    const datePreset = req.query.date_preset || 'last_30d';
+
+    const data = await fbGet(`${accountId}/campaigns`, {
+      fields: 'id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time',
+      limit: 100,
+      access_token: token
+    });
+    const campaigns = data.data || [];
+
+    // Fetch insights in parallel
+    await Promise.all(campaigns.map(async c => {
+      try {
+        const ins = await fbGet(`${c.id}/insights`, {
+          fields: 'spend,impressions,clicks,ctr,cpc,reach',
+          date_preset: datePreset,
+          access_token: token
+        });
+        c.insights = { data: ins.data || [] };
+      } catch { c.insights = { data: [] }; }
+    }));
+
+    res.json({ campaigns });
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+// POST /api/facebook/proxy/pause-campaigns
+router.post('/pause-campaigns', authMiddleware, async (req, res) => {
+  try {
+    const token = await getUserFbToken(req.user.id);
+    if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
+
+    const { accountId, level, reason } = req.body;
+    const data = await fbGet(`${accountId}/campaigns`, { fields: 'id,name,status', limit: 100, access_token: token });
+    const active = (data.data || []).filter(c => c.status === 'ACTIVE');
+
+    await Promise.all(active.map(c =>
+      fbPost(`${c.id}`, { status: 'PAUSED', access_token: token }).catch(() => {})
+    ));
+
+    res.json({ success: true, paused: active.length, reason });
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+// GET /api/facebook/proxy/find-id?query=...
+router.get('/find-id', async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ error: 'Thiếu query' });
+    const token = process.env.FB_DEFAULT_TOKEN;
+    if (!token) return res.status(400).json({ error: 'Chưa cấu hình FB_DEFAULT_TOKEN trên server' });
+    const data = await fbGet('', { id: query, access_token: token });
+    res.json(data);
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+// GET /api/facebook/proxy/ad-library
+router.get('/ad-library', async (req, res) => {
+  try {
+    const token = process.env.FB_DEFAULT_TOKEN;
+    if (!token) return res.status(400).json({ error: 'Chưa cấu hình FB_DEFAULT_TOKEN' });
+    const params = { ...req.query, access_token: token };
+    const data = await fbGet('ads_archive', params);
+    res.json(data);
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+// Generic proxy — GET /api/facebook/proxy/:path (*)
+router.get('/*', authMiddleware, async (req, res) => {
+  try {
+    const token = await getUserFbToken(req.user.id);
+    if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
+
+    const path = req.params[0];
+    const data = await fbGet(path, { ...req.query, access_token: token });
+    res.json(data);
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+// Generic proxy — POST /api/facebook/proxy/:path (*)
+router.post('/*', authMiddleware, async (req, res) => {
+  try {
+    const token = await getUserFbToken(req.user.id);
+    if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
+
+    const path = req.params[0];
+    const data = await fbPost(path, { ...req.body, ...req.query, access_token: token });
+    res.json(data);
+  } catch (e) {
+    const msg = e.response?.data?.error?.message || e.message;
+    res.status(500).json({ error: msg });
+  }
+});
+
+module.exports = router;
