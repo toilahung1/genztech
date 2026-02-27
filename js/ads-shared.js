@@ -117,14 +117,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (a.getAttribute('href') === path) a.classList.add('active');
   });
 
-  // Show FB connection warning if not connected
-  const fbConnected = GZ.isFbConnected();
-  if (!fbConnected) {
+  // Show login warning if not logged in
+  if (!GZ.isLoggedIn()) {
     const subtitle = document.querySelector('.page-subtitle');
     if (subtitle) {
       const notice = document.createElement('div');
       notice.style.cssText = 'background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:10px;padding:10px 14px;font-size:12.5px;color:rgba(255,255,255,.5);margin-bottom:16px;display:flex;align-items:center;gap:8px';
-      notice.innerHTML = '⚠️ Chưa kết nối Facebook — một số tính năng sẽ dùng dữ liệu demo. <a href="auto-post.html" style="color:#fbbf24;text-decoration:none;font-weight:600">Kết nối ngay →</a>';
+      notice.innerHTML = '⚠️ Chưa đăng nhập — <a href="auto-post.html" style="color:#fbbf24;text-decoration:none;font-weight:600">Đăng nhập ngay →</a>';
+      subtitle.insertAdjacentElement('afterend', notice);
+    }
+  }
+
+  // Show FB warning only on pages that require FB (data-require-fb attribute on body)
+  const requireFb = document.body && document.body.dataset.requireFb;
+  if (requireFb && !GZ.isFbConnected()) {
+    const subtitle = document.querySelector('.page-subtitle');
+    if (subtitle) {
+      const notice = document.createElement('div');
+      notice.id = 'fbWarningBanner';
+      notice.style.cssText = 'background:rgba(24,119,242,.06);border:1px solid rgba(24,119,242,.2);border-radius:10px;padding:10px 14px;font-size:12.5px;color:rgba(255,255,255,.6);margin-bottom:16px;display:flex;align-items:center;gap:8px';
+      notice.innerHTML = '<i class="bi bi-facebook" style="color:#1877f2"></i> Chưa kết nối Facebook — tính năng này cần Facebook. <a href="auto-post.html" style="color:#1877f2;text-decoration:none;font-weight:600">Kết nối ngay →</a>';
       subtitle.insertAdjacentElement('afterend', notice);
     }
   }
