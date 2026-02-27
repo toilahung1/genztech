@@ -295,14 +295,15 @@
     if (v && !el.value.startsWith('act_')) el.value = v;
   }
 
-  // Check if FB connected
+  // Check if logged in (not FB connected — backend proxy handles FB token)
   document.addEventListener('DOMContentLoaded', () => {
-    if (!GZ.isFbConnected()) {
+    if (!GZ.isLoggedIn()) {
       document.getElementById('fbConnWarn').style.display = 'flex';
+      document.getElementById('fbConnWarn').innerHTML = '<i class="bi bi-exclamation-triangle"></i> Chưa đăng nhập GenZTech — <a href="auto-post.html" style="color:#fbbf24;text-decoration:none;font-weight:600">Đăng nhập ngay</a>';
     }
   });
 
-  // Load my ad accounts
+  // Load my ad accounts — gọi qua backend proxy
   async function loadMyAccounts() {
     const section = document.getElementById('myAccountsSection');
     const list = document.getElementById('myAccountsList');
@@ -310,9 +311,8 @@
     list.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.4);font-size:13px"><span class="spinner"></span> Đang tải danh sách TKQC...</div>';
 
     try {
-      const data = await GZ.fbApi('me/adaccounts', {
-        fields: 'id,name,account_status,balance,currency,amount_spent'
-      });
+      const resp = await GZ.api('/api/facebook/proxy/my-ad-accounts');
+      const data = { data: resp.accounts || [] };
 
       if (!data.data || !data.data.length) {
         list.innerHTML = '<div class="empty-state"><i class="bi bi-collection"></i><p>Không tìm thấy tài khoản quảng cáo nào</p></div>';
@@ -335,7 +335,10 @@
           </div>
         </div>`).join('');
     } catch(e) {
-      list.innerHTML = `<div style="color:#f87171;font-size:13px;padding:12px"><i class="bi bi-x-circle"></i> ${e.message}</div>`;
+      const msg = e.message.includes('403') || e.message.includes('Chưa kết nối')
+        ? 'Chưa kết nối Facebook. Vui lòng kết nối tại trang Tự Động Đăng Bài.'
+        : e.message;
+      list.innerHTML = `<div style="color:#f87171;font-size:13px;padding:12px"><i class="bi bi-x-circle"></i> ${msg}</div>`;
     }
   }
 
@@ -361,43 +364,11 @@
     try {
       let accountData, insightData, campaignData;
 
-      if (GZ.isFbConnected()) {
-        // Real Facebook API calls
-        [accountData, insightData, campaignData] = await Promise.all([
-          GZ.fbApi(id, {
-            fields: 'id,name,account_status,balance,amount_spent,currency,timezone_name,spend_cap,daily_spend_limit,created_time,funding_source_details,owner'
-          }),
-          GZ.fbApi(`${id}/insights`, {
-            fields: 'spend,impressions,clicks,ctr,cpm,cpp,reach',
-            date_preset: dateRange,
-            level: 'account'
-          }).catch(() => ({ data: [] })),
-          GZ.fbApi(`${id}/campaigns`, {
-            fields: 'id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time',
-            effective_status: '["ACTIVE","PAUSED"]',
-            limit: 10
-          }).catch(() => ({ data: [] }))
-        ]);
-      } else {
-        // Demo data
-        await new Promise(r => setTimeout(r, 800));
-        accountData = {
-          id: id, name: 'Demo Ad Account', account_status: 1,
-          balance: '2500000', amount_spent: '15750000', currency: 'VND',
-          timezone_name: 'Asia/Ho_Chi_Minh', spend_cap: '50000000',
-          daily_spend_limit: '2000000', created_time: '2023-01-15T00:00:00+0000',
-          funding_source_details: { display_string: 'Thẻ Visa **** 4242' }
-        };
-        insightData = { data: [{ spend: '15750000', impressions: '285000', clicks: '4275', ctr: '1.5', cpm: '55263', reach: '180000' }] };
-        campaignData = {
-          data: [
-            { id: '1001', name: 'Chiến dịch bán hàng tháng 2', status: 'ACTIVE', objective: 'CONVERSIONS', daily_budget: '500000' },
-            { id: '1002', name: 'Remarketing khách cũ', status: 'ACTIVE', objective: 'REACH', daily_budget: '300000' },
-            { id: '1003', name: 'Brand awareness Q1', status: 'PAUSED', objective: 'BRAND_AWARENESS', daily_budget: '200000' }
-          ]
-        };
-        GZ.toast('Đang hiển thị dữ liệu demo (chưa kết nối Facebook)', 'info');
-      }
+      // Gọi qua backend proxy (backend dùng token đã lưu trong DB)
+      const resp = await GZ.api(`/api/facebook/proxy/ad-account/${id}?date_preset=${dateRange}`);
+      accountData = resp.account;
+      insightData = { data: resp.insights ? [resp.insights] : [] };
+      campaignData = { data: resp.campaigns || [] };
 
       renderResult(accountData, insightData, campaignData, dateRange);
       document.getElementById('lastChecked').textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
