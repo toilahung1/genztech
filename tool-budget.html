@@ -540,7 +540,8 @@ function fmtVnd(n) {
   return n.toLocaleString('vi-VN');
 }
 function fmtPct(n) { return isNaN(n) ? '—' : n.toFixed(2) + '%'; }
-function fmtX(n) { return isNaN(n) ? '—' : n.toFixe// ─── Load sample data ────────────────────────────────────────────────────────────────────────────────
+function fmtX(n) { return isNaN(n) ? '—' : n.toFixed(2) + 'x'; }
+// ─── Load sample data ────────────────────────────────────────────────────────────────────────────────
 function loadSample() {
   document.getElementById('industry').value = 'Thời trang & Phụ kiện';
   document.getElementById('objective').value = 'Chuyển đổi (Conversions)';
@@ -565,14 +566,19 @@ function loadSample() {
   document.getElementById('adSetCount').value = 3;
   document.getElementById('creativeCount').value = 5;
   document.getElementById('extraNotes').value = 'Frequency đang tăng, lo ngại audience fatigue. Mùa hè sắp tới có thể tăng nhu cầu.';
-  toast('Đã điền dữ liệu m// ─── Reset form ────────────────────────────────────────────────────────────────────────────────
+  toast('Đã điền dữ liệu mẫu', 'info');
+}
+// ─── Reset form ────────────────────────────────────────────────────────────────────────────────
 function resetForm() {
   ['totalSpend','totalRevenue','impressions','clicks','conversions','frequency','aov','cogs','nextBudget','otherCost','reach','addToCart','adSetCount','creativeCount','businessDesc','extraNotes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   document.getElementById('kpiSummary').style.display = 'none';
-  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){}// ─── Compute KPIs ────────────────────────────────────────────────────────────────────────────────
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+}
+// ─── Compute KPIs ────────────────────────────────────────────────────────────────────────────────
 function computeKPIs() {
   const spend = +document.getElementById('totalSpend').value || 0;
   const revenue = +document.getElementById('totalRevenue').value || 0;
@@ -599,7 +605,8 @@ function computeKPIs() {
   const cpm_reach = reach > 0 ? (spend / reach * 1000) : 0;
 
   return { spend, revenue, impressions, clicks, conversions, frequency, aov, cogs, otherCost, reach, addToCart, cpm, ctr, cpc, cvr, cpa, roas, profit, roi, cartAbandonment, cpm_reach };
-} ─── Render KPI stats row ─────────────────────────────────────────────────────
+}
+// ─── Render KPI stats row ─────────────────────────────────────────────────────
 function renderStats(kpis) {
   const items = [
     { label: 'ROAS', value: fmtX(kpis.roas), sub: kpis.roas >= 3 ? '✓ Tốt' : kpis.roas >= 2 ? '~ Trung bình' : '✗ Yếu', color: kpis.roas >= 3 ? '#22c55e' : kpis.roas >= 2 ? '#f59e0b' : '#ef4444' },
