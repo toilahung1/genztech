@@ -2,438 +2,952 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phân Tích Ngân Sách — Genztech</title>
-  <link rel="stylesheet" href="css/main.css">
+  <title>Phân Tích Ngân Sách — GenZTech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none}
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none;margin:0;padding:0;font-family:'Inter',sans-serif;background:#080c1e;color:#fff}
     html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
-    .app-layout{display:flex;min-height:100vh}
-    .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
-    .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
-    .sidebar-logo img{width:36px;height:36px;border-radius:50%}
-    .sidebar-logo span{font-size:15px;font-weight:700;letter-spacing:.5px;color:#fff}
+    canvas.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    #custom-cursor{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,212,255,.8);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s;opacity:0;mix-blend-mode:screen}
+    .app-layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{width:240px;flex-shrink:0;background:rgba(10,14,39,.92);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:34px;height:34px;border-radius:50%}
+    .sidebar-logo span{font-size:14px;font-weight:700;letter-spacing:.5px;color:#fff}
     .sidebar-logo span em{color:#00d4ff;font-style:normal}
-    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
-    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:12px 20px 4px}
-    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:10px 18px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
     .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
     .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
-    .nav-item i{width:18px;text-align:center;font-size:15px}
-    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
-    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
-    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+    .nav-item i{width:17px;text-align:center;font-size:14px}
+    .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 34px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-sub-item.active{color:#22c55e;background:rgba(34,197,94,.06);border-left-color:#22c55e}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.06)}
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:12.5px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
     .breadcrumb span{color:#fff;font-weight:600}
-    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
-    .btn-primary{background:#22c55e;color:#fff}
-    .btn-primary:hover{background:#16a34a;transform:translateY(-1px)}
-    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
-    .btn-outline:hover{border-color:#22c55e;color:#22c55e}
-    .page-body{padding:28px;flex:1}
-    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
-    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
-    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
-    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
-    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
-    .card-title i{color:#4ade80}
-    .card-body{padding:20px}
-    .form-group{margin-bottom:16px}
-    .form-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px;display:block}
-    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;color:#fff;font-size:13.5px;transition:border-color .2s;box-sizing:border-box;font-family:inherit}
-    .form-control:focus{outline:none;border-color:#22c55e}
+    .btn{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif}
+    .btn-primary{background:#22c55e;color:#fff}.btn-primary:hover{background:#16a34a;transform:translateY(-1px)}
+    .btn-blue{background:#1877f2;color:#fff}.btn-blue:hover{background:#1565d8}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}.btn-outline:hover{border-color:#22c55e;color:#22c55e}
+    .btn-sm{padding:5px 12px;font-size:12px}
+    .btn-icon{padding:6px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);border-radius:8px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:5px;transition:all .2s;font-family:'Inter',sans-serif}.btn-icon:hover{background:rgba(255,255,255,.1);color:#fff}
+    .page-body{padding:20px 24px;flex:1}
+    .card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;margin-bottom:16px}
+    .card-header{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-body{padding:18px}
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px}
+    .form-control{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 13px;color:#fff;font-size:13px;transition:border-color .2s;box-sizing:border-box;font-family:'Inter',sans-serif}
+    .form-control:focus{outline:none;border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.08)}
     .form-control::placeholder{color:rgba(255,255,255,.25)}
     select.form-control option{background:#1a2035}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     @media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
     @media(max-width:768px){.grid-2{grid-template-columns:1fr}.sidebar{display:none}.main-content{margin-left:0}}
-    .result-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;text-align:center}
-    .result-stat-label{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
-    .result-stat-value{font-size:20px;font-weight:800;line-height:1}
-    .result-stat-sub{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px}
-    .scenario-card{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;transition:all .2s;cursor:pointer}
-    .scenario-card:hover{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.05)}
-    .scenario-card.selected{border-color:#22c55e;background:rgba(34,197,94,.08)}
-    .scenario-name{font-size:13px;font-weight:700;margin-bottom:8px}
-    .scenario-row{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px}
+    /* KPI Cards */
+    .kpi-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px;text-align:center;transition:all .2s}
+    .kpi-label{font-size:10.5px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+    .kpi-value{font-size:22px;font-weight:800;line-height:1.1;margin-bottom:3px}
+    .kpi-sub{font-size:11px;color:rgba(255,255,255,.3)}
+    .kpi-card.good{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.05)}
+    .kpi-card.warn{border-color:rgba(251,191,36,.25);background:rgba(251,191,36,.05)}
+    .kpi-card.bad{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.05)}
+    /* Slider */
+    .range-wrap{position:relative;margin-top:4px}
+    .range-input{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:rgba(255,255,255,.1);outline:none}
+    .range-input::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#22c55e;cursor:pointer;box-shadow:0 0 6px rgba(34,197,94,.5)}
+    .range-val{position:absolute;right:0;top:-18px;font-size:11.5px;font-weight:700;color:#4ade80}
+    /* Scenario */
+    .scenario-card{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;transition:all .2s;cursor:pointer}
+    .scenario-card:hover{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04)}
+    .scenario-card.selected{border-color:#22c55e;background:rgba(34,197,94,.07)}
+    .scenario-name{font-size:12.5px;font-weight:700;margin-bottom:8px}
+    .scenario-row{display:flex;justify-content:space-between;font-size:11.5px;color:rgba(255,255,255,.5);margin-bottom:3px}
     .scenario-row strong{color:#fff}
-    .insight-item{background:rgba(0,0,0,.2);border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid transparent}
-    .insight-item.good{border-left-color:#22c55e}
-    .insight-item.warn{border-left-color:#fbbf24}
-    .insight-item.bad{border-left-color:#ef4444}
-    .insight-title{font-size:13px;font-weight:700;margin-bottom:3px}
-    .insight-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
-    .range-wrap{position:relative}
-    .range-input{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.1);outline:none;margin-top:8px}
-    .range-input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#22c55e;cursor:pointer;box-shadow:0 0 8px rgba(34,197,94,.5)}
-    .range-val{position:absolute;right:0;top:-2px;font-size:12px;font-weight:700;color:#4ade80}
-    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
-    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
-    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
-    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    /* AI Analysis */
+    .ai-status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:600}
+    .ai-status-badge.good{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+    .ai-status-badge.warn{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+    .ai-status-badge.bad{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+    .ai-score-ring{width:80px;height:80px;position:relative;margin:0 auto 12px}
+    .ai-score-ring svg{transform:rotate(-90deg)}
+    .ai-score-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;font-weight:800}
+    .kpi-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+    .kpi-row:last-child{border-bottom:none}
+    .kpi-row-name{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.7)}
+    .kpi-row-val{font-size:12.5px;font-weight:700}
+    .kpi-row-bench{font-size:11px;color:rgba(255,255,255,.35)}
+    .kpi-row-comment{font-size:11.5px;color:rgba(255,255,255,.45);margin-top:2px}
+    .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .status-dot.good{background:#22c55e}
+    .status-dot.warn{background:#fbbf24}
+    .status-dot.bad{background:#ef4444}
+    .rec-card{background:rgba(0,0,0,.2);border-radius:10px;padding:13px 15px;margin-bottom:8px;border-left:3px solid transparent}
+    .rec-card.high{border-left-color:#ef4444}
+    .rec-card.medium{border-left-color:#fbbf24}
+    .rec-card.low{border-left-color:#22c55e}
+    .rec-priority{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+    .rec-title{font-size:13px;font-weight:700;margin-bottom:4px}
+    .rec-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.6}
+    .rec-impact{font-size:11px;color:#4ade80;margin-top:6px;display:flex;align-items:center;gap:4px}
+    /* Spinner */
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.15);border-top-color:#22c55e;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
     @keyframes spin{to{transform:rotate(360deg)}}
+    /* Toast */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast-item{background:rgba(15,23,42,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+    .toast-item.success{border-left:3px solid #22c55e}
+    .toast-item.error{border-left:3px solid #ef4444}
+    .toast-item.info{border-left:3px solid #60a5fa}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    /* Tabs */
+    .tab-bar{display:flex;gap:3px;padding:4px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:18px}
+    .tab-btn{flex:1;padding:8px 10px;border:none;border-radius:7px;background:transparent;color:rgba(255,255,255,.45);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'Inter',sans-serif}
+    .tab-btn.active{background:rgba(34,197,94,.15);color:#4ade80;box-shadow:0 0 0 1px rgba(34,197,94,.2)}
+    .tab-pane{display:none}.tab-pane.active{display:block}
+    .chart-container{position:relative;height:220px}
+    .empty-ai{text-align:center;padding:40px 20px;color:rgba(255,255,255,.3)}
+    .empty-ai i{font-size:40px;display:block;margin-bottom:12px;opacity:.4}
   </style>
 </head>
-<body class="bg-space-black text-white antialiased overflow-x-hidden">
-  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
-  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
-  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
-  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
-    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
-  </div>
-  <div class="toast-container" id="toastContainer"></div>
+<body>
+<canvas class="bg-canvas" id="bgCanvas"></canvas>
+<div id="custom-cursor"></div>
+<div id="toast"></div>
 
-  <div class="app-layout relative z-10">
-    <aside class="sidebar">
-      <a href="index.html" class="sidebar-logo"><img src="images/logo.png" alt="Logo"><span>GENZ<em>TECH</em></span></a>
-      <nav class="sidebar-nav">
-        <div class="nav-group-label">Tổng quan</div>
-        <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-        <div class="nav-group-label">Công cụ</div>
-        <a href="auto-post.html" class="nav-item"><i class="bi bi-send-fill"></i> Tự Động Đăng Bài</a>
-        <a href="ads-assistant.html" class="nav-item"><i class="bi bi-robot"></i> Trợ Lý Quảng Cáo</a>
-        <div class="nav-sub">
-          <a href="tool-ad-account.html" class="nav-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
-          <a href="tool-fb-id.html" class="nav-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
-          <a href="tool-budget.html" class="nav-item active"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
-          <a href="tool-translate.html" class="nav-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
-          <a href="tool-ads-finder.html" class="nav-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
-          <a href="tool-policy.html" class="nav-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
-          <a href="tool-cookie.html" class="nav-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+<div class="app-layout">
+  <aside class="sidebar">
+    <a href="index.html" class="sidebar-logo">
+      <img src="https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff&bold=true" alt="logo">
+      <span>GENZ<em>TECH</em></span>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Công Cụ</div>
+      <a href="index.html" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+      <a href="auto-post.html" class="nav-item"><i class="bi bi-send"></i> Tự Động Đăng Bài</a>
+      <a href="ads-assistant.html" class="nav-item" onclick="toggleSubNav(event,'subNavAds')">
+        <i class="bi bi-megaphone"></i> Trợ Lý Quảng Cáo
+        <i class="bi bi-chevron-down" id="subNavAdsArrow" style="margin-left:auto;font-size:11px;transition:transform .2s;transform:rotate(180deg)"></i>
+      </a>
+      <div id="subNavAds" style="display:block">
+        <a href="tool-ad-account.html" class="nav-sub-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+        <a href="tool-fb-id.html" class="nav-sub-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+        <a href="tool-budget.html" class="nav-sub-item active"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+        <a href="tool-translate.html" class="nav-sub-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+        <a href="tool-ads-finder.html" class="nav-sub-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+        <a href="tool-policy.html" class="nav-sub-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+        <a href="tool-cookie.html" class="nav-sub-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+      </div>
+      <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:11px;color:rgba(255,255,255,.3);display:flex;align-items:center;gap:6px">
+        <i class="bi bi-graph-up-arrow" style="color:#22c55e"></i> Phân Tích Ngân Sách v3.0
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
+        <i class="bi bi-chevron-right" style="font-size:10px"></i>
+        <span>Phân Tích Ngân Sách</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="resetForm()"><i class="bi bi-arrow-counterclockwise"></i> Đặt lại</button>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="bi bi-download"></i> Xuất CSV</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- ── Nhập liệu ── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="bi bi-sliders" style="color:#22c55e"></i> Thông Số Chiến Dịch</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="calculate()"><i class="bi bi-calculator"></i> Tính Toán</button>
+            <button class="btn btn-blue btn-sm" onclick="analyzeWithAI()" id="aiBtn"><i class="bi bi-stars"></i> Phân Tích AI</button>
+          </div>
         </div>
-        <div class="nav-group-label">Hệ thống</div>
-        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Cài Đặt</a>
-      </nav>
-    </aside>
-
-    <div class="main-content">
-      <header class="topbar">
-        <div class="breadcrumb">
-          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
-          <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
-          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Phân Tích Ngân Sách</span>
-        </div>
-        <div style="display:flex;gap:10px">
-          <button class="btn-sm btn-outline" onclick="resetForm()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
-          <button class="btn-sm btn-primary" onclick="calculate()"><i class="bi bi-calculator"></i> Tính Toán</button>
-        </div>
-      </header>
-
-      <main class="page-body">
-        <h1 class="page-title"><i class="bi bi-graph-up-arrow" style="color:#4ade80"></i> Phân Tích & Tối Ưu Ngân Sách</h1>
-        <p class="page-subtitle">Tính toán ROAS, CPA, CPM và dự báo kết quả chiến dịch. Nhận gợi ý phân bổ ngân sách tối ưu từ AI</p>
-
-        <div class="grid-2">
-          <!-- Input -->
-          <div>
-            <div class="card">
-              <div class="card-header"><div class="card-title"><i class="bi bi-sliders"></i> Thông Số Chiến Dịch</div></div>
-              <div class="card-body">
-                <div class="grid-2" style="gap:12px">
-                  <div class="form-group" style="margin:0">
-                    <label class="form-label">Ngân sách ngày (VNĐ)</label>
-                    <input type="number" class="form-control" id="dailyBudget" value="500000" min="10000" oninput="calculate()">
-                  </div>
-                  <div class="form-group" style="margin:0">
-                    <label class="form-label">Số ngày chạy</label>
-                    <input type="number" class="form-control" id="numDays" value="30" min="1" max="365" oninput="calculate()">
-                  </div>
+        <div class="card-body">
+          <div class="grid-2" style="gap:20px">
+            <div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label class="form-label">Ngành / Lĩnh vực</label>
+                  <select class="form-control" id="industry">
+                    <option value="ecommerce">eCommerce / TMĐT</option>
+                    <option value="education">Giáo dục / Khóa học</option>
+                    <option value="beauty">Làm đẹp / Spa</option>
+                    <option value="food">Ẩm thực / F&B</option>
+                    <option value="realestate">Bất động sản</option>
+                    <option value="finance">Tài chính / Bảo hiểm</option>
+                    <option value="health">Sức khỏe / Y tế</option>
+                    <option value="service">Dịch vụ khác</option>
+                  </select>
                 </div>
-                <div style="margin-top:14px">
+                <div class="form-group">
                   <label class="form-label">Mục tiêu chiến dịch</label>
-                  <select class="form-control" id="objective" onchange="calculate()">
-                    <option value="sales">Bán hàng (Conversions)</option>
-                    <option value="leads">Thu thập khách hàng (Leads)</option>
-                    <option value="traffic">Lưu lượng truy cập (Traffic)</option>
-                    <option value="awareness">Nhận thức thương hiệu (Awareness)</option>
-                    <option value="messages">Tin nhắn (Messages)</option>
+                  <select class="form-control" id="objective">
+                    <option value="conversions">Chuyển đổi / Mua hàng</option>
+                    <option value="messages">Tin nhắn</option>
+                    <option value="leads">Tạo khách hàng tiềm năng</option>
+                    <option value="traffic">Lưu lượng truy cập</option>
+                    <option value="awareness">Nhận thức thương hiệu</option>
+                    <option value="engagement">Tương tác</option>
                   </select>
                 </div>
               </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart-line"></i> Chỉ Số Kỳ Vọng</div></div>
-              <div class="card-body">
+              <div class="grid-2">
                 <div class="form-group">
-                  <label class="form-label">CPM kỳ vọng (VNĐ / 1000 lượt hiển thị)</label>
-                  <div class="range-wrap">
-                    <input type="range" class="range-input" id="cpmRange" min="10000" max="200000" value="50000" step="5000" oninput="syncCpm(this.value);calculate()">
-                    <span class="range-val" id="cpmVal">50,000</span>
-                  </div>
-                  <input type="number" class="form-control" id="cpmInput" value="50000" style="margin-top:8px" oninput="syncCpm(this.value,true);calculate()">
+                  <label class="form-label">Ngân sách ngày (VNĐ)</label>
+                  <input type="number" class="form-control" id="dailyBudget" value="500000" min="0" oninput="calculate()">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">CTR kỳ vọng (%)</label>
-                  <div class="range-wrap">
-                    <input type="range" class="range-input" id="ctrRange" min="0.1" max="10" value="1.5" step="0.1" oninput="syncCtr(this.value);calculate()">
-                    <span class="range-val" id="ctrVal">1.5%</span>
-                  </div>
+                  <label class="form-label">Số ngày chạy</label>
+                  <input type="number" class="form-control" id="numDays" value="30" min="1" oninput="calculate()">
                 </div>
-                <div class="form-group" id="convGroup">
-                  <label class="form-label">Tỷ lệ chuyển đổi (%)</label>
-                  <div class="range-wrap">
-                    <input type="range" class="range-input" id="convRange" min="0.1" max="20" value="2" step="0.1" oninput="syncConv(this.value);calculate()">
-                    <span class="range-val" id="convVal">2.0%</span>
-                  </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">CPM — Chi phí 1,000 lần hiển thị (VNĐ) <span class="range-val" id="cpmVal">50,000</span></label>
+                <div class="range-wrap">
+                  <input type="range" class="range-input" id="cpmRange" min="10000" max="300000" step="5000" value="50000" oninput="syncRange('cpm')">
                 </div>
-                <div class="form-group" id="aovGroup">
-                  <label class="form-label">Giá trị đơn hàng trung bình (VNĐ)</label>
-                  <input type="number" class="form-control" id="aov" value="350000" oninput="calculate()">
+                <input type="number" class="form-control" id="cpmInput" value="50000" style="margin-top:8px" oninput="syncInput('cpm')">
+              </div>
+              <div class="form-group">
+                <label class="form-label">CTR — Tỷ lệ nhấp (%) <span class="range-val" id="ctrVal">1.5%</span></label>
+                <div class="range-wrap">
+                  <input type="range" class="range-input" id="ctrRange" min="0.1" max="10" step="0.1" value="1.5" oninput="syncRange('ctr')">
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Results -->
-          <div>
-            <div class="grid-4" style="margin-bottom:20px" id="statsGrid">
-              <div class="result-stat"><div class="result-stat-label">Tổng Ngân Sách</div><div class="result-stat-value" id="rTotalBudget" style="color:#4ade80">—</div><div class="result-stat-sub">toàn chiến dịch</div></div>
-              <div class="result-stat"><div class="result-stat-label">Lượt Hiển Thị</div><div class="result-stat-value" id="rImpressions" style="color:#60a5fa">—</div><div class="result-stat-sub">ước tính</div></div>
-              <div class="result-stat"><div class="result-stat-label">Lượt Click</div><div class="result-stat-value" id="rClicks" style="color:#c084fc">—</div><div class="result-stat-sub">ước tính</div></div>
-              <div class="result-stat"><div class="result-stat-label">Chuyển Đổi</div><div class="result-stat-value" id="rConversions" style="color:#fbbf24">—</div><div class="result-stat-sub">ước tính</div></div>
-            </div>
-
-            <div class="card">
-              <div class="card-header"><div class="card-title"><i class="bi bi-trophy"></i> Chỉ Số Hiệu Quả</div></div>
-              <div class="card-body">
-                <div class="grid-2" style="gap:12px">
-                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
-                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">CPA (Chi phí/chuyển đổi)</div>
-                    <div style="font-size:22px;font-weight:800;color:#fbbf24" id="rCPA">—</div>
-                  </div>
-                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
-                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">CPC (Chi phí/click)</div>
-                    <div style="font-size:22px;font-weight:800;color:#c084fc" id="rCPC">—</div>
-                  </div>
-                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
-                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">ROAS (Doanh thu/chi phí)</div>
-                    <div style="font-size:22px;font-weight:800;color:#4ade80" id="rROAS">—</div>
-                  </div>
-                  <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:14px;text-align:center">
-                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Doanh thu ước tính</div>
-                    <div style="font-size:18px;font-weight:800;color:#38bdf8" id="rRevenue">—</div>
-                  </div>
+            <div>
+              <div class="form-group">
+                <label class="form-label">Tỷ lệ chuyển đổi (%) <span class="range-val" id="convVal">2.0%</span></label>
+                <div class="range-wrap">
+                  <input type="range" class="range-input" id="convRange" min="0.1" max="30" step="0.1" value="2" oninput="syncRange('conv')">
                 </div>
               </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header"><div class="card-title"><i class="bi bi-lightbulb"></i> Phân Tích & Gợi Ý</div></div>
-              <div class="card-body" id="insightsBody">
-                <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Nhập thông số để xem phân tích</div>
+              <div class="form-group">
+                <label class="form-label">Giá trị đơn hàng trung bình - AOV (VNĐ)</label>
+                <input type="number" class="form-control" id="aov" value="350000" min="0" oninput="calculate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Chi phí sản xuất / COGS (VNĐ, để tính lợi nhuận)</label>
+                <input type="number" class="form-control" id="cogs" value="0" min="0" placeholder="0 = bỏ qua" oninput="calculate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tần suất hiển thị (Frequency)</label>
+                <input type="number" class="form-control" id="frequency" value="1.5" min="1" step="0.1" oninput="calculate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ghi chú / Mô tả chiến dịch (cho AI)</label>
+                <input type="text" class="form-control" id="campaignNote" placeholder="VD: Chiến dịch bán áo hè, target 25-35 tuổi, Hà Nội...">
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Scenarios -->
+      <!-- ── KPI Cards ── -->
+      <div class="grid-4" id="kpiCards" style="margin-bottom:16px">
+        <div class="kpi-card" id="kpiImpressions">
+          <div class="kpi-label">Lượt hiển thị</div>
+          <div class="kpi-value" style="color:#60a5fa">—</div>
+          <div class="kpi-sub">Impressions</div>
+        </div>
+        <div class="kpi-card" id="kpiClicks">
+          <div class="kpi-label">Lượt nhấp</div>
+          <div class="kpi-value" style="color:#a78bfa">—</div>
+          <div class="kpi-sub">Clicks</div>
+        </div>
+        <div class="kpi-card" id="kpiConversions">
+          <div class="kpi-label">Chuyển đổi</div>
+          <div class="kpi-value" style="color:#4ade80">—</div>
+          <div class="kpi-sub">Conversions</div>
+        </div>
+        <div class="kpi-card" id="kpiROAS">
+          <div class="kpi-label">ROAS</div>
+          <div class="kpi-value" style="color:#fbbf24">—</div>
+          <div class="kpi-sub">Return on Ad Spend</div>
+        </div>
+        <div class="kpi-card" id="kpiCPC">
+          <div class="kpi-label">CPC</div>
+          <div class="kpi-value" style="color:#f87171">—</div>
+          <div class="kpi-sub">Chi phí / nhấp</div>
+        </div>
+        <div class="kpi-card" id="kpiCPA">
+          <div class="kpi-label">CPA</div>
+          <div class="kpi-value" style="color:#fb923c">—</div>
+          <div class="kpi-sub">Chi phí / chuyển đổi</div>
+        </div>
+        <div class="kpi-card" id="kpiRevenue">
+          <div class="kpi-label">Doanh thu dự kiến</div>
+          <div class="kpi-value" style="color:#34d399">—</div>
+          <div class="kpi-sub">Tổng doanh thu</div>
+        </div>
+        <div class="kpi-card" id="kpiProfit">
+          <div class="kpi-label">Lợi nhuận</div>
+          <div class="kpi-value" style="color:#22c55e">—</div>
+          <div class="kpi-sub">Sau chi phí QC</div>
+        </div>
+      </div>
+
+      <!-- ── Tabs: Biểu đồ + AI + Kịch bản ── -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabCharts" onclick="switchTab('charts')"><i class="bi bi-bar-chart"></i> Biểu Đồ</button>
+        <button class="tab-btn" id="tabAI" onclick="switchTab('ai')"><i class="bi bi-stars"></i> Phân Tích AI</button>
+        <button class="tab-btn" id="tabScenario" onclick="switchTab('scenario')"><i class="bi bi-layers"></i> Kịch Bản</button>
+      </div>
+
+      <!-- ── Tab: Biểu đồ ── -->
+      <div id="paneCharts" class="tab-pane active">
+        <div class="grid-2">
+          <!-- Biểu đồ 1: Phân bổ ngân sách theo kịch bản -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-bar-chart-fill" style="color:#60a5fa"></i> So Sánh Kịch Bản Ngân Sách</div>
+            </div>
+            <div class="card-body"><div class="chart-container"><canvas id="chartScenario"></canvas></div></div>
+          </div>
+          <!-- Biểu đồ 2: Funnel chuyển đổi -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-funnel-fill" style="color:#a78bfa"></i> Phễu Chuyển Đổi</div>
+            </div>
+            <div class="card-body"><div class="chart-container"><canvas id="chartFunnel"></canvas></div></div>
+          </div>
+          <!-- Biểu đồ 3: ROAS theo ngân sách -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-graph-up" style="color:#4ade80"></i> ROAS Theo Mức Ngân Sách</div>
+            </div>
+            <div class="card-body"><div class="chart-container"><canvas id="chartROAS"></canvas></div></div>
+          </div>
+          <!-- Biểu đồ 4: Chi phí breakdown -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-pie-chart-fill" style="color:#fbbf24"></i> Phân Tích Chi Phí</div>
+            </div>
+            <div class="card-body"><div class="chart-container"><canvas id="chartCost"></canvas></div></div>
+          </div>
+        </div>
+        <!-- Biểu đồ 5: Dự báo doanh thu theo ngày -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title"><i class="bi bi-layers"></i> So Sánh Kịch Bản Ngân Sách</div>
-            <button class="btn-sm btn-outline" onclick="exportScenarios()"><i class="bi bi-download"></i> Xuất báo cáo</button>
+            <div class="card-title"><i class="bi bi-calendar-range" style="color:#34d399"></i> Dự Báo Tích Lũy Theo Ngày</div>
           </div>
-          <div class="card-body">
-            <div class="grid-3" id="scenariosGrid">
-              <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px;grid-column:1/-1">Nhập thông số và nhấn "Tính Toán" để xem so sánh kịch bản</div>
+          <div class="card-body"><div class="chart-container" style="height:200px"><canvas id="chartTrend"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- ── Tab: AI ── -->
+      <div id="paneAI" class="tab-pane">
+        <div id="aiEmpty">
+          <div class="card">
+            <div class="card-body">
+              <div class="empty-ai">
+                <i class="bi bi-stars"></i>
+                <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:8px">Chưa có phân tích AI</div>
+                <div style="font-size:12.5px;color:rgba(255,255,255,.3);margin-bottom:16px">Nhập thông số chiến dịch và nhấn <strong style="color:#22c55e">Phân Tích AI</strong> để nhận nhận xét chuyên sâu</div>
+                <button class="btn btn-blue" onclick="analyzeWithAI()"><i class="bi bi-stars"></i> Phân Tích AI Ngay</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Chart -->
-        <div class="card">
-          <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart"></i> Biểu Đồ Dự Báo Chi Tiêu Theo Ngày</div></div>
-          <div class="card-body"><canvas id="budgetChart" height="100"></canvas></div>
+        <div id="aiLoading" style="display:none">
+          <div class="card">
+            <div class="card-body" style="display:flex;align-items:center;gap:14px;padding:28px;color:rgba(255,255,255,.5)">
+              <span class="spinner" style="width:20px;height:20px;border-top-color:#60a5fa"></span>
+              <div>
+                <div style="font-size:13.5px;font-weight:600;color:#fff">AI đang phân tích chiến dịch...</div>
+                <div style="font-size:12px;margin-top:3px">Đang áp dụng benchmark Facebook Ads Việt Nam và đề xuất cải thiện</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-      </main>
+        <div id="aiResult" style="display:none">
+          <!-- Overview -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-stars" style="color:#fbbf24"></i> Tổng Quan Chiến Dịch</div>
+              <div id="aiStatusBadge"></div>
+            </div>
+            <div class="card-body">
+              <div class="grid-2" style="align-items:center">
+                <div>
+                  <div class="ai-score-ring" id="aiScoreRing">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8"/>
+                      <circle id="aiScoreCircle" cx="40" cy="40" r="34" fill="none" stroke="#22c55e" stroke-width="8" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"/>
+                    </svg>
+                    <div class="ai-score-text" id="aiScoreNum" style="color:#22c55e">—</div>
+                  </div>
+                  <div style="text-align:center;font-size:11px;color:rgba(255,255,255,.35)">Điểm tổng thể</div>
+                </div>
+                <div>
+                  <div style="font-size:13.5px;line-height:1.7;color:rgba(255,255,255,.75)" id="aiSummary">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI Analysis -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-activity" style="color:#60a5fa"></i> Phân Tích Chỉ Số KPI</div>
+            </div>
+            <div class="card-body" id="aiKPIBody"></div>
+          </div>
+
+          <!-- Strengths & Weaknesses -->
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-hand-thumbs-up-fill" style="color:#4ade80"></i> Điểm Mạnh</div>
+              </div>
+              <div class="card-body" id="aiStrengths"></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-exclamation-triangle-fill" style="color:#f87171"></i> Điểm Yếu</div>
+              </div>
+              <div class="card-body" id="aiWeaknesses"></div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-lightbulb-fill" style="color:#fbbf24"></i> Đề Xuất Cải Thiện</div>
+            </div>
+            <div class="card-body" id="aiRecommendations"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Kịch bản ── -->
+      <div id="paneScenario" class="tab-pane">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-layers" style="color:#a78bfa"></i> So Sánh Kịch Bản Ngân Sách</div>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="bi bi-download"></i> Xuất CSV</button>
+          </div>
+          <div class="card-body">
+            <div class="grid-3" id="scenarioCards" style="gap:12px"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
+</div>
 
-  <script src="js/ads-shared.js"></script>
-  <script>
-  let chartInstance = null;
+<script>
+const API_BASE = 'https://genztech-production.up.railway.app';
+let charts = {};
+let lastMetrics = null;
 
-  function syncCpm(v, fromInput) {
-    const n = parseInt(v) || 50000;
-    document.getElementById('cpmRange').value = Math.min(200000, Math.max(10000, n));
-    document.getElementById('cpmInput').value = n;
-    document.getElementById('cpmVal').textContent = GZ.num(n);
+// ── Helpers ──
+const vnd = n => new Intl.NumberFormat('vi-VN').format(Math.round(n)) + ' VNĐ';
+const num = n => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+const pct = n => n.toFixed(1) + '%';
+const x = n => n.toFixed(2) + 'x';
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  const icons = {success:'check-circle-fill', error:'x-circle-fill', info:'info-circle-fill'};
+  el.innerHTML = `<i class="bi bi-${icons[type]||'info-circle-fill'}" style="color:${type==='success'?'#4ade80':type==='error'?'#f87171':'#60a5fa'}"></i> ${msg}`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function syncRange(type) {
+  if (type === 'cpm') {
+    const v = document.getElementById('cpmRange').value;
+    document.getElementById('cpmVal').textContent = new Intl.NumberFormat('vi-VN').format(v);
+    document.getElementById('cpmInput').value = v;
+  } else if (type === 'ctr') {
+    const v = document.getElementById('ctrRange').value;
+    document.getElementById('ctrVal').textContent = v + '%';
+  } else if (type === 'conv') {
+    const v = document.getElementById('convRange').value;
+    document.getElementById('convVal').textContent = v + '%';
   }
-  function syncCtr(v) {
-    document.getElementById('ctrVal').textContent = parseFloat(v).toFixed(1) + '%';
+  calculate();
+}
+
+function syncInput(type) {
+  if (type === 'cpm') {
+    const v = document.getElementById('cpmInput').value;
+    document.getElementById('cpmRange').value = v;
+    document.getElementById('cpmVal').textContent = new Intl.NumberFormat('vi-VN').format(v);
   }
-  function syncConv(v) {
-    document.getElementById('convVal').textContent = parseFloat(v).toFixed(1) + '%';
+  calculate();
+}
+
+// ── Tính toán chính ──
+function calculate() {
+  const daily = parseFloat(document.getElementById('dailyBudget').value) || 0;
+  const days = parseInt(document.getElementById('numDays').value) || 30;
+  const cpm = parseFloat(document.getElementById('cpmInput').value) || 50000;
+  const ctr = parseFloat(document.getElementById('ctrRange').value) / 100;
+  const cvr = parseFloat(document.getElementById('convRange').value) / 100;
+  const aov = parseFloat(document.getElementById('aov').value) || 0;
+  const cogs = parseFloat(document.getElementById('cogs').value) || 0;
+  const freq = parseFloat(document.getElementById('frequency').value) || 1.5;
+
+  const totalBudget = daily * days;
+  const impressions = (totalBudget / cpm) * 1000;
+  const clicks = impressions * ctr;
+  const conversions = clicks * cvr;
+  const cpc = clicks > 0 ? totalBudget / clicks : 0;
+  const cpa = conversions > 0 ? totalBudget / conversions : 0;
+  const revenue = conversions * aov;
+  const roas = totalBudget > 0 ? revenue / totalBudget : 0;
+  const profit = revenue - totalBudget - (cogs * conversions);
+  const reach = impressions / freq;
+
+  lastMetrics = { daily, days, totalBudget, cpm, ctr: ctr*100, cvr: cvr*100, aov, cogs, freq, impressions, clicks, conversions, cpc, cpa, revenue, roas, profit, reach };
+
+  // Update KPI cards
+  setKPI('kpiImpressions', num(impressions), 'Impressions', '#60a5fa', null);
+  setKPI('kpiClicks', num(clicks), 'Clicks', '#a78bfa', null);
+  setKPI('kpiConversions', num(conversions), 'Conversions', '#4ade80', null);
+  setKPI('kpiROAS', x(roas), 'Return on Ad Spend', '#fbbf24', roas >= 3 ? 'good' : roas >= 1.5 ? 'warn' : 'bad');
+  setKPI('kpiCPC', vnd(cpc), 'Chi phí / nhấp', '#f87171', cpc < 4000 ? 'good' : cpc < 8000 ? 'warn' : 'bad');
+  setKPI('kpiCPA', vnd(cpa), 'Chi phí / chuyển đổi', '#fb923c', null);
+  setKPI('kpiRevenue', vnd(revenue), 'Tổng doanh thu', '#34d399', null);
+  setKPI('kpiProfit', vnd(profit), profit >= 0 ? 'Có lãi' : 'Lỗ', profit >= 0 ? '#22c55e' : '#ef4444', profit >= 0 ? 'good' : 'bad');
+
+  renderCharts(daily, days, impressions, clicks, conversions, revenue, totalBudget, cpm, ctr, cvr, aov, cpa, cpc, roas);
+  renderScenarios(daily, days, cpm, ctr, cvr, aov, cogs);
+}
+
+function setKPI(id, value, sub, color, status) {
+  const el = document.getElementById(id);
+  el.querySelector('.kpi-value').textContent = value;
+  el.querySelector('.kpi-value').style.color = color;
+  el.querySelector('.kpi-sub').textContent = sub;
+  el.className = 'kpi-card' + (status ? ' ' + status : '');
+}
+
+// ── Biểu đồ ──
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+const chartDefaults = {
+  plugins: { legend: { labels: { color: 'rgba(255,255,255,.6)', font: { size: 11 } } } },
+  scales: {
+    x: { ticks: { color: 'rgba(255,255,255,.4)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.05)' } },
+    y: { ticks: { color: 'rgba(255,255,255,.4)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.05)' } }
   }
+};
 
-  function calculate() {
-    const daily = parseInt(document.getElementById('dailyBudget').value) || 500000;
-    const days = parseInt(document.getElementById('numDays').value) || 30;
-    const cpm = parseInt(document.getElementById('cpmInput').value) || 50000;
-    const ctr = parseFloat(document.getElementById('ctrRange').value) || 1.5;
-    const conv = parseFloat(document.getElementById('convRange').value) || 2;
-    const aov = parseInt(document.getElementById('aov').value) || 350000;
-    const obj = document.getElementById('objective').value;
+function renderCharts(daily, days, impressions, clicks, conversions, revenue, totalBudget, cpm, ctr, cvr, aov, cpa, cpc, roas) {
+  // 1. Bar: So sánh kịch bản
+  destroyChart('chartScenario');
+  const scenarios = [0.5, 1, 1.5, 2, 3];
+  const scenarioLabels = ['50%', '100%\n(Hiện tại)', '150%', '200%', '300%'];
+  charts.chartScenario = new Chart(document.getElementById('chartScenario'), {
+    type: 'bar',
+    data: {
+      labels: scenarioLabels,
+      datasets: [
+        { label: 'Chi phí (triệu VNĐ)', data: scenarios.map(s => +(daily * s * days / 1e6).toFixed(2)), backgroundColor: 'rgba(96,165,250,.7)', borderRadius: 6 },
+        { label: 'Doanh thu (triệu VNĐ)', data: scenarios.map(s => +((daily * s * days / cpm * 1000) * ctr * cvr * aov / 1e6).toFixed(2)), backgroundColor: 'rgba(34,197,94,.7)', borderRadius: 6 }
+      ]
+    },
+    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+  });
 
-    const total = daily * days;
-    const impressions = Math.round((total / cpm) * 1000);
-    const clicks = Math.round(impressions * (ctr / 100));
-    const conversions = Math.round(clicks * (conv / 100));
-    const cpc = clicks > 0 ? total / clicks : 0;
-    const cpa = conversions > 0 ? total / conversions : 0;
-    const revenue = conversions * aov;
-    const roas = total > 0 ? revenue / total : 0;
-
-    document.getElementById('rTotalBudget').textContent = GZ.vnd(total);
-    document.getElementById('rImpressions').textContent = GZ.num(impressions);
-    document.getElementById('rClicks').textContent = GZ.num(clicks);
-    document.getElementById('rConversions').textContent = GZ.num(conversions);
-    document.getElementById('rCPA').textContent = GZ.vnd(Math.round(cpa));
-    document.getElementById('rCPC').textContent = GZ.vnd(Math.round(cpc));
-    document.getElementById('rROAS').textContent = roas.toFixed(2) + 'x';
-    document.getElementById('rRevenue').textContent = GZ.vnd(revenue);
-
-    renderInsights(daily, total, cpm, ctr, conv, cpa, roas, obj);
-    renderScenarios(daily, days, cpm, ctr, conv, aov);
-    renderChart(daily, days);
-  }
-
-  function renderInsights(daily, total, cpm, ctr, conv, cpa, roas, obj) {
-    const insights = [];
-
-    if (cpm > 100000) insights.push({ type: 'warn', title: 'CPM cao', desc: `CPM ${GZ.vnd(cpm)} khá cao. Thử thu hẹp đối tượng hoặc tối ưu creative để giảm CPM xuống 40,000–70,000 VNĐ.` });
-    else if (cpm < 20000) insights.push({ type: 'good', title: 'CPM tốt', desc: `CPM ${GZ.vnd(cpm)} rất cạnh tranh. Duy trì đối tượng và creative hiện tại.` });
-
-    if (ctr < 0.8) insights.push({ type: 'bad', title: 'CTR thấp', desc: `CTR ${ctr}% dưới mức trung bình (1–2%). Cần cải thiện creative: thử video ngắn, headline mạnh hơn.` });
-    else if (ctr > 3) insights.push({ type: 'good', title: 'CTR xuất sắc', desc: `CTR ${ctr}% rất cao! Creative đang hoạt động tốt. Có thể tăng ngân sách để scale.` });
-
-    if (obj === 'sales') {
-      if (roas < 1) insights.push({ type: 'bad', title: 'ROAS âm', desc: `ROAS ${roas.toFixed(2)}x — đang lỗ. Cần tăng giá trị đơn hàng hoặc giảm CPA xuống dưới ${GZ.vnd(parseInt(document.getElementById('aov').value))}.` });
-      else if (roas >= 3) insights.push({ type: 'good', title: 'ROAS tốt', desc: `ROAS ${roas.toFixed(2)}x — chiến dịch đang có lãi tốt. Có thể scale ngân sách lên 20–30%.` });
-      else if (roas >= 1.5) insights.push({ type: 'warn', title: 'ROAS trung bình', desc: `ROAS ${roas.toFixed(2)}x — đang có lãi nhưng chưa tối ưu. Mục tiêu ROAS ≥ 3x cho ngành TMĐT.` });
+  // 2. Horizontal bar: Funnel
+  destroyChart('chartFunnel');
+  charts.chartFunnel = new Chart(document.getElementById('chartFunnel'), {
+    type: 'bar',
+    data: {
+      labels: ['Hiển thị', 'Nhấp', 'Chuyển đổi'],
+      datasets: [{
+        label: 'Số lượng',
+        data: [impressions, clicks, conversions],
+        backgroundColor: ['rgba(96,165,250,.7)', 'rgba(167,139,250,.7)', 'rgba(74,222,128,.7)'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { ...chartDefaults.plugins, legend: { display: false } }
     }
+  });
 
-    if (daily < 100000) insights.push({ type: 'warn', title: 'Ngân sách ngày thấp', desc: 'Ngân sách dưới 100,000 VNĐ/ngày có thể khiến Facebook không đủ dữ liệu để tối ưu. Khuyến nghị tối thiểu 200,000–500,000 VNĐ/ngày.' });
+  // 3. Line: ROAS theo ngân sách
+  destroyChart('chartROAS');
+  const budgetRange = [100000, 200000, 300000, 500000, 700000, 1000000, 1500000, 2000000];
+  charts.chartROAS = new Chart(document.getElementById('chartROAS'), {
+    type: 'line',
+    data: {
+      labels: budgetRange.map(b => (b/1000).toFixed(0) + 'K'),
+      datasets: [{
+        label: 'ROAS (x)',
+        data: budgetRange.map(b => {
+          const imp = (b / cpm) * 1000;
+          const rev = imp * ctr * cvr * aov;
+          return +(rev / b).toFixed(2);
+        }),
+        borderColor: '#4ade80',
+        backgroundColor: 'rgba(74,222,128,.1)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#4ade80',
+        pointRadius: 4
+      }, {
+        label: 'Hòa vốn (1x)',
+        data: budgetRange.map(() => 1),
+        borderColor: 'rgba(239,68,68,.5)',
+        borderDash: [5, 5],
+        pointRadius: 0
+      }]
+    },
+    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+  });
 
-    if (insights.length === 0) insights.push({ type: 'good', title: 'Thông số ổn định', desc: 'Các chỉ số đang ở mức tốt. Theo dõi sau 3–5 ngày chạy để có dữ liệu thực tế và điều chỉnh.' });
+  // 4. Doughnut: Chi phí breakdown
+  destroyChart('chartCost');
+  const adSpend = totalBudget;
+  const cogsTotal = (parseFloat(document.getElementById('cogs').value) || 0) * conversions;
+  const profitVal = Math.max(0, revenue - adSpend - cogsTotal);
+  charts.chartCost = new Chart(document.getElementById('chartCost'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Chi phí QC', 'COGS', 'Lợi nhuận'],
+      datasets: [{
+        data: [adSpend / 1e6, cogsTotal / 1e6, profitVal / 1e6].map(v => +v.toFixed(2)),
+        backgroundColor: ['rgba(248,113,113,.8)', 'rgba(251,191,36,.8)', 'rgba(34,197,94,.8)'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,.6)', font: { size: 11 }, padding: 12 } } }
+    }
+  });
 
-    const colors = { good: '#22c55e', warn: '#fbbf24', bad: '#ef4444' };
-    document.getElementById('insightsBody').innerHTML = insights.map(i => `
-      <div class="insight-item ${i.type}">
-        <div class="insight-title" style="color:${colors[i.type]}">${i.type==='good'?'✅':i.type==='warn'?'⚠️':'❌'} ${i.title}</div>
-        <div class="insight-desc">${i.desc}</div>
-      </div>`).join('');
-  }
-
-  function renderScenarios(daily, days, cpm, ctr, conv, aov) {
-    const scenarios = [
-      { name: 'Thấp (50%)', budget: daily * 0.5, color: '#60a5fa' },
-      { name: 'Hiện tại', budget: daily, color: '#4ade80', selected: true },
-      { name: 'Tăng 50%', budget: daily * 1.5, color: '#fbbf24' },
-      { name: 'Tăng 2x', budget: daily * 2, color: '#f87171' },
-      { name: 'Tăng 3x', budget: daily * 3, color: '#c084fc' },
-    ];
-    document.getElementById('scenariosGrid').style.gridTemplateColumns = 'repeat(5,1fr)';
-    document.getElementById('scenariosGrid').innerHTML = scenarios.map(s => {
-      const total = s.budget * days;
-      const imp = Math.round((total / cpm) * 1000);
-      const clicks = Math.round(imp * (ctr / 100));
-      const convs = Math.round(clicks * (conv / 100));
-      const revenue = convs * aov;
-      const roas = total > 0 ? revenue / total : 0;
-      return `<div class="scenario-card ${s.selected ? 'selected' : ''}">
-        <div class="scenario-name" style="color:${s.color}">${s.name}</div>
-        <div class="scenario-row"><span>Ngân sách/ngày</span><strong>${GZ.vnd(Math.round(s.budget))}</strong></div>
-        <div class="scenario-row"><span>Tổng ngân sách</span><strong>${GZ.vnd(Math.round(total))}</strong></div>
-        <div class="scenario-row"><span>Lượt hiển thị</span><strong>${GZ.num(imp)}</strong></div>
-        <div class="scenario-row"><span>Chuyển đổi</span><strong>${GZ.num(convs)}</strong></div>
-        <div class="scenario-row"><span>Doanh thu</span><strong style="color:${s.color}">${GZ.vnd(revenue)}</strong></div>
-        <div class="scenario-row"><span>ROAS</span><strong style="color:${roas>=3?'#4ade80':roas>=1.5?'#fbbf24':'#f87171'}">${roas.toFixed(2)}x</strong></div>
-      </div>`;
-    }).join('');
-  }
-
-  function renderChart(daily, days) {
-    const ctx = document.getElementById('budgetChart').getContext('2d');
-    if (chartInstance) chartInstance.destroy();
-    const labels = Array.from({length: Math.min(days, 30)}, (_, i) => `Ngày ${i+1}`);
-    const data = labels.map((_, i) => {
-      const factor = 0.7 + Math.sin(i * 0.3) * 0.2 + (i / labels.length) * 0.3;
-      return Math.round(daily * factor);
-    });
-    chartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Chi tiêu ngày (VNĐ)',
-          data,
-          borderColor: '#22c55e',
-          backgroundColor: 'rgba(34,197,94,0.08)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: days <= 14 ? 4 : 2,
-          pointBackgroundColor: '#22c55e'
-        }, {
-          label: 'Ngân sách mục tiêu',
-          data: labels.map(() => daily),
-          borderColor: 'rgba(255,255,255,0.2)',
-          borderDash: [5,5],
-          fill: false,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + GZ.vnd(ctx.raw) } } },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, maxTicksLimit: 10 } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, callback: v => GZ.vnd(v) } }
+  // 5. Line: Dự báo tích lũy theo ngày
+  destroyChart('chartTrend');
+  const trendDays = Math.min(days, 30);
+  const dayLabels = Array.from({ length: trendDays }, (_, i) => `Ngày ${i + 1}`);
+  charts.chartTrend = new Chart(document.getElementById('chartTrend'), {
+    type: 'line',
+    data: {
+      labels: dayLabels,
+      datasets: [
+        {
+          label: 'Chi phí tích lũy (triệu VNĐ)',
+          data: dayLabels.map((_, i) => +((i + 1) * daily / 1e6).toFixed(2)),
+          borderColor: '#f87171',
+          backgroundColor: 'rgba(248,113,113,.08)',
+          fill: true, tension: 0.3, pointRadius: 0
+        },
+        {
+          label: 'Doanh thu tích lũy (triệu VNĐ)',
+          data: dayLabels.map((_, i) => {
+            const spend = (i + 1) * daily;
+            const imp = (spend / cpm) * 1000;
+            return +(imp * ctr * cvr * aov / 1e6).toFixed(2);
+          }),
+          borderColor: '#4ade80',
+          backgroundColor: 'rgba(34,197,94,.08)',
+          fill: true, tension: 0.3, pointRadius: 0
         }
-      }
+      ]
+    },
+    options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+  });
+}
+
+// ── Kịch bản ──
+function renderScenarios(daily, days, cpm, ctr, cvr, aov, cogs) {
+  const scenarios = [
+    { name: '⬇ Giảm 50%', mult: 0.5, color: '#60a5fa' },
+    { name: '✅ Hiện tại', mult: 1, color: '#4ade80', selected: true },
+    { name: '⬆ Tăng 50%', mult: 1.5, color: '#fbbf24' },
+    { name: '⬆ Tăng 2x', mult: 2, color: '#fb923c' },
+    { name: '🚀 Tăng 3x', mult: 3, color: '#f87171' }
+  ];
+
+  document.getElementById('scenarioCards').innerHTML = scenarios.map(s => {
+    const budget = daily * s.mult;
+    const total = budget * days;
+    const imp = (total / cpm) * 1000;
+    const clicks = imp * ctr;
+    const conv = clicks * cvr;
+    const rev = conv * aov;
+    const roas = total > 0 ? rev / total : 0;
+    const profit = rev - total - cogs * conv;
+    return `
+      <div class="scenario-card ${s.selected ? 'selected' : ''}">
+        <div class="scenario-name" style="color:${s.color}">${s.name}</div>
+        <div class="scenario-row"><span>Ngân sách/ngày</span><strong>${vnd(budget)}</strong></div>
+        <div class="scenario-row"><span>Tổng ngân sách</span><strong>${vnd(total)}</strong></div>
+        <div class="scenario-row"><span>Hiển thị</span><strong>${num(imp)}</strong></div>
+        <div class="scenario-row"><span>Chuyển đổi</span><strong>${num(conv)}</strong></div>
+        <div class="scenario-row"><span>Doanh thu</span><strong style="color:${s.color}">${vnd(rev)}</strong></div>
+        <div class="scenario-row"><span>ROAS</span><strong style="color:${roas>=3?'#4ade80':roas>=1.5?'#fbbf24':'#f87171'}">${x(roas)}</strong></div>
+        <div class="scenario-row"><span>Lợi nhuận</span><strong style="color:${profit>=0?'#4ade80':'#f87171'}">${vnd(profit)}</strong></div>
+      </div>`;
+  }).join('');
+}
+
+// ── Phân tích AI ──
+async function analyzeWithAI() {
+  if (!lastMetrics) { toast('Vui lòng tính toán trước', 'error'); return; }
+
+  const btn = document.getElementById('aiBtn');
+  btn.innerHTML = '<span class="spinner"></span> Đang phân tích...';
+  btn.disabled = true;
+
+  switchTab('ai');
+  document.getElementById('aiEmpty').style.display = 'none';
+  document.getElementById('aiResult').style.display = 'none';
+  document.getElementById('aiLoading').style.display = 'block';
+
+  const industry = document.getElementById('industry').options[document.getElementById('industry').selectedIndex].text;
+  const objective = document.getElementById('objective').options[document.getElementById('objective').selectedIndex].text;
+  const note = document.getElementById('campaignNote').value;
+
+  const metrics = {
+    ngay_chay: lastMetrics.days,
+    ngan_sach_ngay: lastMetrics.daily,
+    tong_ngan_sach: lastMetrics.totalBudget,
+    CPM: lastMetrics.cpm,
+    CTR: lastMetrics.ctr,
+    ty_le_chuyen_doi: lastMetrics.cvr,
+    gia_tri_don_hang_trung_binh_AOV: lastMetrics.aov,
+    tan_suat_frequency: lastMetrics.freq,
+    luot_hien_thi_du_kien: Math.round(lastMetrics.impressions),
+    luot_nhap_du_kien: Math.round(lastMetrics.clicks),
+    chuyen_doi_du_kien: Math.round(lastMetrics.conversions),
+    CPC: Math.round(lastMetrics.cpc),
+    CPA: Math.round(lastMetrics.cpa),
+    doanh_thu_du_kien: Math.round(lastMetrics.revenue),
+    ROAS: +lastMetrics.roas.toFixed(2),
+    loi_nhuan_du_kien: Math.round(lastMetrics.profit),
+    ghi_chu: note || 'Không có'
+  };
+
+  try {
+    const r = await fetch(`${API_BASE}/api/ai/analyze-budget`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metrics, industry, objective, currency: 'VNĐ' })
     });
-  }
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Lỗi server');
 
-  function resetForm() {
-    document.getElementById('dailyBudget').value = 500000;
-    document.getElementById('numDays').value = 30;
-    document.getElementById('cpmInput').value = 50000;
-    document.getElementById('cpmRange').value = 50000;
-    document.getElementById('cpmVal').textContent = '50,000';
-    document.getElementById('ctrRange').value = 1.5;
-    document.getElementById('ctrVal').textContent = '1.5%';
-    document.getElementById('convRange').value = 2;
-    document.getElementById('convVal').textContent = '2.0%';
-    document.getElementById('aov').value = 350000;
-    calculate();
+    renderAIResult(d.analysis);
+    toast('Phân tích AI hoàn thành!', 'success');
+  } catch (e) {
+    document.getElementById('aiEmpty').style.display = 'block';
+    toast('Lỗi AI: ' + e.message, 'error');
+  } finally {
+    document.getElementById('aiLoading').style.display = 'none';
+    btn.innerHTML = '<i class="bi bi-stars"></i> Phân Tích AI';
+    btn.disabled = false;
   }
+}
 
-  function exportScenarios() {
-    const rows = document.querySelectorAll('.scenario-card');
-    if (!rows.length) { GZ.toast('Chưa có dữ liệu', 'error'); return; }
-    GZ.toast('Đang xuất báo cáo...', 'info');
-    setTimeout(() => {
-      const data = Array.from(rows).map(r => {
-        const cells = r.querySelectorAll('.scenario-row strong');
-        return [r.querySelector('.scenario-name').textContent, ...Array.from(cells).map(c => c.textContent)].join(',');
-      });
-      const csv = 'Kịch bản,Ngân sách/ngày,Tổng ngân sách,Lượt hiển thị,Chuyển đổi,Doanh thu,ROAS\n' + data.join('\n');
-      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `budget_analysis_${Date.now()}.csv`; a.click();
-      GZ.toast('Đã xuất báo cáo!', 'success');
-    }, 500);
+function renderAIResult(a) {
+  if (!a || !a.overview) { toast('Dữ liệu AI không hợp lệ', 'error'); return; }
+
+  // Overview
+  const statusMap = { 'Tốt': 'good', 'Trung bình': 'warn', 'Yếu kém': 'bad' };
+  const statusColor = { 'Tốt': '#4ade80', 'Trung bình': '#fbbf24', 'Yếu kém': '#f87171' };
+  const s = a.overview.status;
+  document.getElementById('aiStatusBadge').innerHTML = `<span class="ai-status-badge ${statusMap[s]||'warn'}"><i class="bi bi-circle-fill" style="font-size:8px"></i> ${s}</span>`;
+  document.getElementById('aiSummary').textContent = a.overview.summary || '—';
+
+  // Score ring
+  const score = Math.min(100, Math.max(0, a.overview.score || 50));
+  document.getElementById('aiScoreNum').textContent = score;
+  const color = score >= 70 ? '#22c55e' : score >= 40 ? '#fbbf24' : '#ef4444';
+  document.getElementById('aiScoreNum').style.color = color;
+  document.getElementById('aiScoreCircle').style.stroke = color;
+  const circumference = 213.6;
+  document.getElementById('aiScoreCircle').style.strokeDashoffset = circumference - (score / 100) * circumference;
+
+  // KPI Analysis
+  const kpiStatusColor = { 'Tốt': '#4ade80', 'Trung bình': '#fbbf24', 'Cần cải thiện': '#f87171' };
+  const kpiStatusClass = { 'Tốt': 'good', 'Trung bình': 'warn', 'Cần cải thiện': 'bad' };
+  document.getElementById('aiKPIBody').innerHTML = (a.kpi_analysis || []).map(k => `
+    <div class="kpi-row">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+          <span class="status-dot ${kpiStatusClass[k.status]||'warn'}"></span>
+          <span class="kpi-row-name">${k.kpi}</span>
+          <span class="kpi-row-val" style="color:${kpiStatusColor[k.status]||'#fbbf24'}">${k.value}</span>
+        </div>
+        <div class="kpi-row-bench">Benchmark: ${k.benchmark || '—'}</div>
+        <div class="kpi-row-comment">${k.comment || ''}</div>
+      </div>
+    </div>`).join('');
+
+  // Strengths
+  document.getElementById('aiStrengths').innerHTML = (a.strengths || []).map(s => `
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+      <i class="bi bi-check-circle-fill" style="color:#4ade80;margin-top:1px;flex-shrink:0"></i>
+      <span style="font-size:12.5px;color:rgba(255,255,255,.7)">${s}</span>
+    </div>`).join('') || '<div style="color:rgba(255,255,255,.3);font-size:12.5px">Không có điểm mạnh nổi bật</div>';
+
+  // Weaknesses
+  document.getElementById('aiWeaknesses').innerHTML = (a.weaknesses || []).map(w => `
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+      <i class="bi bi-x-circle-fill" style="color:#f87171;margin-top:1px;flex-shrink:0"></i>
+      <span style="font-size:12.5px;color:rgba(255,255,255,.7)">${w}</span>
+    </div>`).join('') || '<div style="color:rgba(255,255,255,.3);font-size:12.5px">Không có điểm yếu đáng kể</div>';
+
+  // Recommendations
+  const recPriorityMap = { 'Cao': 'high', 'Trung bình': 'medium', 'Thấp': 'low' };
+  const recPriorityColor = { 'Cao': '#f87171', 'Trung bình': '#fbbf24', 'Thấp': '#4ade80' };
+  document.getElementById('aiRecommendations').innerHTML = (a.recommendations || []).map(r => `
+    <div class="rec-card ${recPriorityMap[r.priority]||'medium'}">
+      <div class="rec-priority" style="color:${recPriorityColor[r.priority]||'#fbbf24'}">
+        <i class="bi bi-flag-fill"></i> Ưu tiên ${r.priority}
+      </div>
+      <div class="rec-title">${r.title}</div>
+      <div class="rec-desc">${r.description}</div>
+      ${r.expected_impact ? `<div class="rec-impact"><i class="bi bi-arrow-up-right"></i> ${r.expected_impact}</div>` : ''}
+    </div>`).join('');
+
+  document.getElementById('aiResult').style.display = 'block';
+}
+
+// ── Tabs ──
+function switchTab(tab) {
+  ['charts','ai','scenario'].forEach(t => {
+    const cap = t.charAt(0).toUpperCase() + t.slice(1);
+    document.getElementById('pane' + cap).classList.toggle('active', t === tab);
+    document.getElementById('tab' + cap).classList.toggle('active', t === tab);
+  });
+}
+
+// ── Reset & Export ──
+function resetForm() {
+  document.getElementById('dailyBudget').value = 500000;
+  document.getElementById('numDays').value = 30;
+  document.getElementById('cpmInput').value = 50000;
+  document.getElementById('cpmRange').value = 50000;
+  document.getElementById('cpmVal').textContent = '50,000';
+  document.getElementById('ctrRange').value = 1.5;
+  document.getElementById('ctrVal').textContent = '1.5%';
+  document.getElementById('convRange').value = 2;
+  document.getElementById('convVal').textContent = '2.0%';
+  document.getElementById('aov').value = 350000;
+  document.getElementById('cogs').value = 0;
+  document.getElementById('frequency').value = 1.5;
+  document.getElementById('campaignNote').value = '';
+  calculate();
+  toast('Đã đặt lại thông số', 'info');
+}
+
+function exportCSV() {
+  if (!lastMetrics) { toast('Chưa có dữ liệu', 'error'); return; }
+  const m = lastMetrics;
+  const rows = [
+    ['Chỉ số', 'Giá trị'],
+    ['Ngân sách ngày', m.daily],
+    ['Số ngày', m.days],
+    ['Tổng ngân sách', m.totalBudget],
+    ['CPM', m.cpm],
+    ['CTR (%)', m.ctr],
+    ['Tỷ lệ chuyển đổi (%)', m.cvr],
+    ['AOV', m.aov],
+    ['Lượt hiển thị', Math.round(m.impressions)],
+    ['Lượt nhấp', Math.round(m.clicks)],
+    ['Chuyển đổi', Math.round(m.conversions)],
+    ['CPC', Math.round(m.cpc)],
+    ['CPA', Math.round(m.cpa)],
+    ['Doanh thu', Math.round(m.revenue)],
+    ['ROAS', m.roas.toFixed(2)],
+    ['Lợi nhuận', Math.round(m.profit)]
+  ];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `budget_analysis_${Date.now()}.csv`;
+  a.click();
+  toast('Đã xuất CSV!', 'success');
+}
+
+function toggleSubNav(e, id) {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  const arrow = document.getElementById(id + 'Arrow');
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+document.addEventListener('DOMContentLoaded', calculate);
+</script>
+
+<!-- Background + cursor -->
+<script>
+(function(){
+  const c = document.getElementById('bgCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const stars = Array.from({length:150}, () => ({
+    x: Math.random()*c.width, y: Math.random()*c.height,
+    r: Math.random()*1.5+0.3, o: Math.random()*0.5+0.1,
+    vx: (Math.random()-0.5)*0.1, vy: (Math.random()-0.5)*0.1, p: Math.random()*Math.PI*2
+  }));
+  function draw() {
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s => {
+      s.x+=s.vx; s.y+=s.vy; s.p+=0.015;
+      if(s.x<0)s.x=c.width; if(s.x>c.width)s.x=0;
+      if(s.y<0)s.y=c.height; if(s.y>c.height)s.y=0;
+      const o=s.o*(0.7+Math.sin(s.p)*0.3);
+      const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*2.5);
+      g.addColorStop(0,`rgba(34,197,94,${o})`); g.addColorStop(1,'rgba(34,197,94,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(s.x,s.y,s.r*2.5,0,Math.PI*2); ctx.fill();
+    });
+    requestAnimationFrame(draw);
   }
-
-  document.addEventListener('DOMContentLoaded', calculate);
-  </script>
-  <script>
-  const isMobile=window.innerWidth<768;const cursor=document.getElementById('custom-cursor');if(cursor&&!('ontouchstart' in window)){let m=false;document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';if(!m){cursor.style.opacity='1';m=true;}});document.addEventListener('mouseleave',()=>{cursor.style.opacity='0';m=false;});}
-  const cF=document.getElementById('starfield-far'),cM=document.getElementById('starfield-mid'),cN=document.getElementById('starfield-near');[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});window.addEventListener('resize',()=>{[cF,cM,cN].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});});const xF=cF.getContext('2d'),xM=cM.getContext('2d'),xN=cN.getContext('2d');const sF=Array.from({length:isMobile?60:120},()=>({x:Math.random()*cF.width,y:Math.random()*cF.height,r:Math.random()*1+.3,o:Math.random()*.5+.1}));const sM=Array.from({length:isMobile?30:60},()=>({x:Math.random()*cM.width,y:Math.random()*cM.height,r:Math.random()*1.5+.5,o:Math.random()*.4+.1,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15}));const sN=Array.from({length:isMobile?15:30},()=>({x:Math.random()*cN.width,y:Math.random()*cN.height,r:Math.random()*2+1,o:Math.random()*.6+.2,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*Math.PI*2}));const ss=[];let lt=0;function SS(){this.reset=()=>{this.x=Math.random()*cF.width*.7;this.y=Math.random()*cF.height*.3;this.len=Math.random()*80+40;this.spd=Math.random()*4+2;this.sz=Math.random()*1.5+.5;this.vx=this.spd;this.vy=this.spd*.5;this.op=0;this.life=0;this.maxLife=200;this.active=true;};this.update=()=>{this.x+=this.vx;this.y+=this.vy;this.life++;if(this.life<20)this.op=this.life/20;else if(this.life>this.maxLife-40)this.op=(this.maxLife-this.life)/40;else this.op=1;if(this.life>=this.maxLife||this.x>cF.width+300)this.active=false;};this.draw=c=>{if(!this.active)return;const tx=this.x-this.vx*(this.len/this.spd),ty=this.y-this.vy*(this.len/this.spd);const g=c.createLinearGradient(this.x,this.y,tx,ty);g.addColorStop(0,'rgba(255,255,255,'+this.op+')');g.addColorStop(1,'rgba(255,255,255,0)');c.strokeStyle=g;c.lineWidth=this.sz;c.lineCap='round';c.beginPath();c.moveTo(this.x,this.y);c.lineTo(tx,ty);c.stroke();};this.reset();}
-  (function a(){xF.clearRect(0,0,cF.width,cF.height);sF.forEach(s=>{xF.fillStyle='rgba(255,255,255,'+s.o+')';xF.beginPath();xF.arc(s.x,s.y,s.r,0,Math.PI*2);xF.fill();});const now=Date.now();if(now-lt>Math.random()*1000+500&&ss.length<5){ss.push(new SS());lt=now;}xM.clearRect(0,0,cM.width,cM.height);for(let i=ss.length-1;i>=0;i--){ss[i].update();ss[i].draw(xM);if(!ss[i].active)ss.splice(i,1);}sM.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=cM.width;if(s.x>cM.width)s.x=0;if(s.y<0)s.y=cM.height;if(s.y>cM.height)s.y=0;xM.fillStyle='rgba(255,255,255,'+s.o+')';xM.beginPath();xM.arc(s.x,s.y,s.r,0,Math.PI*2);xM.fill();});xN.clearRect(0,0,cN.width,cN.height);sN.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.p+=.02;if(s.x<0)s.x=cN.width;if(s.x>cN.width)s.x=0;if(s.y<0)s.y=cN.height;if(s.y>cN.height)s.y=0;const po=s.o*(0.7+Math.sin(s.p)*.3);const g=xN.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);g.addColorStop(0,'rgba(34,197,94,'+po+')');g.addColorStop(.5,'rgba(0,212,255,'+(po*.5)+')');g.addColorStop(1,'rgba(0,212,255,0)');xN.fillStyle=g;xN.beginPath();xN.arc(s.x,s.y,s.r*3,0,Math.PI*2);xN.fill();});requestAnimationFrame(a);})();
-  </script>
+  draw();
+})();
+(function(){
+  const cur=document.getElementById('custom-cursor');
+  if(!cur||'ontouchstart' in window) return;
+  let shown=false;
+  document.addEventListener('mousemove',e=>{
+    cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';
+    if(!shown){cur.style.opacity='1';shown=true;}
+  });
+  document.addEventListener('mouseleave',()=>{cur.style.opacity='0';shown=false;});
+})();
+</script>
 </body>
 </html>
