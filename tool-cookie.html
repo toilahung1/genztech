@@ -80,6 +80,10 @@
     .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
     .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
     @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+      .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 34px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent;width:100%;box-sizing:border-box}
+    .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-sub-item.active{color:#00d4ff;background:rgba(0,212,255,.06);border-left-color:#00d4ff}
+    .nav-sub-item i{width:15px;text-align:center;font-size:13px}
   </style>
 </head>
 <body class="bg-space-black text-white antialiased overflow-x-hidden">

@@ -66,7 +66,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .quick-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
 .qlink{padding:7px 16px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:12.5px;cursor:pointer;text-decoration:none;transition:.2s}
 .qlink:hover{background:rgba(24,119,242,.12);border-color:rgba(24,119,242,.3);color:#60a5fa}
-</style>
+    .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 34px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent;width:100%;box-sizing:border-box}
+    .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-sub-item.active{color:#00d4ff;background:rgba(0,212,255,.06);border-left-color:#00d4ff}
+    .nav-sub-item i{width:15px;text-align:center;font-size:13px}
+  </style>
 </head>
 <body>
 <aside class="sidebar">
