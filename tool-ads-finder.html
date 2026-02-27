@@ -243,24 +243,15 @@
     try {
       let ads = [];
 
-      if (GZ.isFbConnected()) {
-        // Real Facebook Ad Library API
-        const params = {
-          search_terms: query,
-          ad_reached_countries: country === 'ALL' ? '["VN","US","TH"]' : `["${country}"]`,
-          ad_active_status: status === 'ALL' ? 'ALL' : status,
-          fields: 'id,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_descriptions,ad_creative_link_titles,ad_delivery_start_time,ad_snapshot_url,page_id,page_name,impressions',
-          limit: 12
-        };
-        if (adType !== 'ALL') params.ad_type = adType;
-        const data = await GZ.fbApi('ads_archive', params);
-        ads = data.data || [];
-      } else {
-        // Demo data
-        await new Promise(r => setTimeout(r, 800));
-        ads = generateDemoAds(query, 9);
-        GZ.toast('Hiển thị dữ liệu demo (chưa kết nối Facebook)', 'info');
-      }
+      // Gọi qua backend proxy
+      const params = new URLSearchParams({
+        keyword: query,
+        country: country === 'ALL' ? 'VN' : country,
+        limit: 12
+      });
+      if (adType !== 'ALL') params.append('ad_type', adType);
+      const resp = await GZ.api(`/api/facebook/proxy/ad-library?${params.toString()}`);
+      ads = resp.ads || [];
 
       renderAds(ads, 'searchResults');
     } catch(e) {
