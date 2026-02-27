@@ -1,85 +1,83 @@
 const cron = require('node-cron');
 const axios = require('axios');
-const { prisma } = require('../middleware/auth');
 
 const FB_GRAPH = 'https://graph.facebook.com/v25.0';
 
 async function processScheduledPosts() {
   try {
+    // Lazy-load to avoid circular dependency
+    const { postsStore } = require('../api/posts');
+    const { users } = require('../api/auth');
     const now = new Date();
-    const duePosts = await prisma.post.findMany({
-      where: { status: 'pending', scheduledAt: { lte: now } },
-      include: { author: { select: { fbToken: true, fbPages: true } } }
-    });
 
-    for (const post of duePosts) {
-      const token = post.author?.fbToken;
-      if (!token) {
-        await prisma.post.update({ where: { id: post.id }, data: { status: 'failed', errorMsg: 'Chưa kết nối Facebook' } });
-        continue;
+    for (const [userId, posts] of postsStore.entries()) {
+      const duePosts = posts.filter(p => p.status === 'pending' && new Date(p.scheduledAt) <= now);
+
+      // Find user's FB token
+      let fbToken = null;
+      let fbPages = [];
+      for (const u of users.values()) {
+        if (u.id === userId) { fbToken = u.fbToken; fbPages = u.fbPages || []; break; }
       }
 
-      try {
-        const pages = Array.isArray(post.author.fbPages) ? post.author.fbPages : [];
-        const page = pages.find(p => p.id === post.pageId);
-        const pageToken = page?.access_token || token;
-
-        let postId;
-        if (post.mediaUrls && post.mediaUrls.length > 0) {
-          const r = await axios.post(`${FB_GRAPH}/${post.pageId}/photos`, null, {
-            params: { url: post.mediaUrls[0], caption: post.content, access_token: pageToken }
-          });
-          postId = r.data.id;
-        } else {
-          const r = await axios.post(`${FB_GRAPH}/${post.pageId}/feed`, null, {
-            params: { message: post.content, access_token: pageToken }
-          });
-          postId = r.data.id;
+      for (const post of duePosts) {
+        if (!fbToken) {
+          post.status = 'failed';
+          post.errorMsg = 'Chưa kết nối Facebook';
+          continue;
         }
 
-        // Update post status
-        const updateData = { status: 'posted', postFbId: postId, postedAt: new Date() };
+        try {
+          const page = fbPages.find(p => p.id === post.pageId);
+          const pageToken = page?.access_token || fbToken;
 
-        // Handle repeat
-        if (post.repeatType === 'daily') {
-          const nextTime = new Date(post.scheduledAt);
-          nextTime.setDate(nextTime.getDate() + 1);
-          // Create next scheduled post
-          await prisma.post.create({
-            data: {
+          let postId;
+          if (post.mediaUrls && post.mediaUrls.length > 0) {
+            const r = await axios.post(`${FB_GRAPH}/${post.pageId}/photos`, null, {
+              params: { url: post.mediaUrls[0], caption: post.content, access_token: pageToken }
+            });
+            postId = r.data.id;
+          } else {
+            const r = await axios.post(`${FB_GRAPH}/${post.pageId}/feed`, null, {
+              params: { message: post.content, access_token: pageToken }
+            });
+            postId = r.data.id;
+          }
+
+          post.status = 'posted';
+          post.postFbId = postId;
+          post.postedAt = new Date().toISOString();
+
+          // Handle repeat
+          if (post.repeatType === 'daily' || post.repeatType === 'weekly') {
+            const { postsStore: ps } = require('../api/posts');
+            const nextTime = new Date(post.scheduledAt);
+            if (post.repeatType === 'daily') nextTime.setDate(nextTime.getDate() + 1);
+            else nextTime.setDate(nextTime.getDate() + 7);
+
+            const { default: postIdCounter } = require('../api/posts');
+            const userPosts = ps.get(userId) || [];
+            userPosts.push({
+              id: String(Date.now()),
               content: post.content,
               mediaUrls: post.mediaUrls,
               status: 'pending',
-              scheduledAt: nextTime,
-              repeatType: 'daily',
-              authorId: post.authorId,
+              scheduledAt: nextTime.toISOString(),
+              repeatType: post.repeatType,
+              authorId: userId,
               pageId: post.pageId,
-              pageName: post.pageName
-            }
-          });
-        } else if (post.repeatType === 'weekly') {
-          const nextTime = new Date(post.scheduledAt);
-          nextTime.setDate(nextTime.getDate() + 7);
-          await prisma.post.create({
-            data: {
-              content: post.content,
-              mediaUrls: post.mediaUrls,
-              status: 'pending',
-              scheduledAt: nextTime,
-              repeatType: 'weekly',
-              authorId: post.authorId,
-              pageId: post.pageId,
-              pageName: post.pageName
-            }
-          });
-        }
+              pageName: post.pageName,
+              createdAt: new Date().toISOString()
+            });
+          }
 
-        await prisma.post.update({ where: { id: post.id }, data: updateData });
-        console.log(`[Scheduler] Posted: ${post.id} → FB:${postId}`);
-      } catch (e) {
-        const errMsg = e.response?.data?.error?.message || e.message;
-        await prisma.post.update({ where: { id: post.id }, data: { status: 'failed', errorMsg: errMsg } });
-        console.error(`[Scheduler] Failed post ${post.id}:`, errMsg);
+          console.log(`[Scheduler] Posted: ${post.id} → FB:${postId}`);
+        } catch (e) {
+          const errMsg = e.response?.data?.error?.message || e.message;
+          post.status = 'failed';
+          post.errorMsg = errMsg;
+          console.error(`[Scheduler] Failed post ${post.id}:`, errMsg);
+        }
       }
     }
   } catch (e) {
@@ -88,7 +86,6 @@ async function processScheduledPosts() {
 }
 
 function startScheduler() {
-  // Run every minute
   cron.schedule('* * * * *', processScheduledPosts);
   console.log('📅 Post scheduler started (runs every minute)');
 }

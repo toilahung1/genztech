@@ -1,14 +1,17 @@
 const express = require('express');
 const axios = require('axios');
-const { authMiddleware, prisma } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 const FB_GRAPH = 'https://graph.facebook.com/v25.0';
 
-// Helper: lấy FB token của user
-async function getUserFbToken(userId) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { fbToken: true } });
-  return user?.fbToken || null;
+// Helper: lấy FB token của user từ in-memory store
+function getUserFbToken(userId) {
+  const { users } = require('./auth');
+  for (const u of users.values()) {
+    if (u.id === userId) return u.fbToken || null;
+  }
+  return null;
 }
 
 // Helper: gọi Facebook API
@@ -25,7 +28,7 @@ async function fbPost(path, params) {
 // GET /api/facebook/proxy/my-ad-accounts
 router.get('/my-ad-accounts', authMiddleware, async (req, res) => {
   try {
-    const token = await getUserFbToken(req.user.id);
+    const token = getUserFbToken(req.user.id);
     if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook. Vui lòng kết nối tại trang Tự Động Đăng Bài.' });
 
     const datePreset = req.query.date_preset || 'last_30d';
@@ -44,7 +47,7 @@ router.get('/my-ad-accounts', authMiddleware, async (req, res) => {
 // GET /api/facebook/proxy/ad-account/:accountId — Campaigns của một TKQC
 router.get('/ad-account/:accountId', authMiddleware, async (req, res) => {
   try {
-    const token = await getUserFbToken(req.user.id);
+    const token = getUserFbToken(req.user.id);
     if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const { accountId } = req.params;
@@ -79,7 +82,7 @@ router.get('/ad-account/:accountId', authMiddleware, async (req, res) => {
 // POST /api/facebook/proxy/pause-campaigns
 router.post('/pause-campaigns', authMiddleware, async (req, res) => {
   try {
-    const token = await getUserFbToken(req.user.id);
+    const token = getUserFbToken(req.user.id);
     if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const { accountId, level, reason } = req.body;
@@ -135,7 +138,7 @@ router.get('/ad-library', async (req, res) => {
 // Generic proxy — GET /api/facebook/proxy/:path (*)
 router.get('/*', authMiddleware, async (req, res) => {
   try {
-    const token = await getUserFbToken(req.user.id);
+    const token = getUserFbToken(req.user.id);
     if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const path = req.params[0];
@@ -150,7 +153,7 @@ router.get('/*', authMiddleware, async (req, res) => {
 // Generic proxy — POST /api/facebook/proxy/:path (*)
 router.post('/*', authMiddleware, async (req, res) => {
   try {
-    const token = await getUserFbToken(req.user.id);
+    const token = getUserFbToken(req.user.id);
     if (!token) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const path = req.params[0];

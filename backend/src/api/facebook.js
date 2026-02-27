@@ -1,11 +1,19 @@
 const express = require('express');
 const axios = require('axios');
 const multer = require('multer');
-const { authMiddleware, prisma } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
+const { users } = require('./auth'); // in-memory user store
 
 const router = express.Router();
 const FB_GRAPH = 'https://graph.facebook.com/v25.0';
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+function getUserStore(userId) {
+  for (const u of users.values()) {
+    if (u.id === userId) return u;
+  }
+  return null;
+}
 
 // GET /api/facebook/oauth/url
 router.get('/oauth/url', (req, res) => {
@@ -28,30 +36,24 @@ router.get('/oauth/callback', async (req, res) => {
     const appSecret = process.env.FB_APP_SECRET;
     const redirectUri = process.env.FB_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/facebook/oauth/callback`;
 
-    // Exchange code for token
     const tokenRes = await axios.get(`${FB_GRAPH}/oauth/access_token`, {
       params: { client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code }
     });
     const shortToken = tokenRes.data.access_token;
 
-    // Exchange for long-lived token
     const longRes = await axios.get(`${FB_GRAPH}/oauth/access_token`, {
       params: { grant_type: 'fb_exchange_token', client_id: appId, client_secret: appSecret, fb_exchange_token: shortToken }
     });
     const longToken = longRes.data.access_token;
-    const expiresIn = longRes.data.expires_in || 5184000; // 60 days default
+    const expiresIn = longRes.data.expires_in || 5184000;
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-    // Get user info
     const meRes = await axios.get(`${FB_GRAPH}/me`, { params: { fields: 'id,name,picture', access_token: longToken } });
     const fbUser = meRes.data;
 
-    // Get pages
     const pagesRes = await axios.get(`${FB_GRAPH}/me/accounts`, { params: { access_token: longToken } });
     const pages = pagesRes.data.data || [];
 
-    // Store in session (redirect with token info to frontend)
-    // Since this is a popup flow, we close the popup and notify parent
     res.send(`
       <script>
         window.opener && window.opener.postMessage({
@@ -74,17 +76,13 @@ router.get('/oauth/callback', async (req, res) => {
 // GET /api/facebook/status
 router.get('/status', authMiddleware, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { fbToken: true, fbTokenExp: true, fbUserId: true, fbPages: true }
-    });
+    const user = getUserStore(req.user.id);
     if (!user || !user.fbToken) return res.json({ connected: false });
 
     const now = new Date();
     const exp = user.fbTokenExp ? new Date(user.fbTokenExp) : null;
     const daysLeft = exp ? Math.max(0, Math.floor((exp - now) / (1000 * 60 * 60 * 24))) : null;
 
-    // Verify token is still valid
     try {
       const meRes = await axios.get(`${FB_GRAPH}/me`, { params: { fields: 'id,name,picture', access_token: user.fbToken }, timeout: 5000 });
       res.json({
@@ -95,8 +93,7 @@ router.get('/status', authMiddleware, async (req, res) => {
         daysLeft
       });
     } catch (fbErr) {
-      // Token invalid
-      await prisma.user.update({ where: { id: req.user.id }, data: { fbToken: null } });
+      user.fbToken = null;
       res.json({ connected: false, error: 'Token Facebook đã hết hạn' });
     }
   } catch (e) {
@@ -104,34 +101,35 @@ router.get('/status', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/facebook/sync — Save FB token from client
+// POST /api/facebook/sync
 router.post('/sync', authMiddleware, async (req, res) => {
   try {
     const { token, fbUser, pages, expiresAt } = req.body;
     if (!token) return res.status(400).json({ error: 'Thiếu token' });
 
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        fbToken: token,
-        fbUserId: fbUser?.id || null,
-        fbTokenExp: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
-        fbPages: pages || []
-      }
-    });
+    const user = getUserStore(req.user.id);
+    if (user) {
+      user.fbToken = token;
+      user.fbUserId = fbUser?.id || null;
+      user.fbTokenExp = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+      user.fbPages = pages || [];
+    }
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// POST /api/facebook/disconnect
-const disconnectHandler = async (req, res) => {
+// POST/DELETE /api/facebook/disconnect
+const disconnectHandler = (req, res) => {
   try {
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { fbToken: null, fbUserId: null, fbTokenExp: null, fbPages: null }
-    });
+    const user = getUserStore(req.user.id);
+    if (user) {
+      user.fbToken = null;
+      user.fbUserId = null;
+      user.fbTokenExp = null;
+      user.fbPages = null;
+    }
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -140,10 +138,10 @@ const disconnectHandler = async (req, res) => {
 router.post('/disconnect', authMiddleware, disconnectHandler);
 router.delete('/disconnect', authMiddleware, disconnectHandler);
 
-// POST /api/facebook/refresh — Extend token
+// POST /api/facebook/refresh
 router.post('/refresh', authMiddleware, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { fbToken: true } });
+    const user = getUserStore(req.user.id);
     if (!user?.fbToken) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const appId = process.env.FB_APP_ID;
@@ -157,7 +155,9 @@ router.post('/refresh', authMiddleware, async (req, res) => {
     const expiresIn = r.data.expires_in || 5184000;
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-    await prisma.user.update({ where: { id: req.user.id }, data: { fbToken: newToken, fbTokenExp: expiresAt } });
+    user.fbToken = newToken;
+    user.fbTokenExp = expiresAt;
+
     res.json({ success: true, expiresAt: expiresAt.toISOString(), daysLeft: Math.floor(expiresIn / 86400) });
   } catch (e) {
     const msg = e.response?.data?.error?.message || e.message;
@@ -165,32 +165,28 @@ router.post('/refresh', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/facebook/upload-media?pageId=xxx
+// POST /api/facebook/upload-media
 router.post('/upload-media', authMiddleware, upload.single('file'), async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { fbToken: true, fbPages: true } });
+    const user = getUserStore(req.user.id);
     if (!user?.fbToken) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const pageId = req.query.pageId;
     if (!pageId) return res.status(400).json({ error: 'Thiếu pageId' });
 
-    // Get page access token
     const pages = Array.isArray(user.fbPages) ? user.fbPages : [];
     const page = pages.find(p => p.id === pageId);
     const pageToken = page?.access_token || user.fbToken;
 
     if (!req.file) return res.status(400).json({ error: 'Thiếu file' });
 
-    // Upload to Facebook
     const FormData = require('form-data');
     const form = new FormData();
     form.append('source', req.file.buffer, { filename: req.file.originalname, contentType: req.file.mimetype });
     form.append('access_token', pageToken);
-    form.append('published', 'false'); // Upload but don't publish yet
+    form.append('published', 'false');
 
-    const uploadRes = await axios.post(`${FB_GRAPH}/${pageId}/photos`, form, {
-      headers: form.getHeaders()
-    });
+    const uploadRes = await axios.post(`${FB_GRAPH}/${pageId}/photos`, form, { headers: form.getHeaders() });
     res.json({ success: true, mediaId: uploadRes.data.id, url: `https://www.facebook.com/photo?fbid=${uploadRes.data.id}` });
   } catch (e) {
     const msg = e.response?.data?.error?.message || e.message;
@@ -198,10 +194,10 @@ router.post('/upload-media', authMiddleware, upload.single('file'), async (req, 
   }
 });
 
-// POST /api/facebook/post — Đăng bài ngay
+// POST /api/facebook/post
 router.post('/post', authMiddleware, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { fbToken: true, fbPages: true } });
+    const user = getUserStore(req.user.id);
     if (!user?.fbToken) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
     const { pageId, content, mediaUrls, mediaIds } = req.body;
@@ -213,30 +209,22 @@ router.post('/post', authMiddleware, async (req, res) => {
 
     let postId;
     if (mediaIds && mediaIds.length > 0) {
-      // Post with multiple photos
       const attachedMedia = mediaIds.map(id => ({ media_fbid: id }));
       const r = await axios.post(`${FB_GRAPH}/${pageId}/feed`, null, {
         params: { message: content || '', attached_media: JSON.stringify(attachedMedia), access_token: pageToken }
       });
       postId = r.data.id;
     } else if (mediaUrls && mediaUrls.length === 1) {
-      // Single photo from URL
       const r = await axios.post(`${FB_GRAPH}/${pageId}/photos`, null, {
         params: { url: mediaUrls[0], caption: content || '', access_token: pageToken }
       });
       postId = r.data.id;
     } else {
-      // Text only
       const r = await axios.post(`${FB_GRAPH}/${pageId}/feed`, null, {
         params: { message: content || '', access_token: pageToken }
       });
       postId = r.data.id;
     }
-
-    // Save to DB
-    await prisma.post.create({
-      data: { content: content || '', mediaUrls: mediaUrls || [], status: 'posted', postFbId: postId, authorId: req.user.id, pageId, postedAt: new Date() }
-    });
 
     res.json({ success: true, postId });
   } catch (e) {
