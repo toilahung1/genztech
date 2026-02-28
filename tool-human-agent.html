@@ -970,11 +970,12 @@ async function openConversation(pageId, userId, pageName) {
   if (page && conv) {
     try {
       const convId = conv.fbConvId || conv.convId;
-      const url = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time&limit=30&access_token=${page.accessToken}`;
+      // Use ?fields=messages endpoint which works with page token
+      const url = `https://graph.facebook.com/v19.0/${convId}?fields=messages{id,message,from,created_time}&access_token=${page.accessToken}`;
       const r = await fetch(url);
       const d = await r.json();
       if (d.error) throw new Error(d.error.message);
-      const msgs = (d.data || []).reverse();
+      const msgs = (d.messages?.data || []).reverse();
       if (container) {
         if (!msgs.length) {
           container.innerHTML = '<div class="empty-state"><i class="bi bi-chat"></i><p>Chưa có tin nhắn</p></div>';
