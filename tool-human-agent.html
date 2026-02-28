@@ -906,10 +906,10 @@ function renderConvList(convs) {
   el.innerHTML = convs.map(c => `
     <div class="conv-item ${c.isPending ? 'pending' : ''} ${selectedConvUserId === c.userId ? 'active' : ''}"
       onclick="openConversation('${c.pageId}', '${c.userId}', '${escHtml(c.pageName)}')">
-      <div class="conv-avatar">${c.userId.slice(-2).toUpperCase()}</div>
+      <div class="conv-avatar">${c.userName ? c.userName.charAt(0).toUpperCase() : c.userId.slice(-2).toUpperCase()}</div>
       <div class="conv-info">
         <div class="conv-name">
-          Khách ${c.userId.slice(-6)}
+          ${escHtml(c.userName || ('Khách ' + c.userId.slice(-6)))}
           ${c.isPending ? '<span class="badge-pending">Chờ HAgent</span>' : ''}
           ${c.unread > 0 ? `<span class="badge-unread">${c.unread}</span>` : ''}
         </div>
@@ -1573,7 +1573,7 @@ async function loadConversationsDirect(showLoading = true) {
           return {
             convId: c.id,
             userId: customer.id || c.id,
-            userName: customer.name || 'Khách hàng',
+            userName: customer.name || '',
             lastMessage: c.snippet || '',
             updatedAt: c.updated_time,
             lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
@@ -1589,6 +1589,13 @@ async function loadConversationsDirect(showLoading = true) {
         allConversations.push(...convs);
       } catch(e) { /* skip this page */ }
     }
+    // Deduplicate by convId
+    const seen = new Set();
+    allConversations = allConversations.filter(c => {
+      if (seen.has(c.convId)) return false;
+      seen.add(c.convId);
+      return true;
+    });
     // Sort by latest
     allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     renderConvList(allConversations);
