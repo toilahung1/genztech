@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Human Agent — GenZTech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#060b1a;color:#e2e8f0;display:flex;min-height:100vh;overflow:hidden}
+
+    /* ── Sidebar ── */
+    .sidebar{width:240px;flex-shrink:0;background:rgba(10,14,39,.92);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+    .sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .sidebar-logo img{width:34px;height:34px;border-radius:50%}
+    .sidebar-logo span{font-size:14px;font-weight:700;letter-spacing:.5px;color:#fff}
+    .sidebar-logo span em{color:#00d4ff;font-style:normal}
+    .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+    .nav-group-label{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase;padding:10px 18px 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .2s;border-left:2px solid transparent}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
+    .nav-item i{width:17px;text-align:center;font-size:14px}
+    .nav-sub{display:none;padding-left:0}
+    .nav-sub.open{display:block}
+    .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 44px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s}
+    .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .nav-sub-item.active{color:#00d4ff}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.06)}
+
+    /* ── Main Layout ── */
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    .topbar{padding:14px 24px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;background:rgba(10,14,39,.8);backdrop-filter:blur(10px);flex-shrink:0}
+    .topbar-title{font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+    .topbar-title i{color:#00d4ff}
+    .topbar-actions{display:flex;align-items:center;gap:8px}
+
+    /* ── Tabs ── */
+    .tabs-bar{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(10,14,39,.6);flex-shrink:0;padding:0 24px}
+    .tab-btn{padding:12px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+    .tab-btn:hover{color:#fff}
+    .tab-btn.active{color:#00d4ff;border-bottom-color:#00d4ff}
+    .tab-badge{background:rgba(0,212,255,.15);color:#00d4ff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+    .tab-badge.red{background:rgba(239,68,68,.15);color:#f87171}
+
+    /* ── Content Area ── */
+    .content-area{flex:1;overflow:hidden;display:flex}
+    .panel{display:none;width:100%;height:100%;overflow-y:auto;padding:24px}
+    .panel.active{display:flex;flex-direction:column;gap:20px}
+
+    /* ── Stats Row ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .stat-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px}
+    .stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .stat-icon.blue{background:rgba(0,212,255,.1);color:#00d4ff}
+    .stat-icon.green{background:rgba(34,197,94,.1);color:#22c55e}
+    .stat-icon.orange{background:rgba(249,115,22,.1);color:#f97316}
+    .stat-icon.purple{background:rgba(168,85,247,.1);color:#a855f7}
+    .stat-label{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:2px}
+    .stat-value{font-size:20px;font-weight:700;color:#fff}
+
+    /* ── Page Grid ── */
+    .page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .page-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px;transition:all .2s;cursor:pointer;position:relative}
+    .page-card:hover{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.04)}
+    .page-card.enabled{border-color:rgba(34,197,94,.3)}
+    .page-card-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .page-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.4);flex-shrink:0}
+    .page-avatar img{width:44px;height:44px;border-radius:50%;object-fit:cover}
+    .page-name{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
+    .page-id{font-size:11px;color:rgba(255,255,255,.3)}
+    .page-status{position:absolute;top:14px;right:14px}
+    .toggle-switch{position:relative;width:38px;height:20px;cursor:pointer}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.15);border-radius:20px;transition:.3s}
+    .toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    input:checked + .toggle-slider{background:#22c55e}
+    input:checked + .toggle-slider:before{transform:translateX(18px)}
+    .page-meta{display:flex;gap:12px;margin-bottom:14px}
+    .page-meta-item{font-size:11px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:4px}
+    .page-meta-item i{font-size:12px;color:#00d4ff}
+    .page-actions{display:flex;gap:8px}
+    .btn-sm{padding:6px 12px;font-size:12px;font-weight:500;border-radius:7px;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+    .btn-sm.primary{background:rgba(0,212,255,.15);color:#00d4ff;border:1px solid rgba(0,212,255,.2)}
+    .btn-sm.primary:hover{background:rgba(0,212,255,.25)}
+    .btn-sm.danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+    .btn-sm.danger:hover{background:rgba(239,68,68,.2)}
+    .btn-sm.success{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2)}
+    .btn-sm.success:hover{background:rgba(34,197,94,.2)}
+    .btn-sm.gray{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1)}
+    .btn-sm.gray:hover{background:rgba(255,255,255,.1);color:#fff}
+
+    /* ── Conversations Panel ── */
+    .conv-layout{display:flex;gap:0;height:100%;overflow:hidden}
+    .conv-list{width:300px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);overflow-y:auto;display:flex;flex-direction:column}
+    .conv-list-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .conv-list-title{font-size:13px;font-weight:600;color:#fff}
+    .conv-search{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+    .conv-search input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;font-size:12px;color:#fff;outline:none}
+    .conv-search input::placeholder{color:rgba(255,255,255,.3)}
+    .conv-item{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .2s;display:flex;gap:10px;align-items:flex-start}
+    .conv-item:hover{background:rgba(255,255,255,.04)}
+    .conv-item.active{background:rgba(0,212,255,.06);border-left:2px solid #00d4ff}
+    .conv-item.pending{border-left:2px solid #f97316}
+    .conv-avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:14px;color:rgba(255,255,255,.5);flex-shrink:0;font-weight:600}
+    .conv-info{flex:1;min-width:0}
+    .conv-name{font-size:13px;font-weight:500;color:#fff;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+    .conv-last{font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .conv-time{font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0}
+    .badge-unread{background:#f97316;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center}
+    .badge-pending{background:rgba(249,115,22,.15);color:#f97316;font-size:9px;padding:1px 5px;border-radius:4px}
+
+    /* ── Chat Area ── */
+    .chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    .chat-header{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .chat-header-info{display:flex;align-items:center;gap:10px}
+    .chat-header-name{font-size:14px;font-weight:600;color:#fff}
+    .chat-header-sub{font-size:11px;color:rgba(255,255,255,.4)}
+    .chat-messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+    .msg-row{display:flex;gap:8px;align-items:flex-end}
+    .msg-row.user{flex-direction:row}
+    .msg-row.assistant{flex-direction:row-reverse}
+    .msg-bubble{max-width:70%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5}
+    .msg-bubble.user{background:rgba(255,255,255,.08);color:#e2e8f0;border-bottom-left-radius:4px}
+    .msg-bubble.assistant.ai{background:rgba(0,212,255,.1);color:#e2e8f0;border-bottom-right-radius:4px;border:1px solid rgba(0,212,255,.15)}
+    .msg-bubble.assistant.human{background:rgba(34,197,94,.1);color:#e2e8f0;border-bottom-right-radius:4px;border:1px solid rgba(34,197,94,.15)}
+    .msg-meta{font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;display:flex;align-items:center;gap:4px}
+    .msg-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+    .chat-input-area{padding:14px 20px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+    .chat-input-row{display:flex;gap:8px;align-items:flex-end}
+    .chat-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:13px;color:#fff;outline:none;resize:none;min-height:40px;max-height:120px;font-family:inherit}
+    .chat-input:focus{border-color:rgba(0,212,255,.4)}
+    .chat-input::placeholder{color:rgba(255,255,255,.3)}
+    .chat-send-btn{padding:10px 16px;background:#00d4ff;color:#000;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+    .chat-send-btn:hover{background:#00b8d9}
+    .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(255,255,255,.3)}
+    .chat-empty i{font-size:48px;opacity:.3}
+    .chat-empty p{font-size:14px}
+
+    /* ── Config Panel ── */
+    .config-layout{display:grid;grid-template-columns:260px 1fr;gap:20px;height:100%}
+    .config-sidebar{display:flex;flex-direction:column;gap:12px}
+    .config-page-item{padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px}
+    .config-page-item:hover{border-color:rgba(0,212,255,.2)}
+    .config-page-item.active{border-color:#00d4ff;background:rgba(0,212,255,.06)}
+    .config-page-name{font-size:13px;font-weight:500;color:#fff}
+    .config-page-sub{font-size:11px;color:rgba(255,255,255,.4)}
+    .config-main{overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+    .config-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:20px}
+    .config-section-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .config-section-title i{color:#00d4ff}
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:12px;font-weight:500;color:rgba(255,255,255,.6);margin-bottom:6px;display:block}
+    .form-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;color:#fff;outline:none;font-family:inherit;transition:border-color .2s}
+    .form-input:focus{border-color:rgba(0,212,255,.4)}
+    .form-input::placeholder{color:rgba(255,255,255,.3)}
+    textarea.form-input{resize:vertical;min-height:80px}
+    .form-hint{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px}
+
+    /* ── Documents ── */
+    .doc-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+    .doc-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+    .doc-icon{width:32px;height:32px;border-radius:7px;background:rgba(0,212,255,.1);color:#00d4ff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .doc-name{font-size:13px;color:#fff;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .doc-size{font-size:11px;color:rgba(255,255,255,.3)}
+    .upload-zone{border:2px dashed rgba(255,255,255,.15);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s}
+    .upload-zone:hover,.upload-zone.dragover{border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.04)}
+    .upload-zone i{font-size:28px;color:rgba(255,255,255,.3);display:block;margin-bottom:8px}
+    .upload-zone p{font-size:13px;color:rgba(255,255,255,.4)}
+    .upload-zone span{font-size:11px;color:rgba(255,255,255,.25)}
+
+    /* ── Rules ── */
+    .rule-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
+    .rule-content{flex:1;min-width:0}
+    .rule-trigger{font-size:12px;font-weight:600;color:#00d4ff;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+    .rule-response{font-size:12px;color:rgba(255,255,255,.6);line-height:1.4}
+
+    /* ── Buttons ── */
+    .btn{padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+    .btn.primary{background:#00d4ff;color:#000}
+    .btn.primary:hover{background:#00b8d9}
+    .btn.secondary{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.12)}
+    .btn.secondary:hover{background:rgba(255,255,255,.12)}
+    .btn.danger{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+    .btn.danger:hover{background:rgba(239,68,68,.25)}
+    .btn.success{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.2)}
+    .btn.success:hover{background:rgba(34,197,94,.25)}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* ── Modal ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.open{display:flex}
+    .modal{background:#0d1530;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:80vh;overflow-y:auto}
+    .modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .modal-title i{color:#00d4ff}
+    .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
+
+    /* ── Setup Banner ── */
+    .setup-banner{background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(168,85,247,.08));border:1px solid rgba(0,212,255,.2);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px}
+    .setup-banner-icon{font-size:32px;color:#00d4ff;flex-shrink:0}
+    .setup-banner-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+    .setup-banner-desc{font-size:13px;color:rgba(255,255,255,.5);line-height:1.5}
+
+    /* ── Toast ── */
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;animation:slideIn .3s ease;max-width:320px}
+    .toast.success{background:#0d2e1a;border:1px solid rgba(34,197,94,.3);color:#22c55e}
+    .toast.error{background:#2e0d0d;border:1px solid rgba(239,68,68,.3);color:#f87171}
+    .toast.info{background:#0d1e2e;border:1px solid rgba(0,212,255,.3);color:#00d4ff}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    /* ── Webhook Info ── */
+    .webhook-box{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;font-family:monospace;font-size:12px;color:#00d4ff;word-break:break-all;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .webhook-box span{flex:1}
+    .copy-btn{padding:4px 10px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:5px;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .2s}
+    .copy-btn:hover{background:rgba(0,212,255,.2)}
+
+    /* ── Test Chat ── */
+    .test-chat{background:rgba(0,0,0,.2);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+    .test-chat-messages{min-height:120px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+    .test-msg{padding:8px 12px;border-radius:10px;font-size:12px;max-width:80%}
+    .test-msg.user{background:rgba(255,255,255,.08);align-self:flex-start}
+    .test-msg.ai{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.15);align-self:flex-end;color:#e2e8f0}
+    .test-input-row{display:flex;gap:8px}
+    .test-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:8px 10px;font-size:12px;color:#fff;outline:none;font-family:inherit}
+    .test-input:focus{border-color:rgba(0,212,255,.4)}
+
+    /* ── Empty State ── */
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;color:rgba(255,255,255,.3);text-align:center;gap:12px}
+    .empty-state i{font-size:40px;opacity:.4}
+    .empty-state p{font-size:14px}
+    .empty-state span{font-size:12px;opacity:.7}
+
+    /* ── Loading ── */
+    .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#00d4ff;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Responsive ── */
+    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-row{grid-template-columns:repeat(2,1fr)}.config-layout{grid-template-columns:1fr}.conv-list{width:100%}}
+  </style>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <img src="images/logo.png" alt="GZ" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#0066ff);display:none;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">GZ</div>
+    <span>GENZ<em>TECH</em></span>
+  </a>
+  <nav class="sidebar-nav">
+    <div class="nav-group-label">Tổng Quan</div>
+    <a href="maindashboard.html" class="nav-item"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+    <div class="nav-group-label">Công Cụ</div>
+    <a href="auto-post.html" class="nav-item"><i class="bi bi-send"></i> Tự Động Đăng Bài</a>
+    <a href="ads-assistant.html" class="nav-item" onclick="toggleSubNav(event,'subNavAds')">
+      <i class="bi bi-megaphone"></i> Trợ Lý Quảng Cáo <i class="bi bi-chevron-down" style="margin-left:auto;font-size:10px"></i>
+    </a>
+    <div class="nav-sub" id="subNavAds">
+      <a href="tool-ad-account.html" class="nav-sub-item"><i class="bi bi-shield-check"></i> Kiểm Tra TKQC</a>
+      <a href="tool-fb-id.html" class="nav-sub-item"><i class="bi bi-person-badge"></i> Tìm Facebook ID</a>
+      <a href="tool-budget.html" class="nav-sub-item"><i class="bi bi-graph-up-arrow"></i> Phân Tích Ngân Sách</a>
+      <a href="tool-translate.html" class="nav-sub-item"><i class="bi bi-translate"></i> Dịch Thuật</a>
+      <a href="tool-ads-finder.html" class="nav-sub-item"><i class="bi bi-binoculars"></i> Ads Finder</a>
+      <a href="tool-policy.html" class="nav-sub-item"><i class="bi bi-journal-text"></i> Chính Sách FB</a>
+      <a href="tool-cookie.html" class="nav-sub-item"><i class="bi bi-cookie"></i> Quản Lý Cookie</a>
+    </div>
+    <a href="tool-human-agent.html" class="nav-item active"><i class="bi bi-robot"></i> AI Human Agent</a>
+    <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:11px;color:rgba(255,255,255,.3)">GenzTech v3.0</div>
+    <div id="serverStatus" style="font-size:11px;color:rgba(255,255,255,.3);margin-top:4px;display:flex;align-items:center;gap:4px">
+      <span id="serverDot" style="width:6px;height:6px;border-radius:50%;background:#666;display:inline-block"></span>
+      <span id="serverLabel">Chưa kết nối server</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main Content ── -->
+<div class="main-content">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title">
+      <i class="bi bi-robot"></i>
+      AI Human Agent
+    </div>
+    <div class="topbar-actions">
+      <button class="btn secondary" onclick="openSetupModal()" style="font-size:12px">
+        <i class="bi bi-gear"></i> Cài đặt Server
+      </button>
+      <button class="btn primary" onclick="syncPages()" id="syncBtn" style="font-size:12px">
+        <i class="bi bi-arrow-repeat"></i> Đồng bộ Pages
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">
+      <i class="bi bi-grid"></i> Tổng quan
+    </button>
+    <button class="tab-btn" id="tab-conversations" onclick="switchTab('conversations')">
+      <i class="bi bi-chat-dots"></i> Hội thoại
+      <span class="tab-badge red" id="badge-conversations">0</span>
+    </button>
+    <button class="tab-btn" id="tab-config" onclick="switchTab('config')">
+      <i class="bi bi-sliders"></i> Cấu hình AI
+    </button>
+    <button class="tab-btn" id="tab-setup" onclick="switchTab('setup')">
+      <i class="bi bi-info-circle"></i> Hướng dẫn
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="content-area">
+
+    <!-- ══ PANEL: Overview ══ -->
+    <div class="panel active" id="panel-overview">
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bi bi-robot"></i></div>
+          <div>
+            <div class="stat-label">Tổng Pages</div>
+            <div class="stat-value" id="stat-total-pages">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+          <div>
+            <div class="stat-label">AI đang hoạt động</div>
+            <div class="stat-value" id="stat-enabled-pages">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="bi bi-chat-dots"></i></div>
+          <div>
+            <div class="stat-label">Hội thoại hôm nay</div>
+            <div class="stat-value" id="stat-conversations">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="bi bi-person-raised-hand"></i></div>
+          <div>
+            <div class="stat-label">Chờ Human Agent</div>
+            <div class="stat-value" id="stat-pending">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup Banner (hiện khi chưa có pages) -->
+      <div class="setup-banner" id="setupBanner" style="display:none">
+        <div class="setup-banner-icon"><i class="bi bi-rocket-takeoff"></i></div>
+        <div style="flex:1">
+          <div class="setup-banner-title">Bắt đầu sử dụng AI Human Agent</div>
+          <div class="setup-banner-desc">Nhấn <strong>"Đồng bộ Pages"</strong> để tải danh sách Facebook Pages của bạn, sau đó cấu hình AI cho từng Page.</div>
+        </div>
+        <button class="btn primary" onclick="syncPages()"><i class="bi bi-arrow-repeat"></i> Đồng bộ ngay</button>
+      </div>
+
+      <!-- Page Grid -->
+      <div>
+        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+          <span>Danh sách Pages</span>
+          <span id="pageCount" style="font-size:12px;color:rgba(255,255,255,.3)">0 pages</span>
+        </div>
+        <div class="page-grid" id="pageGrid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <i class="bi bi-facebook"></i>
+            <p>Chưa có Pages nào</p>
+            <span>Nhập Facebook Token và nhấn "Đồng bộ Pages"</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL: Conversations ══ -->
+    <div class="panel" id="panel-conversations" style="padding:0">
+      <div class="conv-layout" style="height:100%">
+        <!-- Conversation List -->
+        <div class="conv-list">
+          <div class="conv-list-header">
+            <span class="conv-list-title">Hội thoại</span>
+            <select id="convPageFilter" onchange="loadConversations()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;outline:none">
+              <option value="">Tất cả Pages</option>
+            </select>
+          </div>
+          <div class="conv-search">
+            <input type="text" placeholder="Tìm kiếm..." id="convSearch" oninput="filterConversations()">
+          </div>
+          <div id="convList" style="flex:1;overflow-y:auto">
+            <div class="empty-state">
+              <i class="bi bi-chat-dots"></i>
+              <p>Chưa có hội thoại</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+          <div class="chat-empty" id="chatEmpty">
+            <i class="bi bi-chat-square-dots"></i>
+            <p>Chọn một hội thoại để xem</p>
+          </div>
+          <div id="chatView" style="display:none;flex-direction:column;height:100%">
+            <div class="chat-header">
+              <div class="chat-header-info">
+                <div class="conv-avatar" id="chatAvatar">U</div>
+                <div>
+                  <div class="chat-header-name" id="chatName">Người dùng</div>
+                  <div class="chat-header-sub" id="chatSub">Page: —</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn-sm gray" id="btnTakeover" onclick="takeoverConv()">
+                  <i class="bi bi-person-raised-hand"></i> Tiếp quản
+                </button>
+                <button class="btn-sm success" id="btnRelease" onclick="releaseConv()" style="display:none">
+                  <i class="bi bi-robot"></i> Trả về AI
+                </button>
+              </div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area">
+              <div id="humanAgentTag" style="display:none;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer">
+                  <input type="checkbox" id="useHumanTag" checked style="accent-color:#f97316">
+                  Dùng Human Agent Tag (cho phép nhắn tin sau 24h)
+                </label>
+              </div>
+              <div class="chat-input-row">
+                <textarea class="chat-input" id="chatInput" placeholder="Nhập tin nhắn..." rows="1"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendHumanReply()}"
+                  oninput="autoResize(this)"></textarea>
+                <button class="chat-send-btn" onclick="sendHumanReply()">
+                  <i class="bi bi-send"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL: Config ══ -->
+    <div class="panel" id="panel-config" style="padding:0;overflow:hidden">
+      <div class="config-layout" style="padding:24px;height:100%;overflow:hidden">
+        <!-- Config Sidebar: Page List -->
+        <div class="config-sidebar" style="overflow-y:auto">
+          <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Chọn Page</div>
+          <div id="configPageList">
+            <div class="empty-state" style="padding:24px 0">
+              <i class="bi bi-facebook"></i>
+              <p style="font-size:12px">Chưa có Pages</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Config Main -->
+        <div class="config-main" id="configMain">
+          <div class="empty-state" style="height:100%;justify-content:center">
+            <i class="bi bi-sliders"></i>
+            <p>Chọn một Page để cấu hình</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL: Setup Guide ══ -->
+    <div class="panel" id="panel-setup">
+      <div style="max-width:720px">
+        <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:6px">Hướng dẫn cài đặt AI Human Agent</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px">Làm theo các bước dưới đây để kích hoạt AI tự động trả lời Messenger</div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- Step 1 -->
+          <div class="config-section">
+            <div class="config-section-title"><i class="bi bi-1-circle-fill"></i> Tạo Facebook App</div>
+            <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:12px">
+              Truy cập <a href="https://developers.facebook.com/apps/" target="_blank" style="color:#00d4ff">Facebook Developers</a> → Tạo App mới → Chọn loại <strong style="color:#fff">Business</strong> → Thêm sản phẩm <strong style="color:#fff">Messenger</strong>.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group" style="margin:0">
+                <div class="form-label">App ID</div>
+                <div class="webhook-box"><span id="displayAppId">Chưa cấu hình</span></div>
+              </div>
+              <div class="form-group" style="margin:0">
+                <div class="form-label">Webhook Verify Token</div>
+                <div class="webhook-box"><span id="displayVerifyToken">genztech_webhook_2024</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="config-section">
+            <div class="config-section-title"><i class="bi bi-2-circle-fill"></i> Cấu hình Webhook</div>
+            <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:12px">
+              Trong Facebook App → Messenger → Webhooks → Thêm Callback URL và Verify Token:
+            </p>
+            <div class="form-group">
+              <div class="form-label">Callback URL (Webhook URL)</div>
+              <div class="webhook-box">
+                <span id="webhookUrl">Chưa cấu hình Server URL</span>
+                <button class="copy-btn" onclick="copyText('webhookUrl')"><i class="bi bi-copy"></i> Copy</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Verify Token</div>
+              <div class="webhook-box">
+                <span id="verifyTokenDisplay">genztech_webhook_2024</span>
+                <button class="copy-btn" onclick="copyText('verifyTokenDisplay')"><i class="bi bi-copy"></i> Copy</button>
+              </div>
+            </div>
+            <p style="font-size:12px;color:rgba(255,255,255,.4)">
+              <i class="bi bi-info-circle" style="color:#00d4ff"></i>
+              Subscribed fields cần chọn: <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px">messages</code>, <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px">messaging_postbacks</code>
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="config-section">
+            <div class="config-section-title"><i class="bi bi-3-circle-fill"></i> Kết nối Pages</div>
+            <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:12px">
+              Nhập Facebook Access Token (cần quyền <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">pages_messaging</code>, <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">pages_show_list</code>) rồi nhấn <strong style="color:#fff">Đồng bộ Pages</strong>.
+            </p>
+            <button class="btn primary" onclick="syncPages()"><i class="bi bi-arrow-repeat"></i> Đồng bộ Pages ngay</button>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="config-section">
+            <div class="config-section-title"><i class="bi bi-4-circle-fill"></i> Cấu hình AI cho từng Page</div>
+            <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.7">
+              Vào tab <strong style="color:#fff">Cấu hình AI</strong> → Chọn Page → Upload tài liệu kiến thức (PDF, Word, TXT...) → Thêm quy tắc Q&A → Bật AI → Nhấn <strong style="color:#fff">Đăng ký Webhook</strong>.
+            </p>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="config-section">
+            <div class="config-section-title"><i class="bi bi-5-circle-fill"></i> Kiểm tra và vận hành</div>
+            <p style="font-size:13px;color:rgba(255,255,255,.5);line-height:1.7">
+              Dùng tính năng <strong style="color:#fff">Test AI</strong> trong tab Cấu hình để kiểm tra phản hồi. Theo dõi hội thoại thực tế trong tab <strong style="color:#fff">Hội thoại</strong>. Khi cần, nhân viên có thể <strong style="color:#fff">Tiếp quản</strong> và dùng <strong style="color:#fff">Human Agent Tag</strong> để nhắn tin trong 7 ngày.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /main-content -->
+
+<!-- ══ Modal: Setup Server ══ -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal">
+    <div class="modal-title"><i class="bi bi-server"></i> Cài đặt kết nối Server</div>
+    <div class="form-group">
+      <label class="form-label">Server URL <span style="color:#f87171">*</span></label>
+      <input type="url" class="form-input" id="serverUrl" placeholder="https://api.yourdomain.com">
+      <div class="form-hint">URL của backend server đang chạy GenzTech API</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Facebook Access Token <span style="color:#f87171">*</span></label>
+      <input type="text" class="form-input" id="fbTokenInput" placeholder="EAALeRpq...">
+      <div class="form-hint">Token cần quyền: pages_messaging, pages_show_list, pages_manage_metadata</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Webhook Verify Token</label>
+      <input type="text" class="form-input" id="verifyTokenInput" placeholder="genztech_webhook_2024" value="genztech_webhook_2024">
+      <div class="form-hint">Phải khớp với FB_WEBHOOK_VERIFY_TOKEN trong .env của server</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" onclick="closeModal('setupModal')">Hủy</button>
+      <button class="btn primary" onclick="saveSetup()"><i class="bi bi-check2"></i> Lưu & Kết nối</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Add Rule ══ -->
+<div class="modal-overlay" id="ruleModal">
+  <div class="modal">
+    <div class="modal-title"><i class="bi bi-plus-circle"></i> <span id="ruleModalTitle">Thêm Quy Tắc</span></div>
+    <input type="hidden" id="editRuleId">
+    <div class="form-group">
+      <label class="form-label">Từ khóa / Chủ đề kích hoạt <span style="color:#f87171">*</span></label>
+      <input type="text" class="form-input" id="ruleTrigger" placeholder="Ví dụ: giá sản phẩm, thời gian giao hàng, chính sách đổi trả...">
+      <div class="form-hint">Khi khách hỏi về chủ đề này, AI sẽ dùng câu trả lời bên dưới</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Câu trả lời <span style="color:#f87171">*</span></label>
+      <textarea class="form-input" id="ruleResponse" rows="4" placeholder="Nhập câu trả lời chi tiết..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Danh mục</label>
+      <select class="form-input" id="ruleCategory">
+        <option value="general">Chung</option>
+        <option value="product">Sản phẩm</option>
+        <option value="price">Giá cả</option>
+        <option value="shipping">Vận chuyển</option>
+        <option value="policy">Chính sách</option>
+        <option value="support">Hỗ trợ</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" onclick="closeModal('ruleModal')">Hủy</button>
+      <button class="btn primary" onclick="saveRule()"><i class="bi bi-check2"></i> Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let SERVER_URL = localStorage.getItem('HA_SERVER_URL') || '';
+let FB_TOKEN = localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL') || '';
+let VERIFY_TOKEN = localStorage.getItem('HA_VERIFY_TOKEN') || 'genztech_webhook_2024';
+let allPages = [];
+let allConversations = [];
+let selectedConvPageId = null;
+let selectedConvUserId = null;
+let selectedConfigPageId = null;
+let convRefreshInterval = null;
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  // Hiển thị giá trị đã lưu
+  if (SERVER_URL) {
+    document.getElementById('serverUrl').value = SERVER_URL;
+    document.getElementById('webhookUrl').textContent = `${SERVER_URL}/api/human-agent/webhook`;
+  }
+  if (FB_TOKEN) document.getElementById('fbTokenInput').value = FB_TOKEN;
+  document.getElementById('verifyTokenInput').value = VERIFY_TOKEN;
+  document.getElementById('verifyTokenDisplay').textContent = VERIFY_TOKEN;
+
+  // Kiểm tra server
+  if (SERVER_URL) await checkServerStatus();
+
+  // Load pages
+  await loadPages();
+
+  // Auto-refresh conversations
+  convRefreshInterval = setInterval(() => {
+    if (document.getElementById('panel-conversations').classList.contains('active')) {
+      loadConversations(false);
+    }
+    loadStats();
+  }, 15000);
+});
+
+// ═══════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════
+async function api(method, path, body = null) {
+  if (!SERVER_URL) throw new Error('Chưa cấu hình Server URL. Nhấn "Cài đặt Server" để thiết lập.');
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${SERVER_URL}${path}`, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+async function apiUpload(path, formData) {
+  if (!SERVER_URL) throw new Error('Chưa cấu hình Server URL');
+  const r = await fetch(`${SERVER_URL}${path}`, { method: 'POST', body: formData });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════
+// SERVER STATUS
+// ═══════════════════════════════════════════════════════
+async function checkServerStatus() {
+  try {
+    const r = await fetch(`${SERVER_URL}/health`, { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      document.getElementById('serverDot').style.background = '#22c55e';
+      document.getElementById('serverLabel').textContent = 'Server đang hoạt động';
+      return true;
+    }
+  } catch {}
+  document.getElementById('serverDot').style.background = '#f87171';
+  document.getElementById('serverLabel').textContent = 'Không kết nối được server';
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════════════
+function openSetupModal() {
+  document.getElementById('serverUrl').value = SERVER_URL;
+  document.getElementById('fbTokenInput').value = FB_TOKEN;
+  document.getElementById('verifyTokenInput').value = VERIFY_TOKEN;
+  openModal('setupModal');
+}
+
+async function saveSetup() {
+  const url = document.getElementById('serverUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('fbTokenInput').value.trim();
+  const vToken = document.getElementById('verifyTokenInput').value.trim();
+
+  if (!url) return showToast('Vui lòng nhập Server URL', 'error');
+  if (!token) return showToast('Vui lòng nhập Facebook Token', 'error');
+
+  SERVER_URL = url;
+  FB_TOKEN = token;
+  VERIFY_TOKEN = vToken || 'genztech_webhook_2024';
+
+  localStorage.setItem('HA_SERVER_URL', SERVER_URL);
+  localStorage.setItem('HA_FB_TOKEN', FB_TOKEN);
+  localStorage.setItem('HA_VERIFY_TOKEN', VERIFY_TOKEN);
+  localStorage.setItem('FB_TOKEN_MANUAL', FB_TOKEN);
+
+  // Cập nhật UI
+  document.getElementById('webhookUrl').textContent = `${SERVER_URL}/api/human-agent/webhook`;
+  document.getElementById('verifyTokenDisplay').textContent = VERIFY_TOKEN;
+
+  closeModal('setupModal');
+
+  const ok = await checkServerStatus();
+  if (ok) {
+    showToast('Đã lưu cài đặt và kết nối server thành công!', 'success');
+    await syncPages();
+  } else {
+    showToast('Đã lưu cài đặt nhưng không kết nối được server', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PAGES
+// ═══════════════════════════════════════════════════════
+async function loadPages() {
+  try {
+    const data = await api('GET', '/api/human-agent/pages');
+    allPages = data.pages || [];
+    renderPageGrid();
+    renderConfigPageList();
+    loadStats();
+    updateConvPageFilter();
+  } catch (err) {
+    if (SERVER_URL) console.warn('Load pages:', err.message);
+  }
+}
+
+async function syncPages() {
+  if (!FB_TOKEN) {
+    openSetupModal();
+    return showToast('Vui lòng nhập Facebook Token trước', 'error');
+  }
+  if (!SERVER_URL) {
+    openSetupModal();
+    return showToast('Vui lòng cấu hình Server URL trước', 'error');
+  }
+
+  const btn = document.getElementById('syncBtn');
+  btn.innerHTML = '<span class="loading-spinner"></span> Đang đồng bộ...';
+  btn.disabled = true;
+
+  try {
+    const data = await api('POST', '/api/human-agent/pages/sync', { accessToken: FB_TOKEN });
+    showToast(`Đồng bộ thành công ${data.count} Pages`, 'success');
+    await loadPages();
+    document.getElementById('setupBanner').style.display = 'none';
+  } catch (err) {
+    showToast('Lỗi đồng bộ: ' + err.message, 'error');
+  } finally {
+    btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Đồng bộ Pages';
+    btn.disabled = false;
+  }
+}
+
+function renderPageGrid() {
+  const grid = document.getElementById('pageGrid');
+  const countEl = document.getElementById('pageCount');
+  countEl.textContent = `${allPages.length} pages`;
+
+  if (allPages.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <i class="bi bi-facebook"></i>
+      <p>Chưa có Pages nào</p>
+      <span>Nhập Facebook Token và nhấn "Đồng bộ Pages"</span>
+    </div>`;
+    document.getElementById('setupBanner').style.display = 'flex';
+    return;
+  }
+
+  document.getElementById('setupBanner').style.display = 'none';
+  grid.innerHTML = allPages.map(p => `
+    <div class="page-card ${p.enabled ? 'enabled' : ''}" id="pageCard_${p.pageId}">
+      <div class="page-status">
+        <label class="toggle-switch" title="${p.enabled ? 'AI đang bật' : 'AI đang tắt'}">
+          <input type="checkbox" ${p.enabled ? 'checked' : ''} onchange="togglePage('${p.pageId}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="page-card-header">
+        <div class="page-avatar">
+          ${p.pageAvatar ? `<img src="${p.pageAvatar}" alt="${p.pageName}" onerror="this.parentElement.textContent='${p.pageName[0]}'">` : p.pageName[0]}
+        </div>
+        <div>
+          <div class="page-name">${escHtml(p.pageName)}</div>
+          <div class="page-id">${p.pageId}</div>
+        </div>
+      </div>
+      <div class="page-meta">
+        <div class="page-meta-item"><i class="bi bi-file-text"></i> ${p.documentCount} tài liệu</div>
+        <div class="page-meta-item"><i class="bi bi-list-check"></i> ${p.ruleCount} quy tắc</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn-sm primary" onclick="openConfigPage('${p.pageId}')">
+          <i class="bi bi-sliders"></i> Cấu hình
+        </button>
+        <button class="btn-sm success" onclick="subscribeWebhook('${p.pageId}')">
+          <i class="bi bi-broadcast"></i> Webhook
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function togglePage(pageId, enabled) {
+  try {
+    await api('PUT', `/api/human-agent/pages/${pageId}`, { enabled });
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page) page.enabled = enabled;
+    const card = document.getElementById(`pageCard_${pageId}`);
+    if (card) card.classList.toggle('enabled', enabled);
+    showToast(enabled ? 'Đã bật AI cho Page này' : 'Đã tắt AI cho Page này', 'info');
+    loadStats();
+  } catch (err) {
+    showToast('Lỗi: ' + err.message, 'error');
+  }
+}
+
+async function subscribeWebhook(pageId) {
+  try {
+    await api('POST', `/api/human-agent/pages/${pageId}/subscribe`);
+    showToast('Đã đăng ký webhook thành công!', 'success');
+  } catch (err) {
+    showToast('Lỗi đăng ký webhook: ' + err.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const data = await api('GET', '/api/human-agent/stats');
+    document.getElementById('stat-total-pages').textContent = data.totalPages || 0;
+    document.getElementById('stat-enabled-pages').textContent = data.enabledPages || 0;
+    document.getElementById('stat-conversations').textContent = data.totalConversations || 0;
+    document.getElementById('stat-pending').textContent = data.pendingHuman || 0;
+    const pending = data.pendingHuman || 0;
+    document.getElementById('badge-conversations').textContent = pending;
+    document.getElementById('badge-conversations').style.display = pending > 0 ? 'inline-block' : 'none';
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════════
+// CONVERSATIONS
+// ═══════════════════════════════════════════════════════
+function updateConvPageFilter() {
+  const sel = document.getElementById('convPageFilter');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Tất cả Pages</option>' +
+    allPages.map(p => `<option value="${p.pageId}" ${current === p.pageId ? 'selected' : ''}>${escHtml(p.pageName)}</option>`).join('');
+}
+
+async function loadConversations(showLoading = true) {
+  const pageFilter = document.getElementById('convPageFilter').value;
+  const pagesToLoad = pageFilter ? [pageFilter] : allPages.map(p => p.pageId);
+
+  allConversations = [];
+  for (const pageId of pagesToLoad) {
+    try {
+      const data = await api('GET', `/api/human-agent/pages/${pageId}/conversations`);
+      for (const conv of (data.conversations || [])) {
+        conv.pageId = pageId;
+        conv.pageName = allPages.find(p => p.pageId === pageId)?.pageName || pageId;
+        allConversations.push(conv);
+      }
+    } catch {}
+  }
+
+  allConversations.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+  renderConvList(allConversations);
+}
+
+function renderConvList(convs) {
+  const el = document.getElementById('convList');
+  if (convs.length === 0) {
+    el.innerHTML = `<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chưa có hội thoại</p></div>`;
+    return;
+  }
+  el.innerHTML = convs.map(c => `
+    <div class="conv-item ${c.isPending ? 'pending' : ''} ${selectedConvUserId === c.userId ? 'active' : ''}"
+      onclick="openConversation('${c.pageId}', '${c.userId}', '${escHtml(c.pageName)}')">
+      <div class="conv-avatar">${c.userId.slice(-2).toUpperCase()}</div>
+      <div class="conv-info">
+        <div class="conv-name">
+          Khách ${c.userId.slice(-6)}
+          ${c.isPending ? '<span class="badge-pending">Chờ HAgent</span>' : ''}
+          ${c.unread > 0 ? `<span class="badge-unread">${c.unread}</span>` : ''}
+        </div>
+        <div class="conv-last">${escHtml(c.lastMessage || '')}</div>
+      </div>
+      <div class="conv-time">${formatTime(c.lastTimestamp)}</div>
+    </div>
+  `).join('');
+}
+
+function filterConversations() {
+  const q = document.getElementById('convSearch').value.toLowerCase();
+  const filtered = allConversations.filter(c =>
+    c.userId.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q)
+  );
+  renderConvList(filtered);
+}
+
+async function openConversation(pageId, userId, pageName) {
+  selectedConvPageId = pageId;
+  selectedConvUserId = userId;
+
+  document.getElementById('chatEmpty').style.display = 'none';
+  const chatView = document.getElementById('chatView');
+  chatView.style.display = 'flex';
+
+  document.getElementById('chatAvatar').textContent = userId.slice(-2).toUpperCase();
+  document.getElementById('chatName').textContent = `Khách ${userId.slice(-6)}`;
+  document.getElementById('chatSub').textContent = `Page: ${pageName}`;
+
+  try {
+    const data = await api('GET', `/api/human-agent/pages/${pageId}/conversations/${userId}`);
+    renderMessages(data.messages || []);
+
+    const isPending = data.isPending;
+    document.getElementById('btnTakeover').style.display = isPending ? 'none' : 'flex';
+    document.getElementById('btnRelease').style.display = isPending ? 'flex' : 'none';
+    document.getElementById('humanAgentTag').style.display = isPending ? 'block' : 'none';
+  } catch (err) {
+    showToast('Lỗi tải hội thoại: ' + err.message, 'error');
+  }
+
+  // Refresh conv list
+  loadConversations(false);
+}
+
+function renderMessages(messages) {
+  const el = document.getElementById('chatMessages');
+  el.innerHTML = messages.map(m => {
+    const isUser = m.role === 'user';
+    const label = isUser ? '' : (m.isHuman ? '<i class="bi bi-person-fill"></i> Nhân viên' : '<i class="bi bi-robot"></i> AI');
+    return `
+      <div class="msg-row ${isUser ? 'user' : 'assistant'}">
+        <div class="msg-avatar">${isUser ? '👤' : (m.isHuman ? '👨‍💼' : '🤖')}</div>
+        <div>
+          <div class="msg-bubble ${isUser ? 'user' : (m.isHuman ? 'assistant human' : 'assistant ai')}">
+            ${escHtml(m.content)}
+          </div>
+          <div class="msg-meta">${label} ${formatTime(m.timestamp)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendHumanReply() {
+  const msg = document.getElementById('chatInput').value.trim();
+  if (!msg || !selectedConvPageId || !selectedConvUserId) return;
+
+  const useTag = document.getElementById('useHumanTag').checked;
+  document.getElementById('chatInput').value = '';
+
+  try {
+    await api('POST', `/api/human-agent/pages/${selectedConvPageId}/conversations/${selectedConvUserId}/reply`, {
+      message: msg,
+      useHumanAgentTag: useTag
+    });
+    await openConversation(selectedConvPageId, selectedConvUserId,
+      allPages.find(p => p.pageId === selectedConvPageId)?.pageName || '');
+  } catch (err) {
+    showToast('Lỗi gửi tin nhắn: ' + err.message, 'error');
+  }
+}
+
+async function takeoverConv() {
+  if (!selectedConvPageId || !selectedConvUserId) return;
+  try {
+    await api('POST', `/api/human-agent/pages/${selectedConvPageId}/conversations/${selectedConvUserId}/takeover`);
+    document.getElementById('btnTakeover').style.display = 'none';
+    document.getElementById('btnRelease').style.display = 'flex';
+    document.getElementById('humanAgentTag').style.display = 'block';
+    showToast('Đã tiếp quản hội thoại. AI sẽ không tự động trả lời.', 'info');
+  } catch (err) {
+    showToast('Lỗi: ' + err.message, 'error');
+  }
+}
+
+async function releaseConv() {
+  if (!selectedConvPageId || !selectedConvUserId) return;
+  try {
+    await api('POST', `/api/human-agent/pages/${selectedConvPageId}/conversations/${selectedConvUserId}/release`);
+    document.getElementById('btnTakeover').style.display = 'flex';
+    document.getElementById('btnRelease').style.display = 'none';
+    document.getElementById('humanAgentTag').style.display = 'none';
+    showToast('Đã trả hội thoại về cho AI', 'success');
+  } catch (err) {
+    showToast('Lỗi: ' + err.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+function renderConfigPageList() {
+  const el = document.getElementById('configPageList');
+  if (allPages.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:24px 0"><i class="bi bi-facebook"></i><p style="font-size:12px">Chưa có Pages</p></div>`;
+    return;
+  }
+  el.innerHTML = allPages.map(p => `
+    <div class="config-page-item ${selectedConfigPageId === p.pageId ? 'active' : ''}"
+      onclick="openConfigPage('${p.pageId}')">
+      <div class="page-avatar" style="width:32px;height:32px;font-size:14px">
+        ${p.pageAvatar ? `<img src="${p.pageAvatar}" style="width:32px;height:32px;border-radius:50%">` : p.pageName[0]}
+      </div>
+      <div>
+        <div class="config-page-name">${escHtml(p.pageName)}</div>
+        <div class="config-page-sub">${p.documentCount} tài liệu · ${p.ruleCount} quy tắc</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openConfigPage(pageId) {
+  selectedConfigPageId = pageId;
+  switchTab('config');
+
+  // Update active state in sidebar
+  document.querySelectorAll('.config-page-item').forEach(el => el.classList.remove('active'));
+  const items = document.querySelectorAll('.config-page-item');
+  items.forEach(el => {
+    if (el.getAttribute('onclick')?.includes(pageId)) el.classList.add('active');
+  });
+
+  const page = allPages.find(p => p.pageId === pageId);
+  if (!page) return;
+
+  const main = document.getElementById('configMain');
+  main.innerHTML = `<div style="text-align:center;padding:40px"><span class="loading-spinner"></span></div>`;
+
+  try {
+    const [docsData, rulesData] = await Promise.all([
+      api('GET', `/api/human-agent/pages/${pageId}/documents`),
+      api('GET', `/api/human-agent/pages/${pageId}/rules`)
+    ]);
+
+    const docs = docsData.documents || [];
+    const rules = rulesData.rules || [];
+
+    main.innerHTML = `
+      <!-- AI Config -->
+      <div class="config-section">
+        <div class="config-section-title"><i class="bi bi-robot"></i> Cấu hình AI — ${escHtml(page.pageName)}</div>
+        <div class="form-group">
+          <label class="form-label">System Prompt (Hướng dẫn cho AI)</label>
+          <textarea class="form-input" id="cfg_systemPrompt" rows="5"
+            placeholder="Bạn là trợ lý AI chăm sóc khách hàng của [Tên cửa hàng]...">${escHtml(page.aiConfig?.systemPrompt || '')}</textarea>
+          <div class="form-hint">Mô tả vai trò, phong cách trả lời và các giới hạn của AI</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Độ dài tối đa (tokens)</label>
+            <input type="number" class="form-input" id="cfg_maxTokens" value="${page.aiConfig?.maxTokens || 500}" min="100" max="2000">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Ngôn ngữ chính</label>
+            <select class="form-input" id="cfg_language">
+              <option value="vi" ${page.aiConfig?.language === 'vi' ? 'selected' : ''}>Tiếng Việt</option>
+              <option value="en" ${page.aiConfig?.language === 'en' ? 'selected' : ''}>English</option>
+              <option value="auto">Tự động theo khách</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button class="btn primary" onclick="saveAIConfig('${pageId}')">
+            <i class="bi bi-check2"></i> Lưu cấu hình
+          </button>
+          <label class="btn secondary" style="cursor:pointer">
+            <input type="checkbox" id="cfg_enabled" ${page.enabled ? 'checked' : ''} onchange="togglePage('${pageId}', this.checked)" style="margin-right:6px;accent-color:#22c55e">
+            Bật AI cho Page này
+          </label>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div class="config-section">
+        <div class="config-section-title"><i class="bi bi-file-earmark-text"></i> Tài liệu kiến thức (${docs.length})</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px">
+          Upload tài liệu để AI học và trả lời dựa trên nội dung. Hỗ trợ: TXT, MD, PDF, DOCX, CSV, JSON, HTML (tối đa 10MB/file)
+        </p>
+        <div class="doc-list" id="docList_${pageId}">
+          ${docs.length === 0 ? '<div style="font-size:12px;color:rgba(255,255,255,.3);padding:8px 0">Chưa có tài liệu nào</div>' :
+            docs.map(d => renderDocItem(d, pageId)).join('')}
+        </div>
+        <div class="upload-zone" id="uploadZone_${pageId}"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleFileDrop(event,'${pageId}')"
+          onclick="document.getElementById('fileInput_${pageId}').click()">
+          <i class="bi bi-cloud-upload"></i>
+          <p>Kéo thả file vào đây hoặc nhấn để chọn</p>
+          <span>TXT, MD, PDF, DOCX, CSV, JSON, HTML — Tối đa 10MB/file</span>
+        </div>
+        <input type="file" id="fileInput_${pageId}" style="display:none" multiple
+          accept=".txt,.md,.pdf,.docx,.doc,.csv,.json,.html"
+          onchange="uploadDocuments('${pageId}', this.files)">
+      </div>
+
+      <!-- Rules -->
+      <div class="config-section">
+        <div class="config-section-title"><i class="bi bi-list-check"></i> Quy tắc Q&A (${rules.length})</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px">
+          Thêm các cặp câu hỏi - trả lời cụ thể. AI sẽ ưu tiên dùng quy tắc này khi khách hỏi về chủ đề tương ứng.
+        </p>
+        <div id="ruleList_${pageId}" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          ${rules.length === 0 ? '<div style="font-size:12px;color:rgba(255,255,255,.3);padding:8px 0">Chưa có quy tắc nào</div>' :
+            rules.map(r => renderRuleItem(r, pageId)).join('')}
+        </div>
+        <button class="btn secondary" onclick="openAddRule('${pageId}')">
+          <i class="bi bi-plus"></i> Thêm quy tắc
+        </button>
+      </div>
+
+      <!-- Test AI -->
+      <div class="config-section">
+        <div class="config-section-title"><i class="bi bi-chat-square-text"></i> Test AI</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px">Thử nghiệm AI trả lời với cấu hình hiện tại</p>
+        <div class="test-chat">
+          <div class="test-chat-messages" id="testMessages_${pageId}">
+            <div class="test-msg ai">Xin chào! Tôi là AI trợ lý của ${escHtml(page.pageName)}. Bạn cần hỗ trợ gì?</div>
+          </div>
+          <div class="test-input-row">
+            <input type="text" class="test-input" id="testInput_${pageId}"
+              placeholder="Nhập câu hỏi để test AI..."
+              onkeydown="if(event.key==='Enter')testAI('${pageId}')">
+            <button class="btn-sm primary" onclick="testAI('${pageId}')">
+              <i class="bi bi-send"></i> Gửi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Webhook -->
+      <div class="config-section">
+        <div class="config-section-title"><i class="bi bi-broadcast"></i> Đăng ký Webhook</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px">
+          Đăng ký webhook để Facebook gửi tin nhắn đến server của bạn.
+        </p>
+        <button class="btn success" onclick="subscribeWebhook('${pageId}')">
+          <i class="bi bi-broadcast"></i> Đăng ký Webhook cho Page này
+        </button>
+      </div>
+    `;
+  } catch (err) {
+    main.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi tải cấu hình: ${err.message}</p></div>`;
+  }
+}
+
+function renderDocItem(doc, pageId) {
+  const icons = { '.pdf': 'bi-file-pdf', '.docx': 'bi-file-word', '.doc': 'bi-file-word',
+    '.txt': 'bi-file-text', '.md': 'bi-markdown', '.csv': 'bi-table', '.json': 'bi-braces', '.html': 'bi-code' };
+  const icon = icons[doc.ext] || 'bi-file-earmark';
+  return `
+    <div class="doc-item" id="doc_${doc.id}">
+      <div class="doc-icon"><i class="bi ${icon}"></i></div>
+      <div>
+        <div class="doc-name">${escHtml(doc.name)}</div>
+        <div class="doc-size">${formatBytes(doc.size)} · ${(doc.chars || 0).toLocaleString()} ký tự</div>
+      </div>
+      <button class="btn-sm danger" onclick="deleteDocument('${pageId}','${doc.id}')">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  `;
+}
+
+function renderRuleItem(rule, pageId) {
+  const catColors = { product: '#00d4ff', price: '#22c55e', shipping: '#f97316', policy: '#a855f7', support: '#f59e0b', general: '#64748b' };
+  const color = catColors[rule.category] || '#64748b';
+  return `
+    <div class="rule-item" id="rule_${rule.id}">
+      <div class="rule-content">
+        <div class="rule-trigger">
+          <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
+          ${escHtml(rule.trigger)}
+        </div>
+        <div class="rule-response">${escHtml(rule.response)}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn-sm gray" onclick="openEditRule('${pageId}','${rule.id}','${escHtml(rule.trigger).replace(/'/g,"\\'")}','${escHtml(rule.response).replace(/'/g,"\\'")}','${rule.category}')">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn-sm danger" onclick="deleteRule('${pageId}','${rule.id}')">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveAIConfig(pageId) {
+  const systemPrompt = document.getElementById('cfg_systemPrompt')?.value;
+  const maxTokens = parseInt(document.getElementById('cfg_maxTokens')?.value) || 500;
+  const language = document.getElementById('cfg_language')?.value || 'vi';
+
+  try {
+    await api('PUT', `/api/human-agent/pages/${pageId}`, {
+      aiConfig: { systemPrompt, maxTokens, language }
+    });
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page) page.aiConfig = { ...page.aiConfig, systemPrompt, maxTokens, language };
+    showToast('Đã lưu cấu hình AI', 'success');
+  } catch (err) {
+    showToast('Lỗi lưu cấu hình: ' + err.message, 'error');
+  }
+}
+
+// ── Documents ──
+async function uploadDocuments(pageId, files) {
+  if (!files || files.length === 0) return;
+  const formData = new FormData();
+  for (const f of files) formData.append('files', f);
+
+  const zone = document.getElementById(`uploadZone_${pageId}`);
+  if (zone) zone.innerHTML = '<span class="loading-spinner"></span> Đang upload...';
+
+  try {
+    const data = await apiUpload(`/api/human-agent/pages/${pageId}/documents`, formData);
+    showToast(`Đã upload ${data.uploaded.length} tài liệu`, 'success');
+    await openConfigPage(pageId);
+  } catch (err) {
+    showToast('Lỗi upload: ' + err.message, 'error');
+    await openConfigPage(pageId);
+  }
+}
+
+function handleFileDrop(event, pageId) {
+  event.preventDefault();
+  document.getElementById(`uploadZone_${pageId}`)?.classList.remove('dragover');
+  uploadDocuments(pageId, event.dataTransfer.files);
+}
+
+async function deleteDocument(pageId, docId) {
+  if (!confirm('Xóa tài liệu này?')) return;
+  try {
+    await api('DELETE', `/api/human-agent/pages/${pageId}/documents/${docId}`);
+    document.getElementById(`doc_${docId}`)?.remove();
+    showToast('Đã xóa tài liệu', 'info');
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page) page.documentCount = Math.max(0, page.documentCount - 1);
+    renderConfigPageList();
+  } catch (err) {
+    showToast('Lỗi xóa: ' + err.message, 'error');
+  }
+}
+
+// ── Rules ──
+let currentRulePageId = null;
+
+function openAddRule(pageId) {
+  currentRulePageId = pageId;
+  document.getElementById('ruleModalTitle').textContent = 'Thêm Quy Tắc';
+  document.getElementById('editRuleId').value = '';
+  document.getElementById('ruleTrigger').value = '';
+  document.getElementById('ruleResponse').value = '';
+  document.getElementById('ruleCategory').value = 'general';
+  openModal('ruleModal');
+}
+
+function openEditRule(pageId, ruleId, trigger, response, category) {
+  currentRulePageId = pageId;
+  document.getElementById('ruleModalTitle').textContent = 'Sửa Quy Tắc';
+  document.getElementById('editRuleId').value = ruleId;
+  document.getElementById('ruleTrigger').value = trigger;
+  document.getElementById('ruleResponse').value = response;
+  document.getElementById('ruleCategory').value = category || 'general';
+  openModal('ruleModal');
+}
+
+async function saveRule() {
+  const pageId = currentRulePageId;
+  const ruleId = document.getElementById('editRuleId').value;
+  const trigger = document.getElementById('ruleTrigger').value.trim();
+  const response = document.getElementById('ruleResponse').value.trim();
+  const category = document.getElementById('ruleCategory').value;
+
+  if (!trigger || !response) return showToast('Vui lòng điền đầy đủ thông tin', 'error');
+
+  try {
+    if (ruleId) {
+      await api('PUT', `/api/human-agent/pages/${pageId}/rules/${ruleId}`, { trigger, response, category });
+      showToast('Đã cập nhật quy tắc', 'success');
+    } else {
+      await api('POST', `/api/human-agent/pages/${pageId}/rules`, { trigger, response, category });
+      showToast('Đã thêm quy tắc mới', 'success');
+    }
+    closeModal('ruleModal');
+    await openConfigPage(pageId);
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page && !ruleId) page.ruleCount++;
+    renderConfigPageList();
+  } catch (err) {
+    showToast('Lỗi lưu quy tắc: ' + err.message, 'error');
+  }
+}
+
+async function deleteRule(pageId, ruleId) {
+  if (!confirm('Xóa quy tắc này?')) return;
+  try {
+    await api('DELETE', `/api/human-agent/pages/${pageId}/rules/${ruleId}`);
+    document.getElementById(`rule_${ruleId}`)?.remove();
+    showToast('Đã xóa quy tắc', 'info');
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page) page.ruleCount = Math.max(0, page.ruleCount - 1);
+    renderConfigPageList();
+  } catch (err) {
+    showToast('Lỗi xóa: ' + err.message, 'error');
+  }
+}
+
+// ── Test AI ──
+async function testAI(pageId) {
+  const input = document.getElementById(`testInput_${pageId}`);
+  const msg = input?.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const container = document.getElementById(`testMessages_${pageId}`);
+  container.innerHTML += `<div class="test-msg user">${escHtml(msg)}</div>`;
+  container.innerHTML += `<div class="test-msg ai" id="testThinking"><span class="loading-spinner"></span> Đang suy nghĩ...</div>`;
+  container.scrollTop = container.scrollHeight;
+
+  try {
+    const data = await api('POST', `/api/human-agent/pages/${pageId}/test`, { message: msg });
+    document.getElementById('testThinking')?.remove();
+    container.innerHTML += `<div class="test-msg ai">${escHtml(data.reply)}${data.needsHuman ? '<br><em style="color:#f97316;font-size:10px">→ Sẽ chuyển cho nhân viên</em>' : ''}</div>`;
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    document.getElementById('testThinking')?.remove();
+    container.innerHTML += `<div class="test-msg ai" style="color:#f87171">Lỗi: ${err.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${tab}`)?.classList.add('active');
+  document.getElementById(`panel-${tab}`)?.classList.add('active');
+
+  if (tab === 'conversations') loadConversations();
+}
+
+function toggleSubNav(e, id) {
+  e.preventDefault();
+  document.getElementById(id)?.classList.toggle('open');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openSettings() {}
+
+function showToast(msg, type = 'info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', info: 'bi-info-circle-fill' };
+  t.innerHTML = `<i class="bi ${icons[type] || 'bi-info-circle-fill'}"></i> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function copyText(elId) {
+  const text = document.getElementById(elId)?.textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => showToast('Đã copy!', 'success'));
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return 'Vừa xong';
+  if (diff < 3600000) return `${Math.floor(diff/60000)} phút`;
+  if (diff < 86400000) return `${Math.floor(diff/3600000)} giờ`;
+  return d.toLocaleDateString('vi-VN');
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
