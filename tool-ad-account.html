@@ -927,23 +927,24 @@ async function loadAccountsInsights(accounts) {
   // Gọi insights từng TKQC tuần tự (tránh burst rate limit)
   for (const acc of accounts) {
     try {
-      // Lấy chi tiêu hôm nay + breakdown theo giờ
+      // Lấy chi tiêu hôm nay với breakdown theo giờ (dùng breakdowns, không dùng time_increment=hourly)
+      // time_range phải là ngày hôm nay theo định dạng YYYY-MM-DD
+      const todayStr = new Date().toISOString().slice(0, 10);
       const insData = await fbGet(`/${acc.id}/insights`, {
-        fields: 'spend',
-        date_preset: 'today',
-        time_increment: 'hourly',
+        fields: 'spend,hourly_stats_aggregated_by_advertiser_time_zone',
+        breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+        time_range: JSON.stringify({ since: todayStr, until: todayStr }),
         limit: 24
       }, { noCache: false });
       const hourlyData = insData?.data || [];
       // Tổng chi tiêu hôm nay
       const todaySpend = hourlyData.reduce((s, h) => s + parseFloat(h.spend || 0), 0);
-      // Map giờ 0-23 vào mảng
+      // Map giờ 0-23 vào mảng dựa vào hourly_stats_aggregated_by_advertiser_time_zone
       const hourArr = Array(24).fill(0);
       hourlyData.forEach(h => {
-        // date_start có dạng '2024-01-01' khi hourly, dùng hour_start nếu có
-        const hr = h.hourly_stats_aggregated_by_advertiser_time_zone
-          ? parseInt(h.hourly_stats_aggregated_by_advertiser_time_zone.split(':')[0])
-          : (h.date_start ? new Date(h.date_start + 'T' + (h.date_stop || '00:00:00')).getHours() : -1);
+        // Giá trị có dạng '00:00:00' đến '23:00:00'
+        const hrStr = h.hourly_stats_aggregated_by_advertiser_time_zone || '';
+        const hr = hrStr ? parseInt(hrStr.split(':')[0]) : -1;
         if (hr >= 0 && hr < 24) hourArr[hr] = parseFloat(h.spend || 0);
       });
       // Cập nhật cell chi tiêu hôm nay
