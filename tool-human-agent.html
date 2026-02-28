@@ -1492,23 +1492,42 @@ async function fetchAllFBPages(token) {
   return pages;
 }
 
-// Override syncPages
-const _originalSyncPages = typeof syncPages !== 'undefined' ? syncPages : null;
+// Override syncPages — always use direct FB API, server is optional
 syncPages = async function() {
   const btn = document.getElementById('syncBtn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> Đang tải...'; }
   try {
+    // Check if we have FB token
+    const token = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('fb_token') || localStorage.getItem('FB_TOKEN_MANUAL');
+    if (!token) {
+      openSetupModal();
+      showToast('Vui lòng nhập Facebook Token trước', 'error');
+      return;
+    }
+    FB_TOKEN = token;
+    // Try server first if configured, fallback to direct
     if (SERVER_URL) {
       try {
-        const data = await api('POST', '/api/human-agent/sync-pages', { fbToken: FB_TOKEN });
-        allPages = data.pages || [];
-        renderPageList();
-        renderConfigPageList();
-        loadStats();
-        showToast(`Đã đồng bộ ${allPages.length} Pages`, 'success');
-        return;
-      } catch(e) {}
+        const r = await fetch(`${SERVER_URL}/api/human-agent/sync-pages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fbToken: FB_TOKEN }),
+          signal: AbortSignal.timeout(5000)
+        });
+        if (r.ok) {
+          const data = await r.json();
+          allPages = data.pages || [];
+          renderPageList();
+          renderConfigPageList();
+          loadStats();
+          showToast(`Đã đồng bộ ${allPages.length} Pages`, 'success');
+          return;
+        }
+      } catch(e) {
+        console.warn('Server không khả dụng, dùng trực tiếp Facebook API');
+      }
     }
+    // Direct Facebook API
     await loadPagesDirect();
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Đồng bộ Pages'; }
@@ -2090,9 +2109,9 @@ document.addEventListener('DOMContentLoaded', () => {
       footer.parentNode.insertBefore(div, footer);
     }
   }
-  // Auto-load pages if token exists
-  const token = localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL');
-  if (token && !SERVER_URL) {
+  // Auto-load pages if token exists (always try, server is optional)
+  const token = localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL') || localStorage.getItem('fb_token');
+  if (token) {
     FB_TOKEN = token;
     setTimeout(loadPagesDirect, 500);
   }
