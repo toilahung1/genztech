@@ -1542,7 +1542,7 @@ loadConversations = async function(showLoading = true) {
 };
 
 async function loadConversationsDirect(showLoading = true) {
-  const el = document.getElementById('convItems');
+  const el = document.getElementById('convList');
   if (showLoading && el) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
 
   // Determine which pages to load
@@ -1572,15 +1572,18 @@ async function loadConversationsDirect(showLoading = true) {
           const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
           return {
             convId: c.id,
-            userId: customer.id || '',
+            userId: customer.id || c.id,
             userName: customer.name || 'Khách hàng',
             lastMessage: c.snippet || '',
             updatedAt: c.updated_time,
+            lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
+            unread: c.unread_count || 0,
             unreadCount: c.unread_count || 0,
             pageId: page.pageId,
             pageName: page.pageName,
             fbConvId: c.id,
-            accessToken: page.accessToken
+            accessToken: page.accessToken,
+            isPending: false
           };
         });
         allConversations.push(...convs);
@@ -1588,7 +1591,7 @@ async function loadConversationsDirect(showLoading = true) {
     }
     // Sort by latest
     allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    renderConvList();
+    renderConvList(allConversations);
     // Update stats
     const unread = allConversations.filter(c => c.unreadCount > 0).length;
     const statConvs = document.getElementById('stat-convs');
