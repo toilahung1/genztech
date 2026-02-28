@@ -1542,40 +1542,63 @@ loadConversations = async function(showLoading = true) {
 };
 
 async function loadConversationsDirect(showLoading = true) {
-  const page = allPages.find(p => p.pageId === selectedConvPageId);
-  if (!page || !page.accessToken) {
-    const el = document.getElementById('convItems');
+  const el = document.getElementById('convItems');
+  if (showLoading && el) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
+
+  // Determine which pages to load
+  let pagesToLoad = [];
+  if (selectedConvPageId) {
+    const p = allPages.find(p => p.pageId === selectedConvPageId);
+    if (p) pagesToLoad = [p];
+  } else {
+    // Load from all pages (limit to first 10 to avoid too many requests)
+    pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 10);
+  }
+
+  if (!pagesToLoad.length) {
     if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chọn Page để xem hội thoại</p></div>';
     return;
   }
-  const el = document.getElementById('convItems');
-  if (showLoading && el) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
+
   try {
-    const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,message_count,unread_count,participants&limit=30&access_token=${page.accessToken}`;
-    const r = await fetch(url);
-    const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    allConversations = (d.data || []).map(c => {
-      const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
-      return {
-        convId: c.id,
-        userId: customer.id || '',
-        userName: customer.name || 'Khách hàng',
-        lastMessage: c.snippet || '',
-        updatedAt: c.updated_time,
-        unreadCount: c.unread_count || 0,
-        pageId: page.pageId,
-        fbConvId: c.id
-      };
-    });
+    allConversations = [];
+    for (const page of pagesToLoad) {
+      try {
+        const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,message_count,unread_count,participants&limit=20&access_token=${page.accessToken}`;
+        const r = await fetch(url);
+        const d = await r.json();
+        if (d.error || !d.data) continue;
+        const convs = (d.data || []).map(c => {
+          const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
+          return {
+            convId: c.id,
+            userId: customer.id || '',
+            userName: customer.name || 'Khách hàng',
+            lastMessage: c.snippet || '',
+            updatedAt: c.updated_time,
+            unreadCount: c.unread_count || 0,
+            pageId: page.pageId,
+            pageName: page.pageName,
+            fbConvId: c.id,
+            accessToken: page.accessToken
+          };
+        });
+        allConversations.push(...convs);
+      } catch(e) { /* skip this page */ }
+    }
+    // Sort by latest
+    allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     renderConvList();
     // Update stats
     const unread = allConversations.filter(c => c.unreadCount > 0).length;
-    document.getElementById('stat-convs').textContent = allConversations.length;
-    document.getElementById('stat-waiting').textContent = unread;
-    if (unread > 0) {
-      const badge = document.getElementById('tab-conversations')?.querySelector('.tab-badge');
-      if (badge) { badge.textContent = unread; badge.style.display = ''; }
+    const statConvs = document.getElementById('stat-convs');
+    const statWaiting = document.getElementById('stat-waiting');
+    if (statConvs) statConvs.textContent = allConversations.length;
+    if (statWaiting) statWaiting.textContent = unread;
+    const badge = document.getElementById('tab-conversations')?.querySelector('.tab-badge');
+    if (badge) {
+      badge.textContent = allConversations.length;
+      badge.style.display = allConversations.length > 0 ? 'inline-block' : 'none';
     }
   } catch(e) {
     if (el) el.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
