@@ -442,7 +442,7 @@
     const resp = await fetch(`${BACKEND}/api/ai/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, source_lang: sourceLang, target_lang: targetLang, tone, custom_instruction: customInstruction })
+      body: JSON.stringify({ text, targetLang, tone, customInstruction })
     });
     if (!resp.ok) throw new Error(`Server lỗi: ${resp.status}`);
     const data = await resp.json();
@@ -466,7 +466,7 @@
 
     try {
       const data = await callTranslateAI(text, source, target, currentTone, customInstr);
-      const translated = data.translated || '';
+      const translated = data.translation || data.translated || '';
       document.getElementById('targetText').value = translated;
       document.getElementById('targetCharCount').textContent = translated.length + ' ký tự';
 
@@ -520,9 +520,9 @@
       let html = '<div style="margin-top:14px"><div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px"><i class="bi bi-layers" style="color:#a855f7;margin-right:5px"></i>3 phiên bản dịch — click để dùng</div>';
       results.forEach((r, i) => {
         const t = tones[i];
-        html += `<div class="result-card show" style="margin-bottom:8px;cursor:pointer" onclick="useVersion('${escHtml(r.translated || '')}')">
+        html += `<div class="result-card show" style="margin-bottom:8px;cursor:pointer" onclick="useVersion('${escHtml(r.translation || r.translated || '')}')">
           <div class="result-meta"><span style="color:#a855f7;font-weight:600">${t.label}</span></div>
-          <div class="result-text">${escHtml(r.translated || '')}</div>
+          <div class="result-text">${escHtml(r.translation || r.translated || '')}</div>
           <div style="font-size:10.5px;color:rgba(255,255,255,.25);margin-top:6px"><i class="bi bi-cursor"></i> Click để dùng phiên bản này</div>
         </div>`;
       });
@@ -566,7 +566,7 @@
     for (let i = 0; i < lines.length; i++) {
       try {
         const data = await callTranslateAI(lines[i], source, target, currentTone, customInstr);
-        results.push({ source: lines[i], target: data.translated || '', ok: true });
+        results.push({ source: lines[i], target: data.translation || data.translated || '', ok: true });
       } catch(e) {
         results.push({ source: lines[i], target: 'Lỗi: ' + e.message, ok: false });
       }
