@@ -99,7 +99,7 @@
     .search-btn-big:hover{opacity:.9;transform:translateY(-1px)}
     .search-btn-big:disabled{opacity:.6;cursor:not-allowed;transform:none}
   
-    /* ── Universe Background ── */
+    /* -- Universe Background -- */
     canvas.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
     #custom-cursor{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,212,255,.8);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s;opacity:0;mix-blend-mode:screen}
     .nebula-overlay{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(24,119,242,.07) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 70%,rgba(0,212,255,.06) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 50% 10%,rgba(139,92,246,.05) 0%,transparent 50%)}
@@ -172,7 +172,7 @@
         </button>
       </div>
 
-      <!-- ── Tab: Single ── -->
+      <!-- -- Tab: Single -- -->
       <div id="paneSingle" class="tab-pane active">
 
         <!-- Search hero -->
@@ -284,7 +284,7 @@
         </div>
       </div>
 
-      <!-- ── Tab: Bulk ── -->
+      <!-- -- Tab: Bulk -- -->
       <div id="paneBulk" class="tab-pane">
         <div class="card">
           <div class="card-header">
@@ -310,7 +310,7 @@
         <div id="bulkResults"></div>
       </div>
 
-      <!-- ── Tab: History ── -->
+      <!-- -- Tab: History -- -->
       <div id="paneHistory" class="tab-pane">
         <div class="card">
           <div class="card-header">
@@ -335,7 +335,7 @@ const API_BASE = 'https://genztech-production.up.railway.app';
 let _history = JSON.parse(localStorage.getItem('genz_fbid_history') || '[]');
 let _lastResult = null;
 
-// ── Core lookup — gọi backend scrape-id ──
+// -- Core lookup — gọi backend scrape-id --
 async function lookupId(input) {
   if (!input) throw new Error('Link không hợp lệ');
   const r = await fetch(`${API_BASE}/api/facebook/scrape-id?url=${encodeURIComponent(input.trim())}`);
@@ -364,7 +364,7 @@ function typeLabel(t) {
   return 'Profile / Tài khoản';
 }
 
-// ── UI: Single ──
+// -- UI: Single --
 function setExample(val) {
   document.getElementById('fbInput').value = val;
   document.getElementById('fbInput').focus();
@@ -453,7 +453,7 @@ function renderRecent() {
     </div>`).join('');
 }
 
-// ── UI: Bulk ──
+// -- UI: Bulk --
 async function doBulkFind() {
   const lines = document.getElementById('bulkInput').value.split('\n').map(l => l.trim()).filter(Boolean);
   if (!lines.length) { toast('Vui lòng nhập danh sách link', 'error'); return; }
@@ -512,7 +512,7 @@ function exportBulkCSV() {
   downloadCSV(lines.join('\n'), `fbid_bulk_${Date.now()}.csv`);
 }
 
-// ── UI: History ──
+// -- UI: History --
 function updateHistoryCount() {
   document.getElementById('historyCount').textContent = _history.length;
 }
@@ -576,7 +576,7 @@ function exportHistory() {
   downloadCSV(lines.join('\n'), `fbid_history_${Date.now()}.csv`);
 }
 
-// ── UI: Tabs ──
+// -- UI: Tabs --
 function switchTab(tab) {
   ['single','bulk','history'].forEach(t => {
     const cap = t.charAt(0).toUpperCase() + t.slice(1);
@@ -586,7 +586,7 @@ function switchTab(tab) {
   if (tab === 'history') renderHistory();
 }
 
-// ── Helpers ──
+// -- Helpers --
 function toast(msg, type='info') {
   const el = document.createElement('div');
   el.className = `toast-item ${type}`;
@@ -614,7 +614,7 @@ function toggleSubNav(e, id) {
   if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
-// ── Init ──
+// -- Init --
 document.addEventListener('DOMContentLoaded', () => {
   updateHistoryCount();
   renderRecent();
@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
   'use strict';
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-  // ── Stars Canvas ──
+  // -- Stars Canvas --
   const cs = document.getElementById('gz-stars');
   if (!cs) return;
   const ctxS = cs.getContext('2d');
@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   animStars();
 
-  // ── Data Particles Canvas ──
+  // -- Data Particles Canvas --
   const cp = document.getElementById('gz-particles');
   if(!cp) return;
   const ctxP = cp.getContext('2d');
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   animParts();
 
-  // ── Custom Cursor ──
+  // -- Custom Cursor --
   const cur=document.getElementById('custom-cursor');
   if(cur && !('ontouchstart' in window)){
     let mx=0,my=0,cx=0,cy=0,shown=false;
@@ -719,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     animCur();
   }
 
-  // ── Resize handler ──
+  // -- Resize handler --
   window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
 })();
 </script>

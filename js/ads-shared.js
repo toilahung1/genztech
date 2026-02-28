@@ -1,11 +1,11 @@
-// ══════════════════════════════════════════════════════
+// ------------------------------------------------------
 // GENZTECH ADS ASSISTANT — SHARED UTILITIES
-// ══════════════════════════════════════════════════════
+// ------------------------------------------------------
 
 const GZ = {
   API: 'https://genztech-production.up.railway.app',
 
-  // ── Auth helpers ──
+  // -- Auth helpers --
   getToken: () => localStorage.getItem('gz_jwt') || '',
   getUsername: () => localStorage.getItem('gz_username') || '',
   getFbToken: () => localStorage.getItem('gz_fb_token') || localStorage.getItem('fbAccessToken') || '',
@@ -20,7 +20,7 @@ const GZ = {
     return h;
   },
 
-  // ── Facebook Graph API call ──
+  // -- Facebook Graph API call --
   fbApi: async function(endpoint, params = {}, method = 'GET') {
     const token = GZ.getFbToken();
     if (!token) throw new Error('Chưa kết nối Facebook. Vui lòng kết nối tại trang Tự Động Đăng Bài.');
@@ -43,7 +43,7 @@ const GZ = {
     }
   },
 
-  // ── Backend API call ──
+  // -- Backend API call --
   api: async function(path, method = 'GET', body = null) {
     const token = GZ.getToken();
     const opts = {
@@ -57,14 +57,14 @@ const GZ = {
     return data;
   },
 
-  // ── Get Ad Accounts ──
+  // -- Get Ad Accounts --
   getAdAccounts: async function() {
     return GZ.fbApi('me/adaccounts', {
       fields: 'id,name,account_status,balance,amount_spent,currency,spend_cap,daily_spend_limit,funding_source_details,disable_reason'
     });
   },
 
-  // ── Get Account Insights ──
+  // -- Get Account Insights --
   getAccountInsights: async function(accountId, datePreset = 'last_30d') {
     return GZ.fbApi(`${accountId}/insights`, {
       fields: 'impressions,clicks,spend,cpm,cpc,ctr,reach,frequency,actions',
@@ -72,7 +72,7 @@ const GZ = {
     });
   },
 
-  // ── Format helpers ──
+  // -- Format helpers --
   vnd: function(n) {
     if (n >= 1000000000) return (n / 1000000000).toFixed(1) + ' tỷ';
     if (n >= 1000000) return (n / 1000000).toFixed(1) + ' triệu';
@@ -91,7 +91,7 @@ const GZ = {
     return Math.floor(diff / 86400000) + ' ngày trước';
   },
 
-  // ── Toast ──
+  // -- Toast --
   toast: function(msg, type = 'info', duration = 3500) {
     const c = document.getElementById('toastContainer');
     if (!c) return;
@@ -104,13 +104,13 @@ const GZ = {
     setTimeout(() => t.remove(), duration + 400);
   },
 
-  // ── Copy ──
+  // -- Copy --
   copy: function(text, msg = 'Đã copy!') {
     navigator.clipboard.writeText(text).then(() => GZ.toast(msg, 'success'));
   }
 };
 
-// ── Sidebar active state ──
+// -- Sidebar active state --
 document.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.nav-item').forEach(a => {

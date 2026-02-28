@@ -17,7 +17,7 @@
     }
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none !important; width: 0 !important; }
 
-    /* ── Layout ── */
+    /* -- Layout -- */
     .app-layout { display: flex; min-height: 100vh; }
     .sidebar {
       width: 260px; flex-shrink: 0;
@@ -72,7 +72,7 @@
     }
     .conn-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
 
-    /* ── Main content ── */
+    /* -- Main content -- */
     .main-content {
       margin-left: 260px; flex: 1;
       display: flex; flex-direction: column; min-height: 100vh;
@@ -104,12 +104,12 @@
     .btn-success { background: #22c55e; color: #fff; }
     .btn-success:hover { background: #16a34a; }
 
-    /* ── Page body ── */
+    /* -- Page body -- */
     .page-body { padding: 28px; flex: 1; }
     .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
     .page-subtitle { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
 
-    /* ── Stats bar ── */
+    /* -- Stats bar -- */
     .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
     .stat-card {
       background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
@@ -123,10 +123,10 @@
     .stat-yellow .value { color: #fbbf24; }
     .stat-red .value { color: #f87171; }
 
-    /* ── Two-column layout ── */
+    /* -- Two-column layout -- */
     .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
 
-    /* ── Card ── */
+    /* -- Card -- */
     .card {
       background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
       border-radius: 14px; overflow: hidden;
@@ -139,7 +139,7 @@
     .card-title i { color: #00d4ff; }
     .card-body { padding: 20px; }
 
-    /* ── Tabs ── */
+    /* -- Tabs -- */
     .tab-bar {
       display: flex; gap: 4px; padding: 4px;
       background: rgba(0,0,0,0.3); border-radius: 10px; margin-bottom: 20px;
@@ -154,7 +154,7 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
-    /* ── Form elements ── */
+    /* -- Form elements -- */
     .form-group { margin-bottom: 16px; }
     .form-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 6px; display: block; }
     .form-control {
@@ -167,7 +167,7 @@
     textarea.form-control { resize: vertical; min-height: 120px; }
     select.form-control { cursor: pointer; }
 
-    /* ── Content textarea ── */
+    /* -- Content textarea -- */
     .content-wrap { position: relative; }
     .char-count {
       position: absolute; bottom: 10px; right: 12px;
@@ -182,7 +182,7 @@
     }
     .emoji-btn:hover { background: rgba(255,255,255,0.12); }
 
-    /* ── Media Upload ── */
+    /* -- Media Upload -- */
     .media-mode-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
     .media-mode-btn {
       flex: 1; padding: 8px; border: 1px solid rgba(255,255,255,0.12);
@@ -249,7 +249,7 @@
     }
     .media-add-btn:hover { background: rgba(24,119,242,0.2); }
 
-    /* ── AI Section ── */
+    /* -- AI Section -- */
     .ai-section {
       background: rgba(0,212,255,0.04); border: 1px solid rgba(0,212,255,0.12);
       border-radius: 12px; padding: 16px; margin-bottom: 16px;
@@ -281,7 +281,7 @@
     }
     .hashtag-chip:hover { background: rgba(24,119,242,0.3); }
 
-    /* ── Schedule card ── */
+    /* -- Schedule card -- */
     .schedule-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .toggle-switch { position: relative; width: 44px; height: 24px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -303,13 +303,13 @@
     }
     .golden-btn:hover { background: rgba(251,191,36,0.2); }
 
-    /* ── Tips card ── */
+    /* -- Tips card -- */
     .tip-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
     .tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
     .tip-text { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.5; }
     .tip-text strong { color: rgba(255,255,255,0.8); }
 
-    /* ── Post list ── */
+    /* -- Post list -- */
     .post-item {
       background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);
       border-radius: 10px; padding: 14px; margin-bottom: 10px;
@@ -332,7 +332,7 @@
     }
     .post-action-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-    /* ── Modal ── */
+    /* -- Modal -- */
     .modal-bg {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7);
       backdrop-filter: blur(8px); z-index: 200;
@@ -360,7 +360,7 @@
       display: flex; gap: 10px; justify-content: flex-end;
     }
 
-    /* ── Facebook Preview Modal ── */
+    /* -- Facebook Preview Modal -- */
     .fb-preview-wrap {
       background: #18191a; border-radius: 10px; overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -428,7 +428,7 @@
     }
     .fb-action-btn:hover { background: #3a3b3c; color: #e4e6eb; }
 
-    /* ── Connect modal ── */
+    /* -- Connect modal -- */
     .auth-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .auth-tab {
       flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600;
@@ -442,7 +442,7 @@
     .auth-pane { display: none; }
     .auth-pane.active { display: block; }
 
-    /* ── Loading spinner ── */
+    /* -- Loading spinner -- */
     .spinner {
       display: inline-block; width: 14px; height: 14px;
       border: 2px solid rgba(255,255,255,0.3);
@@ -455,7 +455,7 @@
       50% { box-shadow: 0 0 0 8px rgba(24,119,242,0); }
     }
 
-    /* ── Toast ── */
+    /* -- Toast -- */
     .toast-container {
       position: fixed; bottom: 24px; right: 24px; z-index: 999;
       display: flex; flex-direction: column; gap: 8px;
@@ -471,7 +471,7 @@
     .toast.info { border-left: 3px solid #60a5fa; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-    /* ── Responsive ── */
+    /* -- Responsive -- */
     @media (max-width: 1024px) {
       .sidebar { width: 220px; }
       .main-content { margin-left: 220px; }
@@ -486,7 +486,7 @@
 </head>
 <body class="bg-space-black text-white antialiased overflow-x-hidden">
 
-  <!-- ═══════════════ BACKGROUND ENGINE ═══════════════ -->
+  <!-- --------------- BACKGROUND ENGINE --------------- -->
   <canvas id="starfield-far"  class="fixed inset-0 pointer-events-none z-0"></canvas>
   <canvas id="starfield-mid"  class="fixed inset-0 pointer-events-none z-1"></canvas>
   <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
@@ -495,15 +495,15 @@
   <div class="fixed inset-0 pointer-events-none z-5 opacity-30"><div class="cosmic-fog"></div></div>
   <div class="fixed inset-0 pointer-events-none z-6 noise-overlay opacity-10"></div>
 
-  <!-- ═══════════════ CUSTOM CURSOR ═══════════════ -->
+  <!-- --------------- CUSTOM CURSOR --------------- -->
   <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
     <img src="images/logo.png" alt="Genztech Cursor" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
   </div>
 
-  <!-- ═══════════════ TOAST CONTAINER ═══════════════ -->
+  <!-- --------------- TOAST CONTAINER --------------- -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- ═══════════════ APP LAYOUT ═══════════════ -->
+  <!-- --------------- APP LAYOUT --------------- -->
   <div class="app-layout relative z-10">
 
     <!-- SIDEBAR -->
@@ -928,7 +928,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════ MODALS ═══════════════ -->
+  <!-- --------------- MODALS --------------- -->
 
   <!-- Connect Modal -->
   <div class="modal-bg hidden" id="connectModal">
@@ -1089,7 +1089,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+  <!-- --------------- JAVASCRIPT --------------- -->
   <script>
   // ============================================================
   //  CONFIG
@@ -1624,7 +1624,7 @@
     else { S.images = []; S.video = null; renderImageGrid(); renderVideoGrid(); }
   }
 
-  // ── Mixed Mode Handlers ──
+  // -- Mixed Mode Handlers --
   function onDropMixImages(e) {
     e.preventDefault(); e.currentTarget.classList.remove('drag-over');
     const files = Array.from(e.dataTransfer.files).filter(function(f) { return f.type.startsWith('image/'); });
@@ -1686,7 +1686,7 @@
     div.appendChild(rmBtn); grid.innerHTML = ''; grid.appendChild(div);
   }
 
-  // ── Drag & Drop ──
+  // -- Drag & Drop --
   function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
   function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
   function onDropImages(e) {
@@ -1700,7 +1700,7 @@
     if (files.length) setVideo(files[0]);
   }
 
-  // ── Images ──
+  // -- Images --
   function onImagesSelected(e) { addImages(Array.from(e.target.files)); e.target.value = ''; }
   function addImages(files) {
     const remaining = 10 - S.images.length;
@@ -1746,7 +1746,7 @@
     }
   }
 
-  // ── Video ──
+  // -- Video --
   function onVideoSelected(e) { if (e.target.files[0]) setVideo(e.target.files[0]); e.target.value = ''; }
   function setVideo(file) {
     if (file.size > 200 * 1024 * 1024) return toast('Video tối đa 200MB', 'error');
@@ -2385,7 +2385,7 @@
     const isMobile = window.innerWidth < 768;
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // ── Starfield ──
+    // -- Starfield --
     const canvasFar  = document.getElementById('starfield-far');
     const canvasMid  = document.getElementById('starfield-mid');
     const canvasNear = document.getElementById('starfield-near');
@@ -2499,7 +2499,7 @@
     }
     animateStarfield();
 
-    // ── Constellation ──
+    // -- Constellation --
     if (!isMobile) {
       const canvasCon = document.getElementById('constellation-lines');
       const ctxCon = canvasCon.getContext('2d');
@@ -2542,7 +2542,7 @@
       animateCon();
     }
 
-    // ── Data Particles ──
+    // -- Data Particles --
     const canvasData = document.getElementById('data-particles');
     const ctxData = canvasData.getContext('2d');
     canvasData.width = window.innerWidth; canvasData.height = window.innerHeight;
@@ -2578,7 +2578,7 @@
     }
     animateParticles();
 
-    // ── Custom Cursor ──
+    // -- Custom Cursor --
     const cursor = document.getElementById('custom-cursor');
     if (cursor && !isTouchDevice) {
       let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
