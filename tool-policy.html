@@ -507,14 +507,28 @@
   function onAiFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5*1024*1024) { GZ.toast('Ảnh quá lớn (tối đa 5MB)', 'error'); return; }
+    if (file.size > 10*1024*1024) { GZ.toast('Ảnh quá lớn (tối đa 10MB)', 'error'); return; }
     const reader = new FileReader();
     reader.onload = ev => {
-      aiUploadedImg = ev.target.result;
-      const prev = document.getElementById('aiImgPreview');
-      prev.src = aiUploadedImg; prev.style.display = 'block';
-      document.getElementById('aiImageUrl').value = '';
-      GZ.toast('Đã tải ảnh lên');
+      // Nén ảnh xuống max 800px để tránh timeout khi gửi lên server
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        aiUploadedImg = canvas.toDataURL('image/jpeg', 0.85);
+        const prev = document.getElementById('aiImgPreview');
+        prev.src = aiUploadedImg; prev.style.display = 'block';
+        document.getElementById('aiImageUrl').value = '';
+        GZ.toast('Đã tải ảnh (' + w + 'x' + h + 'px)');
+      };
+      img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   }
@@ -607,12 +621,17 @@
         ? '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Không phát hiện vi phạm hình ảnh</div>'
         : imgV.map(v => renderVioItem(v, false)).join('');
 
-    const indV = a.industry_specific?.violations || [];
+    const indSpec = a.industry_specific || {};
+    const indV = indSpec.violations || [];
     let indHtml = '';
-    if (a.industry_specific?.industry) indHtml += '<div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:7px"><strong style="color:#38bdf8">' + a.industry_specific.industry + ':</strong> ' + (a.industry_specific.special_rules||'') + '</div>';
-    indHtml += indV.length === 0
-      ? '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Không vi phạm quy tắc ngành đặc biệt</div>'
-      : indV.map(v => renderVioItem(v, true)).join('');
+    if (indSpec.industry) {
+      indHtml += '<div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:8px;padding:8px 10px;background:rgba(56,189,248,.06);border-radius:6px;border-left:2px solid #38bdf8"><strong style="color:#38bdf8">' + indSpec.industry + ':</strong> ' + (indSpec.special_rules || '') + '</div>';
+    }
+    if (indV.length === 0) {
+      indHtml += '<div class="no-vio"><i class="bi bi-check-circle-fill"></i> Không vi phạm quy tắc ngành đặc biệt</div>';
+    } else {
+      indHtml += indV.map(v => renderVioItem(v, true)).join('');
+    }
     document.getElementById('aiIndVio').innerHTML = indHtml;
 
     const recs = a.recommendations || [];
@@ -626,11 +645,17 @@
   }
 
   function renderVioItem(v, isText) {
-    const sev = (v.severity||'LOW').toLowerCase();
-    const excerpt = isText ? v.excerpt : v.details;
-    return '<div class="vio-item vio-' + sev + '"><div class="vio-head"><span class="sev-tag tag-' + sev + '">' + sev.toUpperCase() + '</span><span class="vio-type">' + (v.type||'') + '</span></div>' +
+    if (!v || typeof v !== 'object') return '';
+    const sev = (v.severity || 'LOW').toLowerCase();
+    const sevValid = ['critical','high','medium','low'].includes(sev) ? sev : 'low';
+    const excerpt = isText ? (v.excerpt || '') : (v.details || '');
+    const reason = v.reason || v.details || '';
+    const vtype = v.type || '';
+    if (!vtype && !reason) return ''; // bỏ qua item rỗng
+    return '<div class="vio-item vio-' + sevValid + '">' +
+      '<div class="vio-head"><span class="sev-tag tag-' + sevValid + '">' + sevValid.toUpperCase() + '</span><span class="vio-type">' + vtype + '</span></div>' +
       (excerpt ? '<div class="vio-excerpt">"' + excerpt + '"</div>' : '') +
-      '<div class="vio-reason"><i class="bi bi-info-circle" style="color:rgba(255,255,255,.25)"></i> ' + (v.reason||v.details||'') + '</div>' +
+      (reason ? '<div class="vio-reason"><i class="bi bi-info-circle" style="color:rgba(255,255,255,.25)"></i> ' + reason + '</div>' : '') +
       (v.recommendation ? '<div class="vio-fix"><i class="bi bi-arrow-right-circle-fill"></i> ' + v.recommendation + '</div>' : '') +
       '</div>';
   }

@@ -947,7 +947,7 @@ router.post('/check-policy', async (req, res) => {
       };
       const r = await axios.post(`${baseUrl}/chat/completions`, body, {
         headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
-        timeout: 30000
+        timeout: 55000 // tăng lên 55s cho vision
       });
       raw = r.data.choices[0].message.content;
     } else {
@@ -958,8 +958,9 @@ router.post('/check-policy', async (req, res) => {
     res.json({ success: true, analysis });
   } catch (e) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    console.error('[Policy Check Error]', e.message);
-    res.status(500).json({ error: e.message });
+    const errDetail = e.response?.data?.error?.message || e.message;
+    console.error('[Policy Check Error]', errDetail, e.response?.status);
+    res.status(500).json({ error: errDetail });
   }
 });
 
