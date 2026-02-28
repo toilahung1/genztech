@@ -135,7 +135,7 @@
   <canvas class="bg-canvas" id="gz-particles"></canvas>
   <div class="nebula-overlay"></div>
   <div id="custom-cursor"></div>
-  <div id="toast"></div>
+  <div id="toastContainer"></div>
 
   <!-- Token Modal -->
   <div class="modal-overlay" id="tokenModal">
@@ -572,7 +572,594 @@
   </div>
 
   <script src="js/ads-shared.js"></script>
-  
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const FB_GRAPH = 'https://graph.facebook.com/v19.0';
+const TOKEN_KEY = 'gz_manual_fb_token';
+let currentTab = 'accounts';
+let allAccounts = [];
+let allCampaigns = [];
+let allAdsets = [];
+let allAds = [];
+let selectedAccountId = null;
+let selectedAccountName = '';
+let rules = JSON.parse(localStorage.getItem('gz_auto_rules') || '[]');
+let sortState = {};
+
+// ── Token helpers ────────────────────────────────────────────────────────────
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY) || GZ.getFbToken() || '';
+}
+
+function openTokenModal() {
+  const t = getToken();
+  if (t) document.getElementById('tokenInput').value = t;
+  document.getElementById('tokenModal').classList.add('open');
+}
+
+function closeTokenModal() {
+  document.getElementById('tokenModal').classList.remove('open');
+}
+
+function saveToken() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if (!t) { GZ.toast('Vui lòng nhập token', 'error'); return; }
+  if (!t.startsWith('EAA') && !t.startsWith('EAB')) {
+    GZ.toast('Token không hợp lệ (phải bắt đầu bằng EAA...)', 'error'); return;
+  }
+  localStorage.setItem(TOKEN_KEY, t);
+  closeTokenModal();
+  updateTokenUI();
+  loadAccounts();
+  GZ.toast('Đã lưu token! Đang tải dữ liệu...', 'success');
+}
+
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  updateTokenUI();
+  setTableMsg('accounts', 'Chưa có token — nhấn nút <strong style="color:#fbbf24">🔑 Token</strong> ở góc trên phải để nhập');
+  document.getElementById('statsRow').style.display = 'none';
+  allAccounts = [];
+  GZ.toast('Đã xóa token', 'info');
+}
+
+function updateTokenUI() {
+  const t = getToken();
+  const banner = document.getElementById('tokenBanner');
+  const indicator = document.getElementById('tokenIndicator');
+  const connDot = document.getElementById('connDot');
+  const connText = document.getElementById('connText');
+  if (t) {
+    if (banner) { banner.style.display = 'flex'; }
+    if (indicator) indicator.style.display = 'inline';
+    if (connDot) { connDot.style.background = '#4ade80'; connDot.style.boxShadow = '0 0 6px #4ade80'; }
+    if (connText) connText.textContent = 'Đã kết nối token';
+  } else {
+    if (banner) { banner.style.display = 'none'; }
+    if (indicator) indicator.style.display = 'none';
+    if (connDot) { connDot.style.background = '#f87171'; connDot.style.boxShadow = 'none'; }
+    if (connText) connText.textContent = 'Chưa kết nối';
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function setTableMsg(tab, msg) {
+  const el = document.getElementById('tbody-' + tab);
+  const cols = { accounts: 9, campaigns: 10, adsets: 10, ads: 10 };
+  if (el) el.innerHTML = `<tr class="loading-row"><td colspan="${cols[tab] || 9}">${msg}</td></tr>`;
+}
+
+function setLoading(tab) {
+  setTableMsg(tab, '<span class="spinner"></span> Đang tải...');
+}
+
+function fmtMoney(val, currency) {
+  if (!val && val !== 0) return '—';
+  const n = parseFloat(val);
+  if (isNaN(n)) return '—';
+  if (currency === 'VND' || currency === 'VNĐ') return n.toLocaleString('vi-VN') + 'đ';
+  return n.toLocaleString('en-US', { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 2 });
+}
+
+function fmtNum(val) {
+  if (!val && val !== 0) return '—';
+  return parseFloat(val).toLocaleString('vi-VN');
+}
+
+function fmtPct(val) {
+  if (!val && val !== 0) return '—';
+  return parseFloat(val).toFixed(2) + '%';
+}
+
+function statusBadge(status) {
+  const map = {
+    1: ['Hoạt động', '#4ade80', 'rgba(34,197,94,.1)'],
+    2: ['Vô hiệu hóa', '#f87171', 'rgba(239,68,68,.1)'],
+    3: ['Chưa xác nhận', '#fbbf24', 'rgba(251,191,36,.1)'],
+    7: ['Đang xem xét', '#60a5fa', 'rgba(96,165,250,.1)'],
+    8: ['Đang xem xét', '#60a5fa', 'rgba(96,165,250,.1)'],
+    9: ['Bị đóng', '#9ca3af', 'rgba(156,163,175,.1)'],
+    100: ['Đang chạy', '#4ade80', 'rgba(34,197,94,.1)'],
+    ACTIVE: ['Đang chạy', '#4ade80', 'rgba(34,197,94,.1)'],
+    PAUSED: ['Tạm dừng', '#fbbf24', 'rgba(251,191,36,.1)'],
+    DELETED: ['Đã xóa', '#9ca3af', 'rgba(156,163,175,.1)'],
+    ARCHIVED: ['Lưu trữ', '#6b7280', 'rgba(107,114,128,.1)'],
+  };
+  const [label, color, bg] = map[status] || ['Không rõ', '#9ca3af', 'rgba(156,163,175,.1)'];
+  return `<span style="background:${bg};color:${color};border:1px solid ${color}33;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600">${label}</span>`;
+}
+
+// ── Facebook API ─────────────────────────────────────────────────────────────
+async function fbGet(path, params = {}) {
+  const token = getToken();
+  if (!token) throw new Error('Chưa có token');
+  const qs = new URLSearchParams({ ...params, access_token: token }).toString();
+  const resp = await fetch(`${FB_GRAPH}${path}?${qs}`);
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  return data;
+}
+
+async function fbGetAll(path, params = {}) {
+  let results = [];
+  let url = `${FB_GRAPH}${path}?${new URLSearchParams({ ...params, access_token: getToken() })}`;
+  while (url) {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    results = results.concat(data.data || []);
+    url = data.paging?.next || null;
+  }
+  return results;
+}
+
+// ── Load Accounts ────────────────────────────────────────────────────────────
+async function loadAccounts() {
+  const token = getToken();
+  if (!token) {
+    setTableMsg('accounts', '🔑 Chưa có token — nhấn nút <strong style="color:#fbbf24">🔑 Token</strong> ở góc trên phải để nhập Access Token');
+    return;
+  }
+  setLoading('accounts');
+  try {
+    const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    const data = await fbGetAll('/me/adaccounts', {
+      fields: 'id,name,account_status,currency,timezone_name,country,balance,amount_spent,spend_cap,daily_spend_limit',
+      date_preset: datePreset,
+      limit: 50
+    });
+    allAccounts = data;
+    renderAccounts(data);
+    updateStats(data);
+    document.getElementById('countAccounts').textContent = data.length;
+  } catch(e) {
+    setTableMsg('accounts', `<span style="color:#f87171"><i class="bi bi-exclamation-triangle"></i> Lỗi: ${e.message}</span>`);
+    GZ.toast('Lỗi tải TKQC: ' + e.message, 'error');
+  }
+}
+
+function renderAccounts(data) {
+  const tbody = document.getElementById('tbody-accounts');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="9">Không tìm thấy tài khoản quảng cáo nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(a => {
+    const id = a.id.replace('act_', '');
+    return `<tr style="cursor:pointer" onclick="selectAccount('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')">  
+      <td><input type="checkbox" class="row-check" value="${a.id}" onclick="event.stopPropagation()"></td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${a.name || 'Không tên'}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">act_${id}</div>
+      </td>
+      <td>${statusBadge(a.account_status)}</td>
+      <td style="font-size:12px">${a.country || '—'}</td>
+      <td style="font-size:11.5px;color:rgba(255,255,255,.5)">${a.timezone_name || '—'}</td>
+      <td style="font-size:12px">${a.currency || '—'}</td>
+      <td style="color:#4ade80;font-weight:600">${fmtMoney(a.balance, a.currency)}</td>
+      <td style="color:#60a5fa">${fmtMoney(a.amount_spent, a.currency)}</td>
+      <td>
+        <button class="btn-icon" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();openEditTzModal('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"
+          title="Sửa múi giờ"><i class="bi bi-globe"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats(data) {
+  const statsRow = document.getElementById('statsRow');
+  if (!data.length) { statsRow.style.display = 'none'; return; }
+  statsRow.style.display = 'flex';
+  document.getElementById('sTotalAcc').textContent = data.length;
+  document.getElementById('sActiveAcc').textContent = data.filter(a => a.account_status === 1).length;
+  document.getElementById('sLockedAcc').textContent = data.filter(a => a.account_status === 2 || a.account_status === 9).length;
+  // Tổng chi tiêu (chỉ tính VND hoặc cùng currency)
+  const currencies = [...new Set(data.map(a => a.currency).filter(Boolean))];
+  if (currencies.length === 1) {
+    const cur = currencies[0];
+    const totalSpend = data.reduce((s, a) => s + (parseFloat(a.amount_spent) || 0), 0);
+    const totalBalance = data.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0);
+    document.getElementById('sTotalSpend').textContent = fmtMoney(totalSpend, cur);
+    document.getElementById('sTotalBalance').textContent = fmtMoney(totalBalance, cur);
+  } else {
+    document.getElementById('sTotalSpend').textContent = 'Đa tiền tệ';
+    document.getElementById('sTotalBalance').textContent = 'Đa tiền tệ';
+  }
+}
+
+// ── Select Account → load campaigns ─────────────────────────────────────────
+function selectAccount(accountId, accountName) {
+  selectedAccountId = accountId;
+  selectedAccountName = accountName;
+  switchTab('campaigns');
+  loadCampaigns(accountId);
+}
+
+async function loadCampaigns(accountId) {
+  setLoading('campaigns');
+  try {
+    const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    const data = await fbGetAll(`/${accountId}/campaigns`, {
+      fields: 'id,name,status,objective,daily_budget,lifetime_budget,insights{spend,impressions,clicks,ctr,cpc}',
+      date_preset: datePreset,
+      limit: 50
+    });
+    allCampaigns = data;
+    renderCampaigns(data);
+    document.getElementById('countCampaigns').textContent = data.length;
+    updateContextBar();
+  } catch(e) {
+    setTableMsg('campaigns', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
+  }
+}
+
+function renderCampaigns(data) {
+  const tbody = document.getElementById('tbody-campaigns');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10">Không có chiến dịch nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const ins = c.insights?.data?.[0] || {};
+    const budget = c.daily_budget ? fmtMoney(c.daily_budget/100, 'VND') : (c.lifetime_budget ? fmtMoney(c.lifetime_budget/100, 'VND') + ' (trọn đời)' : '—');
+    return `<tr style="cursor:pointer" onclick="selectCampaign('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">  
+      <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+      <td><div style="font-weight:600;font-size:13px">${c.name||'—'}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">${c.id}</div></td>
+      <td>${statusBadge(c.status)}</td>
+      <td style="font-size:12px;color:rgba(255,255,255,.6)">${c.objective||'—'}</td>
+      <td style="font-size:12px">${budget}</td>
+      <td style="color:#60a5fa">${ins.spend ? fmtMoney(ins.spend,'VND') : '—'}</td>
+      <td>${fmtNum(ins.impressions)}</td>
+      <td>${fmtNum(ins.clicks)}</td>
+      <td>${fmtPct(ins.ctr)}</td>
+      <td>${ins.cpc ? fmtMoney(ins.cpc,'VND') : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectCampaign(campaignId, campaignName) {
+  switchTab('adsets');
+  loadAdsets(campaignId);
+}
+
+async function loadAdsets(campaignId) {
+  setLoading('adsets');
+  try {
+    const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    const data = await fbGetAll(`/${campaignId}/adsets`, {
+      fields: 'id,name,status,campaign_id,daily_budget,insights{spend,impressions,clicks,cpm,cpc}',
+      date_preset: datePreset,
+      limit: 50
+    });
+    allAdsets = data;
+    renderAdsets(data);
+    document.getElementById('countAdsets').textContent = data.length;
+  } catch(e) {
+    setTableMsg('adsets', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
+  }
+}
+
+function renderAdsets(data) {
+  const tbody = document.getElementById('tbody-adsets');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10">Không có nhóm quảng cáo nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(s => {
+    const ins = s.insights?.data?.[0] || {};
+    const budget = s.daily_budget ? fmtMoney(s.daily_budget/100, 'VND') : '—';
+    return `<tr style="cursor:pointer" onclick="selectAdset('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')">  
+      <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+      <td><div style="font-weight:600;font-size:13px">${s.name||'—'}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">${s.id}</div></td>
+      <td>${statusBadge(s.status)}</td>
+      <td style="font-size:12px;color:rgba(255,255,255,.5)">${s.campaign_id||'—'}</td>
+      <td style="font-size:12px">${budget}</td>
+      <td style="color:#60a5fa">${ins.spend ? fmtMoney(ins.spend,'VND') : '—'}</td>
+      <td>${fmtNum(ins.impressions)}</td>
+      <td>${fmtNum(ins.clicks)}</td>
+      <td>${ins.cpm ? fmtMoney(ins.cpm,'VND') : '—'}</td>
+      <td>${ins.cpc ? fmtMoney(ins.cpc,'VND') : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectAdset(adsetId, adsetName) {
+  switchTab('ads');
+  loadAds(adsetId);
+}
+
+async function loadAds(adsetId) {
+  setLoading('ads');
+  try {
+    const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    const data = await fbGetAll(`/${adsetId}/ads`, {
+      fields: 'id,name,status,adset_id,insights{spend,impressions,clicks,ctr,cpc,cpm}',
+      date_preset: datePreset,
+      limit: 50
+    });
+    allAds = data;
+    renderAds(data);
+    document.getElementById('countAds').textContent = data.length;
+  } catch(e) {
+    setTableMsg('ads', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
+  }
+}
+
+function renderAds(data) {
+  const tbody = document.getElementById('tbody-ads');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10">Không có quảng cáo nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(ad => {
+    const ins = ad.insights?.data?.[0] || {};
+    return `<tr>  
+      <td><input type="checkbox"></td>
+      <td><div style="font-weight:600;font-size:13px">${ad.name||'—'}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">${ad.id}</div></td>
+      <td>${statusBadge(ad.status)}</td>
+      <td style="font-size:12px;color:rgba(255,255,255,.5)">${ad.adset_id||'—'}</td>
+      <td style="color:#60a5fa">${ins.spend ? fmtMoney(ins.spend,'VND') : '—'}</td>
+      <td>${fmtNum(ins.impressions)}</td>
+      <td>${fmtNum(ins.clicks)}</td>
+      <td>${fmtPct(ins.ctr)}</td>
+      <td>${ins.cpc ? fmtMoney(ins.cpc,'VND') : '—'}</td>
+      <td>${ins.cpm ? fmtMoney(ins.cpm,'VND') : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  ['accounts','campaigns','adsets','ads','rules'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'rules') renderRules();
+  updateContextBar();
+}
+
+function updateContextBar() {
+  const bar = document.getElementById('contextBar');
+  if (!bar) return;
+  if (selectedAccountName && currentTab !== 'accounts') {
+    bar.style.display = 'flex';
+    bar.innerHTML = `<i class="bi bi-credit-card" style="color:#00d4ff"></i> <span style="color:rgba(255,255,255,.5)">TKQC:</span> <strong style="color:#00d4ff">${selectedAccountName}</strong>`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function loadCurrentTab() {
+  if (currentTab === 'accounts') loadAccounts();
+  else if (currentTab === 'campaigns' && selectedAccountId) loadCampaigns(selectedAccountId);
+}
+
+function refreshData() {
+  loadCurrentTab();
+  GZ.toast('Đang làm mới...', 'info');
+}
+
+// ── Search & filter ──────────────────────────────────────────────────────────
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const tbody = document.getElementById('tbody-' + currentTab);
+  if (!tbody) return;
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function sortTable(tab, field) {
+  // Simple sort toggle
+  const asc = sortState[tab + field] !== 'asc';
+  sortState[tab + field] = asc ? 'asc' : 'desc';
+  let arr = tab === 'accounts' ? allAccounts : tab === 'campaigns' ? allCampaigns : tab === 'adsets' ? allAdsets : allAds;
+  arr.sort((a, b) => {
+    const va = a[field] ?? '';
+    const vb = b[field] ?? '';
+    if (typeof va === 'number') return asc ? va - vb : vb - va;
+    return asc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+  if (tab === 'accounts') renderAccounts(arr);
+  else if (tab === 'campaigns') renderCampaigns(arr);
+  else if (tab === 'adsets') renderAdsets(arr);
+  else renderAds(arr);
+}
+
+function toggleCheckAll(cb) {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+}
+
+// ── Export CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  let rows = [], headers = [];
+  if (currentTab === 'accounts') {
+    headers = ['ID','Tên','Trạng thái','Quốc gia','Múi giờ','Tiền tệ','Số dư','Chi tiêu'];
+    rows = allAccounts.map(a => [a.id, a.name, a.account_status, a.country, a.timezone_name, a.currency, a.balance, a.amount_spent]);
+  } else if (currentTab === 'campaigns') {
+    headers = ['ID','Tên','Trạng thái','Mục tiêu','Ngân sách ngày'];
+    rows = allCampaigns.map(c => [c.id, c.name, c.status, c.objective, c.daily_budget]);
+  }
+  if (!rows.length) { GZ.toast('Không có dữ liệu để xuất', 'error'); return; }
+  let csv = headers.join(',') + '\n' + rows.map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}));
+  a.download = `tkqc_${currentTab}_${Date.now()}.csv`;
+  a.click();
+  GZ.toast('Đã xuất CSV!', 'success');
+}
+
+// ── Rules ────────────────────────────────────────────────────────────────────
+function openRuleModal() { document.getElementById('ruleModal').classList.add('open'); }
+function closeRuleModal() { document.getElementById('ruleModal').classList.remove('open'); }
+
+function saveRule() {
+  const name = document.getElementById('ruleName').value.trim();
+  if (!name) { GZ.toast('Vui lòng nhập tên quy tắc', 'error'); return; }
+  const rule = {
+    id: Date.now(),
+    name,
+    condType: document.getElementById('ruleCondType').value,
+    condValue: document.getElementById('ruleCondValue').value,
+    action: document.getElementById('ruleAction').value,
+    scope: document.getElementById('ruleScope').value,
+    notifyBrowser: document.getElementById('ruleNotifyBrowser').checked,
+    notifyLog: document.getElementById('ruleNotifyLog').checked,
+    enabled: true,
+    createdAt: Date.now()
+  };
+  rules.unshift(rule);
+  localStorage.setItem('gz_auto_rules', JSON.stringify(rules));
+  closeRuleModal();
+  renderRules();
+  document.getElementById('countRules').textContent = rules.length;
+  GZ.toast('Đã lưu quy tắc!', 'success');
+}
+
+function deleteRule(id) {
+  rules = rules.filter(r => r.id !== id);
+  localStorage.setItem('gz_auto_rules', JSON.stringify(rules));
+  renderRules();
+  document.getElementById('countRules').textContent = rules.length;
+  GZ.toast('Đã xóa quy tắc', 'info');
+}
+
+function toggleRule(id) {
+  const r = rules.find(r => r.id === id);
+  if (r) { r.enabled = !r.enabled; localStorage.setItem('gz_auto_rules', JSON.stringify(rules)); renderRules(); }
+}
+
+function applyPreset(type) {
+  const presets = {
+    spend_spike: { name: 'Tắt khi thốc tiền đột ngột', condType: 'spend_spike', condValue: '50', action: 'pause_campaign' },
+    high_cpc: { name: 'Tắt khi CPC quá đắt', condType: 'cpc_above', condValue: '50000', action: 'pause_ad' },
+    low_balance: { name: 'Cảnh báo sắp hết tiền', condType: 'balance_below', condValue: '500000', action: 'notify_only' },
+    account_disabled: { name: 'Tài khoản bị vô hiệu hóa', condType: 'account_disabled', condValue: '0', action: 'pause_campaign' }
+  };
+  const p = presets[type];
+  if (!p) return;
+  document.getElementById('ruleName').value = p.name;
+  document.getElementById('ruleCondType').value = p.condType;
+  document.getElementById('ruleCondValue').value = p.condValue;
+  document.getElementById('ruleAction').value = p.action;
+  openRuleModal();
+}
+
+function updateCondUnit() {
+  const type = document.getElementById('ruleCondType').value;
+  const units = { spend_spike: '%', cpc_above: 'VND', cpm_above: 'VND', ctr_below: '%', balance_below: 'VND', spend_above: 'VND', account_disabled: '', no_conversion: 'giờ' };
+  document.getElementById('condUnit').textContent = units[type] || '';
+}
+
+function renderRules() {
+  const el = document.getElementById('rulesList');
+  document.getElementById('countRules').textContent = rules.length;
+  if (!rules.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">Chưa có quy tắc nào. Tạo quy tắc hoặc chọn preset bên trên.</div>';
+    return;
+  }
+  el.innerHTML = rules.map(r => `
+    <div style="background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px">${r.name}</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.4);margin-top:3px">${r.condType} > ${r.condValue} → ${r.action}</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:${r.enabled ? '#4ade80' : 'rgba(255,255,255,.3)'}">
+        <input type="checkbox" ${r.enabled ? 'checked' : ''} onchange="toggleRule(${r.id})" style="accent-color:#4ade80"> ${r.enabled ? 'Bật' : 'Tắt'}
+      </label>
+      <button onclick="deleteRule(${r.id})" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:4px 10px;color:#f87171;cursor:pointer;font-size:12px"><i class="bi bi-trash"></i></button>
+    </div>`).join('');
+}
+
+// ── Edit Timezone Modal ──────────────────────────────────────────────────────
+function openEditTzModal(accountId, accountName) {
+  document.getElementById('editTzModal').classList.add('open');
+  document.getElementById('editTzAccName').textContent = accountName;
+  const acc = allAccounts.find(a => a.id === accountId);
+  if (acc) {
+    document.getElementById('currentCountryDisplay').textContent = acc.country || '—';
+    document.getElementById('currentTzDisplay').textContent = acc.timezone_name || '—';
+    if (acc.country) document.getElementById('editCountry').value = acc.country;
+    if (acc.timezone_name) document.getElementById('editTimezone').value = acc.timezone_name;
+  }
+  document.getElementById('editTzModal').dataset.accountId = accountId;
+}
+
+function closeEditTzModal() {
+  document.getElementById('editTzModal').classList.remove('open');
+}
+
+async function saveTimezone() {
+  const accountId = document.getElementById('editTzModal').dataset.accountId;
+  const country = document.getElementById('editCountry').value;
+  const tz = document.getElementById('editTimezone').value;
+  const token = getToken();
+  if (!token) { GZ.toast('Cần token để cập nhật', 'error'); return; }
+  try {
+    const resp = await fetch(`${FB_GRAPH}/${accountId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ access_token: token, timezone_id: tz, country: country })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    closeEditTzModal();
+    loadAccounts();
+    GZ.toast('Đã cập nhật múi giờ!', 'success');
+  } catch(e) {
+    GZ.toast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+// ── Misc ─────────────────────────────────────────────────────────────────────
+function toggleSubNav(e, id) {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  const arrow = document.getElementById(id + 'Arrow');
+  if (el) { const open = el.style.display !== 'none'; el.style.display = open ? 'none' : 'flex'; if(arrow) arrow.style.transform = open ? '' : 'rotate(180deg)'; }
+}
+
+function openSettings() { if(window.GZ?.openSettings) window.GZ.openSettings(); }
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  updateTokenUI();
+  const token = getToken();
+  if (token) {
+    loadAccounts();
+  } else {
+    setTableMsg('accounts', '🔑 Chưa có token — nhấn nút <strong style="color:#fbbf24"><i class="bi bi-key"></i> Token</strong> ở góc trên phải để nhập Facebook Access Token');
+  }
+  renderRules();
+  // Đóng modal khi click ngoài
+  ['tokenModal','ruleModal','editTzModal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+});
+</script>
 
 <script id="gz-universe-bg">
 (function(){
