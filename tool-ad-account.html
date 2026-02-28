@@ -696,6 +696,14 @@ function statusBadge(status) {
     PAUSED: ['Tạm dừng', '#fbbf24', 'rgba(251,191,36,.1)'],
     DELETED: ['Đã xóa', '#9ca3af', 'rgba(156,163,175,.1)'],
     ARCHIVED: ['Lưu trữ', '#6b7280', 'rgba(107,114,128,.1)'],
+    PENDING_REVIEW: ['Đang xem xét', '#60a5fa', 'rgba(96,165,250,.1)'],
+    DISAPPROVED: ['Bị từ chối', '#f87171', 'rgba(239,68,68,.1)'],
+    PREAPPROVED: ['Tiền duyệt', '#a78bfa', 'rgba(167,139,250,.1)'],
+    PENDING_BILLING_INFO: ['Chờ thanh toán', '#fb923c', 'rgba(251,146,60,.1)'],
+    CAMPAIGN_PAUSED: ['Chiến dịch dừng', '#fbbf24', 'rgba(251,191,36,.1)'],
+    ADSET_PAUSED: ['Nhóm dừng', '#fbbf24', 'rgba(251,191,36,.1)'],
+    IN_PROCESS: ['Đang xử lý', '#60a5fa', 'rgba(96,165,250,.1)'],
+    WITH_ISSUES: ['Có vấn đề', '#f87171', 'rgba(239,68,68,.1)'],
   };
   const [label, color, bg] = map[status] || ['Không rõ', '#9ca3af', 'rgba(156,163,175,.1)'];
   return `<span style="background:${bg};color:${color};border:1px solid ${color}33;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600">${label}</span>`;
@@ -1009,11 +1017,27 @@ async function loadCampaigns(accountId) {
   setLoading('campaigns');
   try {
     const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    // Lấy danh sách campaign + effective_status
     const data = await fbGetAll(`/${accountId}/campaigns`, {
-      fields: 'id,name,status,objective,daily_budget,lifetime_budget,insights{spend,impressions,clicks,ctr,cpc}',
-      date_preset: datePreset,
+      fields: 'id,name,status,effective_status,objective,daily_budget,lifetime_budget',
       limit: 50
     });
+    // Lấy insights riêng với date_preset đúng
+    if (data.length > 0) {
+      try {
+        const insResp = await fbGet(`/${accountId}/insights`, {
+          fields: 'campaign_id,spend,impressions,clicks,ctr,cpc',
+          date_preset: datePreset,
+          level: 'campaign',
+          limit: 200
+        });
+        const insMap = {};
+        (insResp?.data || []).forEach(r => { insMap[r.campaign_id] = r; });
+        data.forEach(c => { c._ins = insMap[c.id] || {}; });
+      } catch(e2) {
+        data.forEach(c => { c._ins = {}; });
+      }
+    }
     allCampaigns = data;
     renderCampaigns(data);
     document.getElementById('countCampaigns').textContent = data.length;
@@ -1030,12 +1054,13 @@ function renderCampaigns(data) {
     return;
   }
   tbody.innerHTML = data.map(c => {
-    const ins = c.insights?.data?.[0] || {};
+    const ins = c._ins || {};
     const budget = c.daily_budget ? fmtMoney(c.daily_budget/100, 'VND') : (c.lifetime_budget ? fmtMoney(c.lifetime_budget/100, 'VND') + ' (trọn đời)' : '—');
+    const effStatus = c.effective_status || c.status;
     return `<tr style="cursor:pointer" onclick="selectCampaign('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">  
       <td><input type="checkbox" onclick="event.stopPropagation()"></td>
       <td><div style="font-weight:600;font-size:13px">${c.name||'—'}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">${c.id}</div></td>
-      <td>${statusBadge(c.status)}</td>
+      <td>${statusBadge(effStatus)}</td>
       <td style="font-size:12px;color:rgba(255,255,255,.6)">${c.objective||'—'}</td>
       <td style="font-size:12px">${budget}</td>
       <td style="color:#60a5fa">${ins.spend ? fmtMoney(ins.spend,'VND') : '—'}</td>
@@ -1057,10 +1082,22 @@ async function loadAdsets(campaignId) {
   try {
     const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
     const data = await fbGetAll(`/${campaignId}/adsets`, {
-      fields: 'id,name,status,campaign_id,daily_budget,insights{spend,impressions,clicks,cpm,cpc}',
-      date_preset: datePreset,
+      fields: 'id,name,status,effective_status,campaign_id,daily_budget',
       limit: 50
     });
+    if (data.length > 0) {
+      try {
+        const insResp = await fbGet(`/${campaignId}/insights`, {
+          fields: 'adset_id,spend,impressions,clicks,cpm,cpc',
+          date_preset: datePreset,
+          level: 'adset',
+          limit: 200
+        });
+        const insMap = {};
+        (insResp?.data || []).forEach(r => { insMap[r.adset_id] = r; });
+        data.forEach(s => { s._ins = insMap[s.id] || {}; });
+      } catch(e2) { data.forEach(s => { s._ins = {}; }); }
+    }
     allAdsets = data;
     renderAdsets(data);
     document.getElementById('countAdsets').textContent = data.length;
@@ -1076,12 +1113,13 @@ function renderAdsets(data) {
     return;
   }
   tbody.innerHTML = data.map(s => {
-    const ins = s.insights?.data?.[0] || {};
+    const ins = s._ins || {};
     const budget = s.daily_budget ? fmtMoney(s.daily_budget/100, 'VND') : '—';
+    const effStatus = s.effective_status || s.status;
     return `<tr style="cursor:pointer" onclick="selectAdset('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')">  
       <td><input type="checkbox" onclick="event.stopPropagation()"></td>
       <td><div style="font-weight:600;font-size:13px">${s.name||'—'}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">${s.id}</div></td>
-      <td>${statusBadge(s.status)}</td>
+      <td>${statusBadge(effStatus)}</td>
       <td style="font-size:12px;color:rgba(255,255,255,.5)">${s.campaign_id||'—'}</td>
       <td style="font-size:12px">${budget}</td>
       <td style="color:#60a5fa">${ins.spend ? fmtMoney(ins.spend,'VND') : '—'}</td>
@@ -1103,10 +1141,22 @@ async function loadAds(adsetId) {
   try {
     const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
     const data = await fbGetAll(`/${adsetId}/ads`, {
-      fields: 'id,name,status,adset_id,insights{spend,impressions,clicks,ctr,cpc,cpm}',
-      date_preset: datePreset,
+      fields: 'id,name,status,effective_status,adset_id',
       limit: 50
     });
+    if (data.length > 0) {
+      try {
+        const insResp = await fbGet(`/${adsetId}/insights`, {
+          fields: 'ad_id,spend,impressions,clicks,ctr,cpc,cpm',
+          date_preset: datePreset,
+          level: 'ad',
+          limit: 200
+        });
+        const insMap = {};
+        (insResp?.data || []).forEach(r => { insMap[r.ad_id] = r; });
+        data.forEach(ad => { ad._ins = insMap[ad.id] || {}; });
+      } catch(e2) { data.forEach(ad => { ad._ins = {}; }); }
+    }
     allAds = data;
     renderAds(data);
     document.getElementById('countAds').textContent = data.length;
@@ -1122,11 +1172,12 @@ function renderAds(data) {
     return;
   }
   tbody.innerHTML = data.map(ad => {
-    const ins = ad.insights?.data?.[0] || {};
+    const ins = ad._ins || {};
+    const effStatus = ad.effective_status || ad.status;
     return `<tr>  
       <td><input type="checkbox"></td>
       <td><div style="font-weight:600;font-size:13px">${ad.name||'—'}</div><div style="font-size:11px;color:rgba(255,255,255,.3)">${ad.id}</div></td>
-      <td>${statusBadge(ad.status)}</td>
+      <td>${statusBadge(effStatus)}</td>
       <td style="font-size:12px;color:rgba(255,255,255,.5)">${ad.adset_id||'—'}</td>
       <td style="color:#60a5fa">${ins.spend ? fmtMoney(ins.spend,'VND') : '—'}</td>
       <td>${fmtNum(ins.impressions)}</td>
