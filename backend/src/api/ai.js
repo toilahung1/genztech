@@ -911,50 +911,156 @@ TRẢ VỀ JSON với cấu trúc:
   ]
 }`;
 
+// ─── Helper: Pre-scan hình ảnh độc lập, rất nghiêm khắc ─────────────────────────
+async function scanImageViolations(imageUrl) {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+
+  const scanPrompt = `Bạn là hệ thống kiểm duyệt hình ảnh quảng cáo Facebook với độ nhạy cảm CAO NHẤT. Nhiệm vụ: phân tích hình ảnh và phát hiện MỌI nội dung vi phạm.
+
+CHÍNH SÁCH FACEBOOK - NỘI DUNG BỊ CẤM HOÀN TOÀN (CRITICAL - image_score 0-10):
+- Ma túy, chất kích thích: thuốc phiến, heroin, cocaine, fentanyl, cần sa, MDMA, thuốc lắc, bột trắng nghi vấn, kim tiêm ma túy, dụng cụ hút chích, thìa nấu thuốc
+- Vũ khí: súng, dao, chất nổ, lựu đạn
+- Khỏa thân, nội dung tình dục, khuyến dục
+- Bạo lực, máu me, tử thi
+- Hình ảnh trẻ em trong ngữ cảnh nguy hiểm
+
+NỘI DUNG HẠN CHẾC CAO (HIGH - image_score 20-40):
+- Hình trước/sau (before/after) trong lĩnh vực sức khỏe, giảm cân
+- Hình ảnh gợi cảm quá mức
+- Tiền mặt, séc, biểu tượng giàu có để quảng cáo tài chính
+
+NỘI DUNG HẠN CHẾC TRUNG BÌNH (MEDIUM - image_score 50-70):
+- Mũi tên, vòng tròn highlight giả tạo
+- Nút play giả, khung giả giống giao diện Facebook
+- Hình ảnh quá nhiều chữ (>20% diện tích)
+
+NỘI DUNG AN TOÀN (image_score 85-100): Không có vi phạm nào.
+
+QUY TẮc BẮc BUỘC:
+1. Mô tả CHÍNH XÁC những gì bạn thấy trong ảnh (tiếng Việt)
+2. Nếu thấy bất kỳ dấu hiệu ma túy (bột trắng, kim tiêm, dụng cụ hút chích, thìa nấu thuốc) → CRITICAL, image_score = 0
+3. image_score PHẢI PHẢN ÁNH ĐÚNG mức độ vi phạm: CRITICAL=0-10, HIGH=20-40, MEDIUM=50-70, SAFE=85-100
+4. violations phải là array các object, không phải string
+5. Nếu không thấy vi phạm, trả về violations=[] và image_score=95
+
+Trả về JSON:
+{
+  "image_description": "<Mô tả chi tiết những gì thấy trong ảnh bằng tiếng Việt>",
+  "has_violation": true/false,
+  "image_score": <số 0-100, CRITICAL=0-10, HIGH=20-40, MEDIUM=50-70, AN TOÀN=85-100>,
+  "violations": [
+    {
+      "type": "<Tên loại vi phạm>",
+      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
+      "details": "<Mô tả chi tiết vi phạm trong hình ảnh>",
+      "recommendation": "<Đề xuất chỉnh sửa cụ thể>"
+    }
+  ]
+}`;
+
+  const r = await axios.post(`${baseUrl}/chat/completions`, {
+    model: 'gpt-4.1-mini',
+    messages: [
+      { role: 'system', content: scanPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Phân tích hình ảnh này theo chính sách Facebook Ads. Hãy mô tả rõ những gì bạn thấy và xác định vi phạm nếu có.' },
+          { type: 'image_url', image_url: { url: imageUrl, detail: 'high' } }
+        ]
+      }
+    ],
+    max_tokens: 1500,
+    temperature: 0.1,
+    response_format: { type: 'json_object' }
+  }, {
+    headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+    timeout: 30000
+  });
+
+  const raw = r.data.choices[0].message.content;
+  try { return JSON.parse(raw); } catch { return { has_violation: false, violations: [], image_score: 100 }; }
+}
+
 router.post('/check-policy', async (req, res) => {
   try {
     const { text, image_url, industry, landing_page_url, notes } = req.body;
     if (!text && !image_url) {
       return res.status(400).json({ error: 'Cần cung cấp ít nhất nội dung văn bản hoặc URL hình ảnh' });
     }
+    // ── BƯỚC 1: Pre-scan hình ảnh riêng (nếu có) với prompt cực kỳ nghiêm khắc ──
+    let imageScan = null;
+    if (image_url) {
+      try {
+        imageScan = await scanImageViolations(image_url);
+        console.log('[Image Scan]', JSON.stringify({ has_violation: imageScan.has_violation, score: imageScan.image_score, violations: imageScan.violations?.length }));
+      } catch (scanErr) {
+        console.error('[Image Scan Error]', scanErr.message);
+      }
+    }
+
+    // ── BƯỚC 2: Phân tích toàn diện (text + context) ──
     let userPrompt = `Hãy kiểm tra vi phạm chính sách Facebook Ads cho quảng cáo sau:\n\n`;
     if (industry) userPrompt += `NGÀNH HÀNG: ${industry}\n`;
     if (text) userPrompt += `\nNỘI DUNG VĂN BẢN:\n"""\n${text}\n"""\n`;
-    if (image_url) userPrompt += `\nURL HÌNH ẢNH: ${image_url}\n(Hãy phân tích hình ảnh này nếu bạn có khả năng nhìn hình ảnh)`;
+    if (imageScan) {
+      userPrompt += `\nKẾT QUẢ PHÂN TÍCH HÌNH ẢNH (pre-scan):\n`;
+      userPrompt += `- Mô tả ảnh: ${imageScan.image_description || 'Không rõ'}\n`;
+      userPrompt += `- Vi phạm phát hiện: ${imageScan.has_violation ? 'CÓ' : 'KHÔNG'}\n`;
+      if (imageScan.violations?.length) {
+        userPrompt += `- Chi tiết vi phạm: ${JSON.stringify(imageScan.violations)}\n`;
+      }
+    } else if (image_url) {
+      userPrompt += `\nCÓ HÌNH ẢNH ĐI KÈM (URL: ${image_url})\n`;
+    }
     if (landing_page_url) userPrompt += `\nURL TRANG ĐÍCH: ${landing_page_url}`;
     if (notes) userPrompt += `\nGHI CHÚ THÊM: ${notes}`;
-    userPrompt += `\n\nHãy phân tích cực kỳ chi tiết, không bỏ sót bất kỳ vi phạm tiềm ẩn nào. Trả về JSON.`;
+    userPrompt += `\n\nDựa trên thông tin trên, hãy tổng hợp phân tích toàn diện. Đặc biệt: nếu pre-scan hình ảnh đã phát hiện vi phạm, hãy đưa vào image_analysis.violations và điều chỉnh overall_score thấp xuống tương ứng. Trả về JSON.`;
 
-    let raw;
-    if (image_url) {
-      const openaiKey = process.env.OPENAI_API_KEY;
-      const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
-      const body = {
-        model: 'gpt-4.1-mini',
-        messages: [
-          { role: 'system', content: FB_POLICY_CHECKER_SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: userPrompt },
-              { type: 'image_url', image_url: { url: image_url, detail: 'high' } }
-            ]
-          }
-        ],
-        max_tokens: 3000,
-        temperature: 0.2,
-        response_format: { type: 'json_object' }
-      };
-      const r = await axios.post(`${baseUrl}/chat/completions`, body, {
-        headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
-        timeout: 55000 // tăng lên 55s cho vision
-      });
-      raw = r.data.choices[0].message.content;
-    } else {
-      raw = await callOpenAI(FB_POLICY_CHECKER_SYSTEM_PROMPT, userPrompt, 3000, true);
-    }
+    const raw = await callOpenAI(FB_POLICY_CHECKER_SYSTEM_PROMPT, userPrompt, 3000, true);
     let analysis;
     try { analysis = JSON.parse(raw); } catch { analysis = { raw, parse_error: true }; }
+
+    // ── BƯỚC 3: Merge kết quả pre-scan vào analysis (override nếu AI bỏ sót) ──
+    if (imageScan && imageScan.has_violation && !analysis.parse_error) {
+      // Đảm bảo image_analysis luôn có violations từ pre-scan
+      if (!analysis.image_analysis) analysis.image_analysis = {};
+      analysis.image_analysis.has_image = true;
+      analysis.image_analysis.description = imageScan.image_description;
+
+      // Merge violations: giữ tất cả từ pre-scan, thêm vào nếu chưa có
+      const existingVios = analysis.image_analysis.violations || [];
+      const preScanVios = imageScan.violations || [];
+      const mergedVios = [...existingVios];
+      for (const pv of preScanVios) {
+        const alreadyExists = mergedVios.some(ev => ev.type === pv.type);
+        if (!alreadyExists) mergedVios.push(pv);
+      }
+      analysis.image_analysis.violations = mergedVios;
+
+      // Cập nhật score: lấy min giữa score hiện tại và pre-scan score
+      const preScanScore = imageScan.image_score ?? 100;
+      analysis.image_analysis.score = Math.min(analysis.image_analysis.score ?? 100, preScanScore);
+
+      // Nếu có vi phạm CRITICAL, điều chỉnh overall_score
+      const hasCritical = mergedVios.some(v => v.severity === 'CRITICAL');
+      if (hasCritical && (analysis.overall_score ?? 100) > 20) {
+        analysis.overall_score = Math.min(analysis.overall_score ?? 100, 15);
+        analysis.overall_verdict = 'Sẽ bị từ chối';
+        analysis.overall_summary = (analysis.overall_summary || '') + ' [Hình ảnh chứa nội dung vi phạm CRITICAL: ' + mergedVios.filter(v=>v.severity==='CRITICAL').map(v=>v.type).join(', ') + ']';
+      }
+    }
+
+    // Thêm mô tả hình ảnh vào kết quả dù không vi phạm
+    if (imageScan && !analysis.parse_error) {
+      if (!analysis.image_analysis) analysis.image_analysis = {};
+      analysis.image_analysis.has_image = true;
+      if (!analysis.image_analysis.description) {
+        analysis.image_analysis.description = imageScan.image_description;
+      }
+    }
+
     res.json({ success: true, analysis });
   } catch (e) {
     res.setHeader('Access-Control-Allow-Origin', '*');
