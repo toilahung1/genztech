@@ -1425,7 +1425,7 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`)?.classList.add('active');
   document.getElementById(`panel-${tab}`)?.classList.add('active');
 
-  if (tab === 'conversations') loadConversations();
+  if (tab === 'conversations' && (!allConversations || allConversations.length === 0)) loadConversations();
 }
 
 function toggleSubNav(e, id) {
