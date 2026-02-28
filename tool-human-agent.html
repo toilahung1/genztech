@@ -1444,10 +1444,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 // Override loadPages to work directly with Facebook API
 const _originalLoadPages = loadPages;
 loadPages = async function() {
-  // Try server first, fallback to direct FB API
-  if (SERVER_URL) {
-    try { return await _originalLoadPages(); } catch(e) {}
-  }
+  // Always use direct FB API
   await loadPagesDirect();
 };
 
@@ -1540,9 +1537,7 @@ syncPages = async function() {
 // Override loadConversations to work directly with Facebook API
 const _origLoadConversations = loadConversations;
 loadConversations = async function(showLoading = true) {
-  if (SERVER_URL) {
-    try { return await _origLoadConversations(showLoading); } catch(e) {}
-  }
+  // Always use direct FB API (server is optional and may not be available)
   await loadConversationsDirect(showLoading);
 };
 
@@ -1592,9 +1587,6 @@ const _origOpenConv = openConversation;
 openConversation = async function(pageId, userId, userName) {
   selectedConvPageId = pageId;
   selectedConvUserId = userId;
-  if (SERVER_URL) {
-    try { return await _origOpenConv(pageId, userId, userName); } catch(e) {}
-  }
   await openConversationDirect(pageId, userId, userName);
 };
 
@@ -1740,9 +1732,6 @@ function releaseConvDirect(convId) {
 // Override openConfigPage to work with localStorage
 const _origOpenConfigPage = openConfigPage;
 openConfigPage = async function(pageId) {
-  if (SERVER_URL) {
-    try { return await _origOpenConfigPage(pageId); } catch(e) {}
-  }
   await openConfigPageDirect(pageId);
 };
 
@@ -2013,17 +2002,7 @@ async function testAIDirect(pageId) {
   container.innerHTML += `<div class="test-msg user">${escHtml(msg)}</div>`;
   container.innerHTML += `<div class="test-msg ai" id="testThinking"><span class="loading-spinner"></span> Đang suy nghĩ...</div>`;
   container.scrollTop = container.scrollHeight;
-  // Try server first
-  if (SERVER_URL) {
-    try {
-      const data = await api('POST', `/api/human-agent/pages/${pageId}/test`, { message: msg });
-      document.getElementById('testThinking')?.remove();
-      container.innerHTML += `<div class="test-msg ai">${escHtml(data.reply)}</div>`;
-      container.scrollTop = container.scrollHeight;
-      return;
-    } catch(e) {}
-  }
-  // Fallback: direct OpenAI
+  // Direct OpenAI (server is optional)
   const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
   if (!openaiKey) {
     document.getElementById('testThinking')?.remove();
@@ -2067,13 +2046,6 @@ async function testAIDirect(pageId) {
 async function subscribeWebhookDirect(pageId) {
   const page = allPages.find(p => p.pageId === pageId);
   if (!page) return;
-  if (SERVER_URL) {
-    try {
-      await api('POST', `/api/human-agent/pages/${pageId}/subscribe`, { pageAccessToken: page.accessToken });
-      showToast('Đăng ký webhook thành công!', 'success');
-      return;
-    } catch(e) {}
-  }
   // Direct subscribe via Facebook API
   try {
     const r = await fetch(`https://graph.facebook.com/v19.0/${pageId}/subscribed_apps`, {
