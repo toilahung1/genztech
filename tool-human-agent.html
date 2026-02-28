@@ -932,28 +932,79 @@ async function openConversation(pageId, userId, pageName) {
   selectedConvPageId = pageId;
   selectedConvUserId = userId;
 
+  // Find conversation in cache
+  const conv = allConversations.find(c => c.userId === userId || c.convId === userId);
+  const userName = conv?.userName || pageName || 'Khách hàng';
+  const initials = userName.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase() || 'K';
+  const page = allPages.find(p => p.pageId === pageId);
+
   document.getElementById('chatEmpty').style.display = 'none';
   const chatView = document.getElementById('chatView');
   chatView.style.display = 'flex';
 
-  document.getElementById('chatAvatar').textContent = userId.slice(-2).toUpperCase();
-  document.getElementById('chatName').textContent = `Khách ${userId.slice(-6)}`;
-  document.getElementById('chatSub').textContent = `Page: ${pageName}`;
+  document.getElementById('chatAvatar').textContent = initials;
+  document.getElementById('chatName').textContent = userName;
+  document.getElementById('chatSub').textContent = page ? `Page: ${page.pageName}` : `Page: ${pageName}`;
 
-  try {
-    const data = await api('GET', `/api/human-agent/pages/${pageId}/conversations/${userId}`);
-    renderMessages(data.messages || []);
+  // Update buttons
+  const btnTakeover = document.getElementById('btnTakeover');
+  const btnRelease = document.getElementById('btnRelease');
+  if (btnTakeover) { btnTakeover.style.display = 'flex'; btnTakeover.onclick = () => takeoverConvDirect(conv?.fbConvId || userId); }
+  if (btnRelease) { btnRelease.style.display = 'none'; }
 
-    const isPending = data.isPending;
-    document.getElementById('btnTakeover').style.display = isPending ? 'none' : 'flex';
-    document.getElementById('btnRelease').style.display = isPending ? 'flex' : 'none';
-    document.getElementById('humanAgentTag').style.display = isPending ? 'block' : 'none';
-  } catch (err) {
-    showToast('Lỗi tải hội thoại: ' + err.message, 'error');
+  // Update send/input
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.querySelector('.chat-send-btn');
+  if (chatInput) {
+    chatInput.value = '';
+    chatInput.onkeydown = function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessageDirect(conv?.fbConvId || userId, conv?.userId || userId); }
+    };
+  }
+  if (sendBtn) sendBtn.onclick = () => sendMessageDirect(conv?.fbConvId || userId, conv?.userId || userId);
+
+  // Load messages from Facebook API directly
+  const container = document.getElementById('chatMessages');
+  if (container) container.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
+
+  if (page && conv) {
+    try {
+      const convId = conv.fbConvId || conv.convId;
+      const url = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time&limit=30&access_token=${page.accessToken}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      const msgs = (d.data || []).reverse();
+      if (container) {
+        if (!msgs.length) {
+          container.innerHTML = '<div class="empty-state"><i class="bi bi-chat"></i><p>Chưa có tin nhắn</p></div>';
+        } else {
+          container.innerHTML = msgs.map(m => {
+            const isPage = m.from?.id === pageId;
+            const time = formatTime(m.created_time);
+            return `<div class="msg-row ${isPage ? 'assistant' : 'user'}">
+              ${!isPage ? `<div class="msg-avatar">${initials}</div>` : ''}
+              <div>
+                <div class="msg-bubble ${isPage ? 'assistant ai' : 'user'}">${escHtml(m.message || '')}</div>
+                <div class="msg-meta">${time}</div>
+              </div>
+            </div>`;
+          }).join('');
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+    } catch(e) {
+      if (container) container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
+    }
+  } else if (!page) {
+    if (container) container.innerHTML = '<div class="empty-state"><p>Không tìm thấy Page token</p></div>';
   }
 
-  // Refresh conv list
-  loadConversations(false);
+  // Update conv list active state
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.conv-item').forEach(el => {
+    if (el.getAttribute('onclick')?.includes(userId)) el.classList.add('active');
+  });
 }
 
 function renderMessages(messages) {
