@@ -1620,6 +1620,8 @@ const _origOpenConv = openConversation;
 openConversation = async function(pageId, userId, userName) {
   selectedConvPageId = pageId;
   selectedConvUserId = userId;
+  // Ensure we're on the conversations tab
+  switchTab('conversations');
   await openConversationDirect(pageId, userId, userName);
 };
 
@@ -1637,41 +1639,54 @@ async function openConversationDirect(pageId, userId, userName) {
     if (el.getAttribute('onclick')?.includes(userId)) el.classList.add('active');
   });
 
-  const chatArea = document.getElementById('chatArea');
-  if (!chatArea) return;
-  chatArea.innerHTML = `
-    <div class="chat-header">
-      <div class="chat-header-info">
-        <div class="conv-avatar" style="width:36px;height:36px">${initials}</div>
-        <div>
-          <div class="chat-header-name">${escHtml(name)}</div>
-          <div class="chat-header-sub" id="chatSub">${page.enabled ? '🤖 AI đang trả lời tự động' : 'AI đang tắt'}</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-sm primary" id="btnTakeover" onclick="takeoverConvDirect('${convId}')"><i class="bi bi-person-fill"></i> Tiếp quản</button>
-        <button class="btn-sm success" id="btnRelease" style="display:none" onclick="releaseConvDirect('${convId}')"><i class="bi bi-robot"></i> Trả về AI</button>
-        <button class="btn-sm gray" onclick="sendHumanAgentTagDirect('${convId}', '${escHtml(conv?.userId || userId)}')"><i class="bi bi-clock-history"></i> Human Tag 7 ngày</button>
-      </div>
-    </div>
-    <div class="chat-messages" id="chatMessages"><div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div></div>
-    <div class="chat-input-area">
-      <div class="chat-input-row">
-        <textarea class="chat-input" id="chatInput" placeholder="Nhập tin nhắn..." rows="1"
-          oninput="autoResize(this)"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessageDirect('${convId}','${escHtml(conv?.userId || userId)}')}"></textarea>
-        <button class="chat-send-btn" onclick="sendMessageDirect('${convId}','${escHtml(conv?.userId || userId)}')"><i class="bi bi-send-fill"></i></button>
-      </div>
-    </div>`;
+  // Use the existing HTML structure
+  const chatEmpty = document.getElementById('chatEmpty');
+  const chatView = document.getElementById('chatView');
+  if (chatEmpty) chatEmpty.style.display = 'none';
+  if (chatView) chatView.style.display = 'flex';
 
-  // Load messages
+  // Update header info
+  const chatAvatar = document.getElementById('chatAvatar');
+  const chatName = document.getElementById('chatName');
+  const chatSub = document.getElementById('chatSub');
+  if (chatAvatar) chatAvatar.textContent = initials;
+  if (chatName) chatName.textContent = name;
+  if (chatSub) chatSub.textContent = page.enabled ? '🤖 AI đang trả lời tự động' : `Page: ${page.pageName}`;
+
+  // Update buttons with direct API handlers
+  const btnTakeover = document.getElementById('btnTakeover');
+  const btnRelease = document.getElementById('btnRelease');
+  if (btnTakeover) {
+    btnTakeover.style.display = 'flex';
+    btnTakeover.onclick = () => takeoverConvDirect(convId);
+  }
+  if (btnRelease) {
+    btnRelease.style.display = 'none';
+    btnRelease.onclick = () => releaseConvDirect(convId);
+  }
+
+  // Update send button and input
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.querySelector('.chat-send-btn');
+  if (chatInput) {
+    chatInput.value = '';
+    chatInput.onkeydown = function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessageDirect(convId, conv?.userId || userId); }
+    };
+  }
+  if (sendBtn) sendBtn.onclick = () => sendMessageDirect(convId, conv?.userId || userId);
+
+  // Show loading in messages
+  const container = document.getElementById('chatMessages');
+  if (container) container.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
+
+  // Load messages from Facebook API
   try {
     const url = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time&limit=30&access_token=${page.accessToken}`;
     const r = await fetch(url);
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
     const msgs = (d.data || []).reverse();
-    const container = document.getElementById('chatMessages');
     if (!container) return;
     if (!msgs.length) {
       container.innerHTML = '<div class="empty-state"><i class="bi bi-chat"></i><p>Chưa có tin nhắn</p></div>';
@@ -1690,7 +1705,6 @@ async function openConversationDirect(pageId, userId, userName) {
     }).join('');
     container.scrollTop = container.scrollHeight;
   } catch(e) {
-    const container = document.getElementById('chatMessages');
     if (container) container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
   }
 }
