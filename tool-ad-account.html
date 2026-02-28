@@ -725,7 +725,7 @@ async function loadAccounts() {
   try {
     const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
     const data = await fbGetAll('/me/adaccounts', {
-      fields: 'id,name,account_status,currency,timezone_name,country,balance,amount_spent,spend_cap,daily_spend_limit',
+      fields: 'id,name,account_status,currency,timezone_name,country,balance,amount_spent',
       date_preset: datePreset,
       limit: 50
     });
