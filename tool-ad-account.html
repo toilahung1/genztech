@@ -274,6 +274,8 @@
                   <option value="this_month">Tháng này</option>
                   <option value="last_month">Tháng trước</option>
                 </select>
+                <div id="rateLimitIndicator" style="display:none;align-items:center;gap:5px;font-size:11px;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:4px 10px"></div>
+                <button class="btn-icon btn-sm" onclick="clearAllCache()" title="Xóa cache, tải lại dữ liệu mới"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
                 <button class="btn-icon btn-sm" onclick="exportCSV()"><i class="bi bi-download"></i> Xuất CSV</button>
               </div>
             </div>
@@ -575,7 +577,7 @@
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
-const FB_GRAPH = 'https://graph.facebook.com/v19.0';
+const FB_GRAPH = 'https://graph.facebook.com/v25.0';
 const TOKEN_KEY = 'gz_manual_fb_token';
 let currentTab = 'accounts';
 let allAccounts = [];
@@ -690,28 +692,147 @@ function statusBadge(status) {
   return `<span style="background:${bg};color:${color};border:1px solid ${color}33;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600">${label}</span>`;
 }
 
-// ── Facebook API ─────────────────────────────────────────────────────────────
-async function fbGet(path, params = {}) {
-  const token = getToken();
-  if (!token) throw new Error('Chưa có token');
-  const qs = new URLSearchParams({ ...params, access_token: token }).toString();
-  const resp = await fetch(`${FB_GRAPH}${path}?${qs}`);
-  const data = await resp.json();
-  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-  return data;
+// ── Rate Limit & Cache System ────────────────────────────────────────────────
+const API_CACHE = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 phút
+const RATE_LIMIT_CODES = [4, 17, 32, 613, 80004];
+let rateLimitUntil = 0;
+let pendingRequests = 0;
+
+function getCacheKey(path, params) {
+  return path + '|' + JSON.stringify(params);
 }
 
-async function fbGetAll(path, params = {}) {
+function getCache(key) {
+  const c = API_CACHE[key];
+  if (c && Date.now() - c.ts < CACHE_TTL) return c.data;
+  return null;
+}
+
+function setCache(key, data) {
+  API_CACHE[key] = { data, ts: Date.now() };
+}
+
+function clearCacheFor(prefix) {
+  Object.keys(API_CACHE).forEach(k => { if (k.startsWith(prefix)) delete API_CACHE[k]; });
+}
+
+function updateRateLimitUI() {
+  const indicator = document.getElementById('rateLimitIndicator');
+  if (!indicator) return;
+  if (Date.now() < rateLimitUntil) {
+    const secs = Math.ceil((rateLimitUntil - Date.now()) / 1000);
+    indicator.style.display = 'flex';
+    indicator.innerHTML = `<i class="bi bi-hourglass-split" style="color:#fbbf24"></i> Rate limit: chờ ${secs}s`;
+  } else {
+    indicator.style.display = 'none';
+  }
+}
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Facebook API với retry + cache ─────────────────────────────────────────
+async function fbGet(path, params = {}, opts = {}) {
+  const token = getToken();
+  if (!token) throw new Error('Chưa có token');
+  const cacheKey = getCacheKey(path, params);
+  if (!opts.noCache) {
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+  }
+  // Chờ nếu đang bị rate limit
+  if (Date.now() < rateLimitUntil) {
+    await sleep(rateLimitUntil - Date.now());
+  }
+  const qs = new URLSearchParams({ ...params, access_token: token }).toString();
+  let retries = 0;
+  while (retries <= 3) {
+    try {
+      pendingRequests++;
+      const resp = await fetch(`${FB_GRAPH}${path}?${qs}`);
+      pendingRequests--;
+      const data = await resp.json();
+      if (data.error) {
+        const code = data.error.code;
+        if (RATE_LIMIT_CODES.includes(code)) {
+          // Exponential backoff: 5s, 15s, 45s
+          const wait = Math.pow(3, retries + 1) * 5000;
+          rateLimitUntil = Date.now() + wait;
+          updateRateLimitUI();
+          GZ.toast(`Rate limit FB API — đợi ${wait/1000}s rồi thử lại...`, 'warn');
+          await sleep(wait);
+          retries++;
+          continue;
+        }
+        throw new Error(`[${code}] ${data.error.message}`);
+      }
+      if (!opts.noCache) setCache(cacheKey, data);
+      return data;
+    } catch(e) {
+      pendingRequests--;
+      if (retries >= 3) throw e;
+      await sleep(2000 * (retries + 1));
+      retries++;
+    }
+  }
+}
+
+// fbGetAll: phân trang nhưng giới hạn tối đa 3 trang (150 items) tránh quá nhiều request
+async function fbGetAll(path, params = {}, maxPages = 3) {
+  const cacheKey = 'all:' + getCacheKey(path, params);
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
+
   let results = [];
   let url = `${FB_GRAPH}${path}?${new URLSearchParams({ ...params, access_token: getToken() })}`;
-  while (url) {
+  let page = 0;
+  while (url && page < maxPages) {
+    // Delay nhỏ giữa các trang để tránh burst
+    if (page > 0) await sleep(300);
     const resp = await fetch(url);
     const data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) {
+      const code = data.error.code;
+      if (RATE_LIMIT_CODES.includes(code)) {
+        const wait = 10000;
+        rateLimitUntil = Date.now() + wait;
+        updateRateLimitUI();
+        GZ.toast(`Rate limit — đợi 10s...`, 'warn');
+        await sleep(wait);
+        continue; // thử lại trang này
+      }
+      throw new Error(`[${code}] ${data.error.message}`);
+    }
     results = results.concat(data.data || []);
     url = data.paging?.next || null;
+    page++;
   }
+  setCache(cacheKey, results);
   return results;
+}
+
+// fbBatch: gộp nhiều request thành 1 lần gọi (Facebook Batch API)
+async function fbBatch(requests) {
+  const token = getToken();
+  if (!token) throw new Error('Chưa có token');
+  // Tối đa 50 request/batch
+  const chunks = [];
+  for (let i = 0; i < requests.length; i += 50) chunks.push(requests.slice(i, i + 50));
+  let allResults = [];
+  for (const chunk of chunks) {
+    if (chunks.indexOf(chunk) > 0) await sleep(500);
+    const body = new URLSearchParams({
+      access_token: token,
+      batch: JSON.stringify(chunk.map(r => ({ method: 'GET', relative_url: r })))
+    });
+    const resp = await fetch('https://graph.facebook.com/v25.0', { method: 'POST', body });
+    const results = await resp.json();
+    allResults = allResults.concat(results);
+  }
+  return allResults.map(r => {
+    if (!r || r.code !== 200) return null;
+    try { return JSON.parse(r.body); } catch { return null; }
+  });
 }
 
 // ── Load Accounts ────────────────────────────────────────────────────────────
@@ -959,6 +1080,14 @@ function loadCurrentTab() {
 function refreshData() {
   loadCurrentTab();
   GZ.toast('Đang làm mới...', 'info');
+}
+
+function clearAllCache() {
+  Object.keys(API_CACHE).forEach(k => delete API_CACHE[k]);
+  rateLimitUntil = 0;
+  updateRateLimitUI();
+  loadCurrentTab();
+  GZ.toast('Xoá cache — đang tải lại dữ liệu mới...', 'success');
 }
 
 // ── Search & filter ──────────────────────────────────────────────────────────

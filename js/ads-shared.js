@@ -24,7 +24,7 @@ const GZ = {
   fbApi: async function(endpoint, params = {}, method = 'GET') {
     const token = GZ.getFbToken();
     if (!token) throw new Error('Chưa kết nối Facebook. Vui lòng kết nối tại trang Tự Động Đăng Bài.');
-    const base = `https://graph.facebook.com/v19.0/${endpoint}`;
+    const base = `https://graph.facebook.com/v25.0/${endpoint}`;
     if (method === 'GET') {
       const qs = new URLSearchParams({ ...params, access_token: token }).toString();
       const resp = await fetch(`${base}?${qs}`);
