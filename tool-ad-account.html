@@ -595,6 +595,10 @@ let allAdsets = [];
 let allAds = [];
 let selectedAccountId = null;
 let selectedAccountName = '';
+let selectedCampaignId = null;
+let selectedCampaignName = '';
+let selectedAdsetId = null;
+let selectedAdsetName = '';
 let rules = JSON.parse(localStorage.getItem('gz_auto_rules') || '[]');
 let sortState = {};
 
@@ -706,7 +710,7 @@ function statusBadge(status) {
     WITH_ISSUES: ['Có vấn đề', '#f87171', 'rgba(239,68,68,.1)'],
   };
   const [label, color, bg] = map[status] || ['Không rõ', '#9ca3af', 'rgba(156,163,175,.1)'];
-  return `<span style="background:${bg};color:${color};border:1px solid ${color}33;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600">${label}</span>`;
+  return `<span style="background:${bg};color:${color};border:1px solid ${color}33;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap;display:inline-block">${label}</span>`;
 }
 
 // ── Rate Limit & Cache System ────────────────────────────────────────────────
@@ -1073,6 +1077,8 @@ function renderCampaigns(data) {
 }
 
 function selectCampaign(campaignId, campaignName) {
+  selectedCampaignId = campaignId;
+  selectedCampaignName = campaignName;
   switchTab('adsets');
   loadAdsets(campaignId);
 }
@@ -1085,22 +1091,27 @@ async function loadAdsets(campaignId) {
       fields: 'id,name,status,effective_status,campaign_id,daily_budget',
       limit: 50
     });
-    if (data.length > 0) {
+    if (data.length > 0 && selectedAccountId) {
       try {
-        const insResp = await fbGet(`/${campaignId}/insights`, {
+        // Dùng account-level insights với filtering theo campaign_id
+        const insResp = await fbGet(`/${selectedAccountId}/insights`, {
           fields: 'adset_id,spend,impressions,clicks,cpm,cpc',
           date_preset: datePreset,
           level: 'adset',
+          filtering: JSON.stringify([{field:'campaign.id',operator:'EQUAL',value:campaignId}]),
           limit: 200
         });
         const insMap = {};
         (insResp?.data || []).forEach(r => { insMap[r.adset_id] = r; });
         data.forEach(s => { s._ins = insMap[s.id] || {}; });
       } catch(e2) { data.forEach(s => { s._ins = {}; }); }
+    } else {
+      data.forEach(s => { s._ins = {}; });
     }
     allAdsets = data;
     renderAdsets(data);
     document.getElementById('countAdsets').textContent = data.length;
+    updateContextBar();
   } catch(e) {
     setTableMsg('adsets', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
   }
@@ -1132,6 +1143,8 @@ function renderAdsets(data) {
 }
 
 function selectAdset(adsetId, adsetName) {
+  selectedAdsetId = adsetId;
+  selectedAdsetName = adsetName;
   switchTab('ads');
   loadAds(adsetId);
 }
@@ -1144,22 +1157,27 @@ async function loadAds(adsetId) {
       fields: 'id,name,status,effective_status,adset_id',
       limit: 50
     });
-    if (data.length > 0) {
+    if (data.length > 0 && selectedAccountId) {
       try {
-        const insResp = await fbGet(`/${adsetId}/insights`, {
+        // Dùng account-level insights với filtering theo adset_id
+        const insResp = await fbGet(`/${selectedAccountId}/insights`, {
           fields: 'ad_id,spend,impressions,clicks,ctr,cpc,cpm',
           date_preset: datePreset,
           level: 'ad',
+          filtering: JSON.stringify([{field:'adset.id',operator:'EQUAL',value:adsetId}]),
           limit: 200
         });
         const insMap = {};
         (insResp?.data || []).forEach(r => { insMap[r.ad_id] = r; });
         data.forEach(ad => { ad._ins = insMap[ad.id] || {}; });
       } catch(e2) { data.forEach(ad => { ad._ins = {}; }); }
+    } else {
+      data.forEach(ad => { ad._ins = {}; });
     }
     allAds = data;
     renderAds(data);
     document.getElementById('countAds').textContent = data.length;
+    updateContextBar();
   } catch(e) {
     setTableMsg('ads', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
   }
