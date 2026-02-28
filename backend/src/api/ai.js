@@ -11,7 +11,7 @@ async function callOpenAI(systemPrompt, userPrompt, maxTokens = 2000, jsonMode =
   if (!openaiKey) throw new Error('Chưa cấu hình OPENAI_API_KEY trên server');
 
   const body = {
-    model: 'gpt-4o-mini',
+    model: 'gpt-4.1-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
@@ -35,7 +35,7 @@ async function callOpenAIStreaming(systemPrompt, userPrompt, maxTokens, onChunk)
   if (!openaiKey) throw new Error('Chưa cấu hình OPENAI_API_KEY trên server');
 
   const body = {
-    model: 'gpt-4o-mini',
+    model: 'gpt-4.1-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
@@ -930,7 +930,7 @@ router.post('/check-policy', async (req, res) => {
       const openaiKey = process.env.OPENAI_API_KEY;
       const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
       const body = {
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini',
         messages: [
           { role: 'system', content: FB_POLICY_CHECKER_SYSTEM_PROMPT },
           {
