@@ -10,8 +10,6 @@
   <style>
     html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none;-webkit-user-select:none;user-select:none;margin:0;padding:0;font-family:'Inter',sans-serif;background:#080c1e;color:#fff}
     html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
-    canvas.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
-    #custom-cursor{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,212,255,.8);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s;opacity:0;mix-blend-mode:screen}
     .app-layout{display:flex;min-height:100vh;position:relative;z-index:1}
     /* Sidebar */
     .sidebar{width:240px;flex-shrink:0;background:rgba(10,14,39,.92);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
@@ -124,11 +122,18 @@
     .page-btn:disabled{opacity:.3;cursor:not-allowed}
     /* Responsive */
     @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-row{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}}
+  
+    /* ── Universe Background ── */
+    canvas.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    #custom-cursor{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,212,255,.8);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s;opacity:0;mix-blend-mode:screen}
+    .nebula-overlay{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(24,119,242,.07) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 70%,rgba(0,212,255,.06) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 50% 10%,rgba(139,92,246,.05) 0%,transparent 50%)}
   </style>
 </head>
 <body>
-  <canvas class="bg-canvas" id="stars-canvas"></canvas>
-  <canvas class="bg-canvas" id="data-particles"></canvas>
+  <!-- Universe Background -->
+  <canvas class="bg-canvas" id="gz-stars"></canvas>
+  <canvas class="bg-canvas" id="gz-particles"></canvas>
+  <div class="nebula-overlay"></div>
   <div id="custom-cursor"></div>
   <div id="toast"></div>
 
@@ -567,1151 +572,106 @@
   </div>
 
   <script src="js/ads-shared.js"></script>
-  <script>
-  // ── Constants ──
-  const API_BASE = 'https://genztech-production.up.railway.app';
-  const FB_GRAPH = 'https://graph.facebook.com/v25.0';
-  const STATUS_MAP = {1:['Hoạt động','badge-green'],2:['Vô hiệu hóa','badge-red'],3:['Chưa xác nhận','badge-yellow'],7:['Bị khóa','badge-red'],9:['Đóng cửa','badge-gray'],100:['Đang xem xét','badge-yellow']};
-  const CAMPAIGN_STATUS = {ACTIVE:['Đang chạy','badge-green'],PAUSED:['Tạm dừng','badge-yellow'],DELETED:['Đã xóa','badge-red'],ARCHIVED:['Lưu trữ','badge-gray']};
-  const OBJECTIVE_MAP = {OUTCOME_TRAFFIC:'Lưu lượng',OUTCOME_AWARENESS:'Nhận thức',OUTCOME_ENGAGEMENT:'Tương tác',OUTCOME_LEADS:'Khách hàng tiềm năng',OUTCOME_SALES:'Doanh số',OUTCOME_APP_PROMOTION:'Ứng dụng',LINK_CLICKS:'Lượt click',CONVERSIONS:'Chuyển đổi',BRAND_AWARENESS:'Nhận thức thương hiệu',REACH:'Tiếp cận',VIDEO_VIEWS:'Xem video',MESSAGES:'Tin nhắn'};
+  
 
-  // ── CSS Rules ──
-  (function(){
-    const s=document.createElement('style');
-    s.textContent=`
-      .preset-card{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .2s}
-      .preset-card:hover{background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.3);transform:translateY(-1px)}
-      .preset-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-      .preset-info{flex:1}
-      .preset-title{font-size:13px;font-weight:600;color:#fff}
-      .preset-desc{font-size:11.5px;color:rgba(255,255,255,.4);margin-top:2px}
-      .preset-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
-      .rule-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:all .2s}
-      .rule-card:hover{border-color:rgba(168,85,247,.3)}
-      .rule-card.active-rule{border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.04)}
-      .rule-card.triggered{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.04)}
-      .rule-toggle{position:relative;width:36px;height:20px;flex-shrink:0}
-      .rule-toggle input{opacity:0;width:0;height:0}
-      .rule-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.15);border-radius:20px;transition:.3s}
-      .rule-slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-      .rule-toggle input:checked+.rule-slider{background:#7c3aed}
-      .rule-toggle input:checked+.rule-slider:before{transform:translateX(16px)}
-      .rule-info{flex:1}
-      .rule-name{font-size:13px;font-weight:600;color:#fff}
-      .rule-meta{font-size:11.5px;color:rgba(255,255,255,.4);margin-top:3px}
-      .rule-log{font-size:11px;color:#c084fc;margin-top:4px}
-      .rule-actions{display:flex;gap:6px}
-      .log-section{margin-top:16px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px}
-      .log-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-      .log-item{font-size:11.5px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:10px;align-items:flex-start}
-      .log-item:last-child{border-bottom:none}
-      .log-time{color:rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0}
-      .log-msg{color:rgba(255,255,255,.7)}
-      .log-msg.triggered{color:#f87171}
-      .log-msg.ok{color:#4ade80}
-    `;
-    document.head.appendChild(s);
-  })();
+<script id="gz-universe-bg">
+(function(){
+  'use strict';
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-  // ── State ──
-  var S = {
-    accounts: [], campaigns: [], adsets: [], ads: [],
-    selectedAccountId: null, selectedAccountName: null,
-    selectedCampaignId: null, selectedCampaignName: null,
-    selectedAdsetId: null, selectedAdsetName: null,
-    currentTab: 'accounts', sortField: null, sortAsc: true,
-    page: 1, perPage: 20, searchQ: '',
-    token: localStorage.getItem('gz_manual_fb_token') || null,
-    jwt: localStorage.getItem('gz_jwt') || null,
-    user: null
-  };
-
-  // ── Helpers ──
-  function vnd(n) {
-    if (!n && n !== 0) return '—';
-    n = parseFloat(n);
-    if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
-    if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-    if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
-    return n.toLocaleString('vi-VN');
-  }
-  function pct(n) { return n ? parseFloat(n).toFixed(2) + '%' : '—'; }
-  function toast(msg, type='info') {
-    const el = document.createElement('div');
-    el.className = `toast-item ${type}`;
-    const icons = {success:'check-circle-fill',error:'x-circle-fill',info:'info-circle-fill'};
-    el.innerHTML = `<i class="bi bi-${icons[type]||'info-circle-fill'}" style="color:${type==='success'?'#4ade80':type==='error'?'#f87171':'#00d4ff'}"></i> ${msg}`;
-    document.getElementById('toast').appendChild(el);
-    setTimeout(() => el.remove(), 3500);
-  }
-
-  // ── Auth ──
-  function goLogin() { window.location.href = 'auto-post.html'; }
-
-  async function initAuth() {
-    // Token indicator - show first so token users don't need to wait for JWT check
-    if (S.token) {
-      document.getElementById('tokenIndicator').style.display = 'inline';
-      document.getElementById('tokenBanner').style.display = 'flex';
-    }
-    // JWT auth check - wrapped in try/catch so failure never blocks the page
-    if (S.jwt) {
-      try {
-        const r = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${S.jwt}` },
-          signal: AbortSignal.timeout(5000) // 5s timeout
-        });
-        if (r.ok) {
-          const data = await r.json();
-          // Only use data if it has user info (not an error object)
-          if (data && (data.username || data.email || data.id)) {
-            S.user = data;
-            document.getElementById('userBadge').style.display = 'flex';
-            document.getElementById('userAvatar').textContent = (data.username || data.email || 'U')[0].toUpperCase();
-            document.getElementById('userName').textContent = data.username || data.email || '';
-            document.getElementById('connDot').classList.add('online');
-            document.getElementById('connText').textContent = data.username || 'Đã đăng nhập';
-          } else {
-            // Route not found or invalid response - silently ignore
-            S.jwt = null;
-          }
-        } else {
-          // 404 or other error - silently clear JWT, don't block
-          S.jwt = null;
-        }
-      } catch(e) {
-        // Network error or timeout - silently ignore, don't block
-        S.jwt = null;
-      }
-    }
-    if (!S.token && !S.jwt) {
-      showLoginBanner();
-    }
-  }
-
-  function showLoginBanner() {
-    // No login banner UI — user is redirected to auto-post.html if needed
-    if (!S.token && !S.jwt) {
-      toast('Vui lòng đăng nhập tại trang Tự Động Đăng Bài hoặc nhập token thủ công', 'info');
-    }
-  }
-
-  // ── Token Modal ──
-  function openTokenModal() {
-    document.getElementById('tokenInput').value = S.token || '';
-    document.getElementById('tokenModal').classList.add('open');
-  }
-  function closeTokenModal() { document.getElementById('tokenModal').classList.remove('open'); }
-  function saveToken() {
-    const t = document.getElementById('tokenInput').value.trim();
-    if (!t) { toast('Vui lòng nhập token', 'error'); return; }
-    if (!t.startsWith('EAA') && !t.startsWith('EAB') && !t.startsWith('EAAG')) {
-      toast('Token không hợp lệ — phải bắt đầu bằng EAA', 'error'); return;
-    }
-    S.token = t;
-    localStorage.setItem('gz_manual_fb_token', t);
-    document.getElementById('tokenIndicator').style.display = 'inline';
-    document.getElementById('tokenBanner').style.display = 'flex';
-    closeTokenModal();
-    toast('Lưu token thành công! Đang tải dữ liệu...', 'success');
-    loadAccounts();
-  }
-  function clearToken() {
-    S.token = null;
-    localStorage.removeItem('gz_manual_fb_token');
-    document.getElementById('tokenIndicator').style.display = 'none';
-    document.getElementById('tokenBanner').style.display = 'none';
-    toast('Đã xóa token thủ công', 'info');
-    if (!S.jwt && !S.token) toast('Nhập token để tiếp tục sử dụng', 'info');
-  }
-
-  // ── API calls ──
-  async function fbGet(path) {
-    if (S.token) {
-      const sep = path.includes('?') ? '&' : '?';
-      const r = await fetch(`${FB_GRAPH}/${path}${sep}access_token=${S.token}`);
-      const d = await r.json();
-      if (d.error) throw new Error(d.error.message);
-      return d;
-    } else if (S.jwt) {
-      const r = await fetch(`${API_BASE}/api/facebook/proxy/${path}`, {
-        headers: { Authorization: `Bearer ${S.jwt}` }
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Lỗi server');
-      return d;
-    } else {
-      throw new Error('Chưa đăng nhập hoặc chưa có token');
-    }
-  }
-
-  // ── Load Accounts ──
-  async function loadAccounts() {
-    const tbody = document.getElementById('tbody-accounts');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="8"><span class="spinner"></span> Đang tải danh sách TKQC...</td></tr>';
-    document.getElementById('statsRow').style.display = 'none';
-
-    try {
-      let accounts = [];
-      if (S.token) {
-        const datePreset = document.getElementById('datePreset').value;
-        // Step 1: Get all ad accounts
-        const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,currency,amount_spent,spend_cap,account_id,timezone_id,timezone_name,country&limit=50&access_token=${S.token}`);
-        const d = await r.json();
-        if (d.error) throw new Error(d.error.message);
-        accounts = d.data || [];
-        // Step 2: Batch API - get insights for ALL accounts in 1 single request
-        if (accounts.length > 0) {
-          try {
-            const batchRequests = accounts.map(acc => ({
-              method: 'GET',
-              relative_url: `${acc.id}/insights?fields=spend,impressions,clicks,reach&date_preset=${datePreset}`
-            }));
-            const batchResp = await fetch(`${FB_GRAPH}/?batch=${encodeURIComponent(JSON.stringify(batchRequests))}&access_token=${S.token}&include_headers=false`, { method: 'POST' });
-            const batchData = await batchResp.json();
-            if (Array.isArray(batchData)) {
-              batchData.forEach((item, i) => {
-                try {
-                  if (item && item.code === 200) {
-                    const body = JSON.parse(item.body);
-                    accounts[i]._insights = body.data?.[0] || {};
-                  } else {
-                    accounts[i]._insights = {};
-                  }
-                } catch(e) { accounts[i]._insights = {}; }
-              });
-            }
-          } catch(e) {
-            // Batch failed - use amount_spent as fallback, no extra requests
-            accounts.forEach(acc => { acc._insights = {}; });
-          }
-        }
-      } else if (S.jwt) {
-        const r = await fetch(`${API_BASE}/api/facebook/proxy/my-ad-accounts`, {
-          headers: { Authorization: `Bearer ${S.jwt}` }
-        });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Lỗi server');
-        accounts = d.accounts || [];
-      }
-
-      S.accounts = accounts;
-      document.getElementById('countAccounts').textContent = accounts.length;
-
-      // Stats
-      const active = accounts.filter(a => a.account_status === 1).length;
-      const locked = accounts.filter(a => [2,7,9].includes(a.account_status)).length;
-      const totalSpend = accounts.reduce((s, a) => s + parseFloat(a._insights?.spend || a.amount_spent || 0), 0);
-      const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance || 0), 0);
-      document.getElementById('sTotalAcc').textContent = accounts.length;
-      document.getElementById('sActiveAcc').textContent = active;
-      document.getElementById('sLockedAcc').textContent = locked;
-      document.getElementById('sTotalSpend').textContent = vnd(totalSpend);
-      document.getElementById('sTotalBalance').textContent = vnd(totalBalance);
-      document.getElementById('statsRow').style.display = 'grid';
-
-      renderAccounts(accounts);
-    } catch(e) {
-      tbody.innerHTML = `<tr class="loading-row"><td colspan="8" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
-      toast(e.message, 'error');
-    }
-  }
-
-  function renderAccounts(list) {
-    const tbody = document.getElementById('tbody-accounts');
-    if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><p>Không tìm thấy tài khoản quảng cáo nào</p></div></td></tr>';
-      return;
-    }
-    // Apply search
-    const q = S.searchQ.toLowerCase();
-    const filtered = q ? list.filter(a => (a.name||'').toLowerCase().includes(q) || (a.id||'').includes(q)) : list;
-
-    tbody.innerHTML = filtered.map((acc, idx) => {
-      const [statusText, statusClass] = STATUS_MAP[acc.account_status] || ['Không rõ','badge-gray'];
-      const spend = acc._insights?.spend || acc.amount_spent || 0;
-      const country = acc.country || '—';
-      const tzName = acc.timezone_name || (acc.timezone_id ? 'TZ #'+acc.timezone_id : '—');
-      const tzShort = tzName.replace('Asia/','').replace('America/','').replace('Europe/','').replace(/_/g,' ');
-      // Store account data in a global map to avoid HTML escaping issues
-      window._accMap = window._accMap || {};
-      window._accMap[acc.id] = acc;
-      const safeId = acc.id;
-      const safeName = JSON.stringify(acc.name || acc.id);
-      return `<tr data-accid="${acc.id}" class="acc-row" style="cursor:pointer" onclick="selectAccount('${acc.id}', ${safeName})">
-        <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${acc.id}"></td>
-        <td>
-          <div class="td-name">${acc.name || acc.id}</div>
-          <div class="td-id">${acc.id}</div>
-        </td>
-        <td><span class="badge ${statusClass}">${statusText}</span></td>
-        <td style="font-size:12px">
-          <div style="display:flex;align-items:center;gap:5px">
-            <img src="https://flagcdn.com/16x12/${(country||'').toLowerCase()}.png" onerror="this.style.display='none'" style="border-radius:2px">
-            <span style="color:rgba(255,255,255,.7)">${country}</span>
-          </div>
-        </td>
-        <td style="font-size:12px;color:rgba(255,255,255,.6)">
-          <div title="${tzName}"><i class="bi bi-clock" style="color:#c084fc;margin-right:4px"></i>${tzShort}</div>
-        </td>
-        <td>
-          <div style="font-size:13px;font-weight:600">${acc.currency || 'VND'}</div>
-        </td>
-        <td style="color:#4ade80;font-weight:600">${vnd(parseFloat(acc.balance||0))}</td>
-        <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(spend))}</td>
-        <td onclick="event.stopPropagation()">
-          <button class="btn-icon btn-sm edit-tz-btn" data-id="${acc.id}" data-tz="${(acc.timezone_name||'').replace(/"/g,'&quot;')}" data-country="${acc.country||''}" title="Sửa múi giờ / quốc gia" style="font-size:11px" onclick="event.stopPropagation();(function(b){openEditTzModal(b.dataset.id,b.dataset.id,b.dataset.tz,b.dataset.country)})(this)">
-            <i class="bi bi-pencil-square"></i>
-          </button>
-        </td>
-      </tr>`;
-    }).join('');
-    // Click events handled by event delegation in init()
-  }
-
-  // ── Select Account → Load Campaigns ──
-  async function selectAccount(id, name) {
-    S.selectedAccountId = id;
-    S.selectedAccountName = name;
-    S.selectedCampaignId = null;
-    S.selectedCampaignName = null;
-    S.selectedAdsetId = null;
-    S.selectedAdsetName = null;
-    S.campaigns = []; S.adsets = []; S.ads = [];
-    document.getElementById('countCampaigns').textContent = '0';
-    document.getElementById('countAdsets').textContent = '0';
-    document.getElementById('countAds').textContent = '0';
-    toast(`Đã chọn: ${name}`, 'info');
-    updateContextBar();
-    // Switch tab first (without auto-loading since we call loadCampaigns below)
-    S.currentTab = 'campaigns';
-    ['accounts','campaigns','adsets','ads','rules'].forEach(t => {
-      document.getElementById(`tab-${t}`).classList.toggle('active', t === 'campaigns');
-      document.getElementById(`panel-${t}`).style.display = t === 'campaigns' ? 'block' : 'none';
-    });
-    await loadCampaigns(id);
-  }
-
-  async function loadCampaigns(accountId) {
-    const tbody = document.getElementById('tbody-campaigns');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải chiến dịch...</td></tr>';
-    const datePreset = document.getElementById('datePreset').value;
-
-    try {
-      let campaigns = [];
-      if (S.token) {
-        const url = `${FB_GRAPH}/${accountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time&limit=100&access_token=${S.token}`;
-        console.log('[GenZTech] Load campaigns URL:', url.replace(S.token, 'TOKEN_HIDDEN'));
-        const r = await fetch(url);
-        const d = await r.json();
-        console.log('[GenZTech] Campaigns response:', JSON.stringify(d).substring(0, 300));
-        if (d.error) throw new Error(`FB API lỗi ${d.error.code}: ${d.error.message}`);
-        if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
-        campaigns = d.data || [];
-        // Get insights
-        await Promise.all(campaigns.map(async c => {
-          try {
-            const ins = await fetch(`${FB_GRAPH}/${c.id}/insights?fields=spend,impressions,clicks,ctr,cpc,reach&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
-            c._ins = ins.data?.[0] || {};
-          } catch(e) { c._ins = {}; }
-        }));
-      } else if (S.jwt) {
-        const r = await fetch(`${API_BASE}/api/facebook/proxy/ad-account/${accountId}?date_preset=${datePreset}`, {
-          headers: { Authorization: `Bearer ${S.jwt}` }
-        });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Lỗi server');
-        campaigns = d.campaigns || [];
-      }
-
-      S.campaigns = campaigns;
-      document.getElementById('countCampaigns').textContent = campaigns.length;
-
-      if (!campaigns.length) {
-        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-flag"></i><p>Không có chiến dịch nào</p></div></td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = campaigns.map(c => {
-        const [st, sc] = CAMPAIGN_STATUS[c.status] || ['Không rõ','badge-gray'];
-        const obj = OBJECTIVE_MAP[c.objective] || c.objective || '—';
-        const ins = c._ins || c.insights?.data?.[0] || {};
-        return `<tr onclick="selectCampaign('${c.id}','${c.name}')">
-          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${c.id}"></td>
-          <td><div class="td-name">${c.name}</div><div class="td-id">${c.id}</div></td>
-          <td><span class="badge ${sc}">${st}</span></td>
-          <td style="font-size:12px;color:rgba(255,255,255,.6)">${obj}</td>
-          <td style="color:#fbbf24">${c.daily_budget ? vnd(parseInt(c.daily_budget)/100) : '—'}</td>
-          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
-          <td>${vnd(parseInt(ins.impressions||0))}</td>
-          <td>${vnd(parseInt(ins.clicks||0))}</td>
-          <td>${pct(ins.ctr)}</td>
-          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e) {
-      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
-      toast(e.message, 'error');
-    }
-  }
-
-  async function selectCampaign(id, name) {
-    S.selectedCampaignId = id;
-    S.selectedCampaignName = name;
-    S.selectedAdsetId = null;
-    S.selectedAdsetName = null;
-    S.adsets = []; S.ads = [];
-    document.getElementById('countAdsets').textContent = '0';
-    document.getElementById('countAds').textContent = '0';
-    updateContextBar();
-    switchTab('adsets');
-    await loadAdsets(id, name);
-  }
-
-  async function loadAdsets(campaignId, campaignName) {
-    const tbody = document.getElementById('tbody-adsets');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải nhóm quảng cáo...</td></tr>';
-    const datePreset = document.getElementById('datePreset').value;
-    // Fallback campaign name from state
-    const campLabel = campaignName || S.selectedCampaignName || '—';
-
-    try {
-      if (!S.token && !S.jwt) throw new Error('Chưa đăng nhập hoặc chưa có token');
-      let adsets = [];
-      if (S.token) {
-        // Include campaign{name} so we always have the campaign name even if passed incorrectly
-        const r = await fetch(`${FB_GRAPH}/${campaignId}/adsets?fields=id,name,status,daily_budget,lifetime_budget,campaign_id,campaign{name},optimization_goal&limit=100&access_token=${S.token}`);
-        const d = await r.json();
-        if (d.error) throw new Error(d.error.message);
-        adsets = d.data || [];
-        await Promise.all(adsets.map(async a => {
-          try {
-            const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
-            a._ins = ins.data?.[0] || {};
-          } catch(e) { a._ins = {}; }
-        }));
-      } else if (S.jwt) {
-        const r = await fetch(`${API_BASE}/api/facebook/proxy/ad-account/${S.selectedAccountId}?date_preset=${datePreset}`, {
-          headers: { Authorization: `Bearer ${S.jwt}` }
-        });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Lỗi server');
-        // Filter adsets by campaign
-        adsets = (d.adsets || []).filter(a => a.campaign_id === campaignId);
-      }
-
-      S.adsets = adsets;
-      document.getElementById('countAdsets').textContent = adsets.length;
-
-      if (!adsets.length) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="bi bi-collection"></i><p>Không có nhóm quảng cáo nào trong chiến dịch "${campLabel}"</p></div></td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = adsets.map(a => {
-        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
-        const ins = a._ins || {};
-        // Use campaign name from API response first, then fallback
-        const cName = a.campaign?.name || campLabel;
-        return `<tr onclick="selectAdset('${a.id}','${(a.name||'').replace(/'/g,"\\'")}')"
-          style="cursor:pointer">
-          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
-          <td><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></td>
-          <td><span class="badge ${sc}">${st}</span></td>
-          <td style="font-size:12px;color:rgba(255,255,255,.5)">${cName}</td>
-          <td style="color:#fbbf24">${a.daily_budget ? vnd(parseInt(a.daily_budget)/100) : '—'}</td>
-          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
-          <td>${vnd(parseInt(ins.impressions||0))}</td>
-          <td>${vnd(parseInt(ins.clicks||0))}</td>
-          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
-          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e) {
-      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
-    }
-  }
-
-  async function selectAdset(id, name) {
-    S.selectedAdsetId = id;
-    S.selectedAdsetName = name;
-    updateContextBar();
-    switchTab('ads');
-    await loadAds(id, name);
-  }
-
-  async function loadAds(adsetId, adsetName) {
-    const tbody = document.getElementById('tbody-ads');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải quảng cáo...</td></tr>';
-    const datePreset = document.getElementById('datePreset').value;
-
-    try {
-      if (!S.token) throw new Error('Cần token thủ công để xem quảng cáo chi tiết');
-      const r = await fetch(`${FB_GRAPH}/${adsetId}/ads?fields=id,name,status,creative{title,body,thumbnail_url}&limit=50&access_token=${S.token}`);
-      const d = await r.json();
-      if (d.error) throw new Error(d.error.message);
-      const ads = d.data || [];
-
-      await Promise.all(ads.map(async a => {
-        try {
-          const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
-          a._ins = ins.data?.[0] || {};
-        } catch(e) { a._ins = {}; }
-      }));
-
-      S.ads = ads;
-      document.getElementById('countAds').textContent = ads.length;
-
-      if (!ads.length) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có quảng cáo nào trong nhóm "${adsetName}"</p></div></td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = ads.map(a => {
-        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
-        const ins = a._ins || {};
-        const thumb = a.creative?.thumbnail_url;
-        return `<tr>
-          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
-          <td>
-            <div style="display:flex;align-items:center;gap:10px">
-              ${thumb ? `<img src="${thumb}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '<div style="width:40px;height:40px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><i class="bi bi-image" style="color:rgba(255,255,255,.3)"></i></div>'}
-              <div><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></div>
-            </div>
-          </td>
-          <td><span class="badge ${sc}">${st}</span></td>
-          <td style="font-size:12px;color:rgba(255,255,255,.5)">${adsetName || '—'}</td>
-          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
-          <td>${vnd(parseInt(ins.impressions||0))}</td>
-          <td>${vnd(parseInt(ins.clicks||0))}</td>
-          <td>${pct(ins.ctr)}</td>
-          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
-          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e) {
-      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
-    }
-  }
-
-  // ── Context bar ──
-  function updateContextBar() {
-    const bar = document.getElementById('contextBar');
-    if (!bar) return;
-    const parts = [];
-    if (S.selectedAccountName) parts.push(`<i class="bi bi-credit-card" style="color:#00d4ff"></i> <span style="color:#00d4ff">${S.selectedAccountName}</span>`);
-    if (S.selectedCampaignName) parts.push(`<i class="bi bi-chevron-right" style="font-size:10px;color:rgba(255,255,255,.3)"></i> <i class="bi bi-flag" style="color:#fbbf24"></i> <span style="color:#fbbf24">${S.selectedCampaignName}</span>`);
-    if (S.selectedAdsetName) parts.push(`<i class="bi bi-chevron-right" style="font-size:10px;color:rgba(255,255,255,.3)"></i> <i class="bi bi-collection" style="color:#4ade80"></i> <span style="color:#4ade80">${S.selectedAdsetName}</span>`);
-    if (parts.length) {
-      bar.innerHTML = parts.join(' ');
-      bar.style.display = 'flex';
-    } else {
-      bar.style.display = 'none';
-    }
-  }
-
-  // ── Tab switching ──
-  function switchTab(tab) {
-    S.currentTab = tab;
-    ['accounts','campaigns','adsets','ads','rules'].forEach(t => {
-      document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
-      document.getElementById(`panel-${t}`).style.display = t === tab ? 'block' : 'none';
-    });
-    // Auto-load data when switching tabs
-    if (tab === 'campaigns') {
-      if (S.selectedAccountId) {
-        loadCampaigns(S.selectedAccountId); // always reload
-      } else {
-        document.getElementById('tbody-campaigns').innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy quay lại tab <strong>Tài khoản quảng cáo</strong> và click vào một tài khoản để xem chiến dịch</p></div></td></tr>';
-      }
-    } else if (tab === 'adsets') {
-      if (S.selectedCampaignId) {
-        loadAdsets(S.selectedCampaignId, S.selectedCampaignName);
-      } else if (S.selectedAccountId) {
-        loadAllAdsets(S.selectedAccountId);
-      } else {
-        document.getElementById('tbody-adsets').innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-credit-card"></i><p>Hãy quay lại tab <strong>Tài khoản quảng cáo</strong> và click vào một tài khoản</p></div></td></tr>';
-      }
-    } else if (tab === 'ads') {
-      if (S.selectedAdsetId) {
-        loadAds(S.selectedAdsetId, S.selectedAdsetName);
-      } else if (S.selectedAccountId) {
-        loadAllAds(S.selectedAccountId);
-      } else {
-        document.getElementById('tbody-ads').innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><p>Hãy quay lại tab <strong>Tài khoản quảng cáo</strong> và click vào một tài khoản</p></div></td></tr>';
-      }
-    } else if (tab === 'rules') {
-      renderRules();
-    }
-  }
-
-  // Load all adsets directly from account (bypass campaign selection)
-  async function loadAllAdsets(accountId) {
-    const tbody = document.getElementById('tbody-adsets');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải tất cả nhóm quảng cáo...</td></tr>';
-    const datePreset = document.getElementById('datePreset').value;
-    try {
-      if (!S.token) throw new Error('Cần token để xem nhóm quảng cáo');
-      const r = await fetch(`${FB_GRAPH}/${accountId}/adsets?fields=id,name,status,daily_budget,campaign_id,campaign{name},optimization_goal&limit=100&access_token=${S.token}`);
-      const d = await r.json();
-      if (d.error) throw new Error(d.error.message);
-      const adsets = d.data || [];
-      await Promise.all(adsets.map(async a => {
-        try {
-          const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
-          a._ins = ins.data?.[0] || {};
-        } catch(e) { a._ins = {}; }
-      }));
-      S.adsets = adsets;
-      document.getElementById('countAdsets').textContent = adsets.length;
-      if (!adsets.length) {
-        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-collection"></i><p>Không có nhóm quảng cáo nào</p></div></td></tr>';
-        return;
-      }
-      tbody.innerHTML = adsets.map(a => {
-        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
-        const ins = a._ins || {};
-        const campName = a.campaign?.name || '—';
-        return `<tr onclick="selectAdset('${a.id}','${a.name}')">
-          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
-          <td><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></td>
-          <td><span class="badge ${sc}">${st}</span></td>
-          <td style="font-size:12px;color:rgba(255,255,255,.5)">${campName}</td>
-          <td style="color:#fbbf24">${a.daily_budget ? vnd(parseInt(a.daily_budget)/100) : '—'}</td>
-          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
-          <td>${vnd(parseInt(ins.impressions||0))}</td>
-          <td>${vnd(parseInt(ins.clicks||0))}</td>
-          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
-          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e) {
-      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
-    }
-  }
-
-  // Load all ads directly from account
-  async function loadAllAds(accountId) {
-    const tbody = document.getElementById('tbody-ads');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải tất cả quảng cáo...</td></tr>';
-    const datePreset = document.getElementById('datePreset').value;
-    try {
-      if (!S.token) throw new Error('Cần token để xem quảng cáo');
-      const r = await fetch(`${FB_GRAPH}/${accountId}/ads?fields=id,name,status,adset_id,adset{name},creative{title,thumbnail_url}&limit=100&access_token=${S.token}`);
-      const d = await r.json();
-      if (d.error) throw new Error(d.error.message);
-      const ads = d.data || [];
-      await Promise.all(ads.map(async a => {
-        try {
-          const ins = await fetch(`${FB_GRAPH}/${a.id}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=${datePreset}&access_token=${S.token}`).then(r=>r.json());
-          a._ins = ins.data?.[0] || {};
-        } catch(e) { a._ins = {}; }
-      }));
-      S.ads = ads;
-      document.getElementById('countAds').textContent = ads.length;
-      if (!ads.length) {
-        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><p>Không có quảng cáo nào</p></div></td></tr>';
-        return;
-      }
-      tbody.innerHTML = ads.map(a => {
-        const [st, sc] = CAMPAIGN_STATUS[a.status] || ['Không rõ','badge-gray'];
-        const ins = a._ins || {};
-        const thumb = a.creative?.thumbnail_url;
-        const adsetName = a.adset?.name || '—';
-        return `<tr>
-          <td onclick="event.stopPropagation()"><input type="checkbox" class="row-check" value="${a.id}"></td>
-          <td>
-            <div style="display:flex;align-items:center;gap:10px">
-              ${thumb ? `<img src="${thumb}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">` : '<div style="width:40px;height:40px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center"><i class="bi bi-image" style="color:rgba(255,255,255,.3)"></i></div>'}
-              <div><div class="td-name">${a.name}</div><div class="td-id">${a.id}</div></div>
-            </div>
-          </td>
-          <td><span class="badge ${sc}">${st}</span></td>
-          <td style="font-size:12px;color:rgba(255,255,255,.5)">${adsetName}</td>
-          <td style="color:#60a5fa;font-weight:600">${vnd(parseFloat(ins.spend||0))}</td>
-          <td>${vnd(parseInt(ins.impressions||0))}</td>
-          <td>${vnd(parseInt(ins.clicks||0))}</td>
-          <td>${pct(ins.ctr)}</td>
-          <td>${ins.cpc ? vnd(parseFloat(ins.cpc)) : '—'}</td>
-          <td>${ins.cpm ? vnd(parseFloat(ins.cpm)) : '—'}</td>
-        </tr>`;
-      }).join('');
-    } catch(e) {
-      tbody.innerHTML = `<tr class="loading-row"><td colspan="10" style="color:#f87171"><i class="bi bi-x-circle"></i> ${e.message}</td></tr>`;
-    }
-  }
-
-  function loadCurrentTab() {
-    if (S.currentTab === 'accounts') loadAccounts();
-    else if (S.currentTab === 'campaigns' && S.selectedAccountId) loadCampaigns(S.selectedAccountId);
-    else if (S.currentTab === 'adsets') {
-      if (S.selectedCampaignId) loadAdsets(S.selectedCampaignId, S.selectedCampaignName);
-      else if (S.selectedAccountId) loadAllAdsets(S.selectedAccountId);
-    } else if (S.currentTab === 'ads') {
-      if (S.selectedAdsetId) loadAds(S.selectedAdsetId, S.selectedAdsetName);
-      else if (S.selectedAccountId) loadAllAds(S.selectedAccountId);
-    }
-  }
-
-  // ── Search & Sort ──
-  function filterTable() {
-    S.searchQ = document.getElementById('searchInput').value;
-    if (S.currentTab === 'accounts') renderAccounts(S.accounts);
-  }
-
-  function sortTable(tab, field) {
-    if (S.sortField === field) S.sortAsc = !S.sortAsc;
-    else { S.sortField = field; S.sortAsc = true; }
-    if (tab === 'accounts') {
-      S.accounts.sort((a,b) => {
-        let va = a[field] || 0, vb = b[field] || 0;
-        if (typeof va === 'string') va = va.toLowerCase();
-        if (typeof vb === 'string') vb = vb.toLowerCase();
-        return S.sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
-      });
-      renderAccounts(S.accounts);
-    }
-  }
-
-  // ── Checkbox ──
-  function toggleCheckAll(el) {
-    document.querySelectorAll('.row-check').forEach(c => c.checked = el.checked);
-    updateSelectedCount();
-  }
-  function updateSelectedCount() {
-    const n = document.querySelectorAll('.row-check:checked').length;
-    const el = document.getElementById('selectedCount');
-    el.style.display = n ? 'block' : 'none';
-    el.textContent = `Đã chọn ${n} mục`;
-  }
-  document.addEventListener('change', e => { if (e.target.classList.contains('row-check')) updateSelectedCount(); });
-
-  // ── Export CSV ──
-  function exportCSV() {
-    const tab = S.currentTab;
-    const data = S[tab] || [];
-    if (!data.length) { toast('Không có dữ liệu để xuất', 'error'); return; }
-    const headers = Object.keys(data[0]).filter(k => !k.startsWith('_'));
-    const rows = data.map(r => headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    const a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
-    a.download = `genztech_${tab}_${Date.now()}.csv`;
-    a.click();
-    toast('Xuất CSV thành công!', 'success');
-  }
-
-  // ── Refresh ──
-  function refreshData() { loadCurrentTab(); toast('Đang làm mới dữ liệu...', 'info'); }
-
-  // ── Sidebar toggle ──
-  function toggleSubNav(e, id) {
-    e.preventDefault();
-    const el = document.getElementById(id);
-    const arrow = document.getElementById(id + 'Arrow');
-    const open = el.style.display === 'none';
-    el.style.display = open ? 'block' : 'none';
-    if (arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
-  }
-
-  function openSettings() { toast('Cài đặt đang phát triển', 'info'); }
-
-  // ── Edit Timezone / Country ──
-  let _editTzAccId = null;
-
-  function openEditTzModal(accId, accName, currentTz, currentCountry) {
-    _editTzAccId = accId;
-    document.getElementById('editTzAccName').textContent = accName;
-    document.getElementById('currentCountryDisplay').textContent = currentCountry || '—';
-    document.getElementById('currentTzDisplay').textContent = currentTz || '—';
-    // Pre-select current values
-    const tzSel = document.getElementById('editTimezone');
-    const ctrSel = document.getElementById('editCountry');
-    if (currentTz) {
-      const opt = [...tzSel.options].find(o => o.value === currentTz);
-      if (opt) tzSel.value = currentTz;
-    }
-    if (currentCountry) {
-      const opt = [...ctrSel.options].find(o => o.value === currentCountry.toUpperCase());
-      if (opt) ctrSel.value = currentCountry.toUpperCase();
-    }
-    document.getElementById('editTzModal').classList.add('open');
-  }
-
-  function closeEditTzModal() {
-    document.getElementById('editTzModal').classList.remove('open');
-    _editTzAccId = null;
-  }
-
-  async function saveTimezone() {
-    if (!_editTzAccId) return;
-    const timezone = document.getElementById('editTimezone').value;
-    const country = document.getElementById('editCountry').value;
-    if (!S.token) {
-      toast('Cần Access Token để cập nhật thông tin TKQC', 'error');
-      return;
-    }
-    const btn = document.querySelector('#editTzModal .btn:last-child');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Đang cập nhật...';
-    try {
-      // Facebook Marketing API: POST /{ad-account-id}
-      // Use timezone_name (string) - Facebook accepts this directly
-      const params = new URLSearchParams();
-      params.append('access_token', S.token);
-      if (timezone) params.append('timezone_name', timezone);
-      if (country) params.append('country', country);
-      const r = await fetch(`${FB_GRAPH}/${_editTzAccId}`, {
-        method: 'POST',
-        body: params
-      });
-      const d = await r.json();
-      if (d.error) throw new Error(`${d.error.message} (code: ${d.error.code})`);
-      // Facebook returns {success: true} or {id: "act_xxx"} on success
-      if (d.success || d.id || d === true) {
-        toast('Cập nhật thành công!', 'success');
-        // Update local state
-        const acc = S.accounts.find(a => a.id === _editTzAccId);
-        if (acc) { acc.timezone_name = timezone; acc.country = country; }
-        closeEditTzModal();
-        renderAccounts(S.accounts);
-      } else {
-        // Log response for debugging
-        console.warn('[GenZTech] saveTimezone response:', d);
-        throw new Error('Không thể cập nhật. Phản hồi: ' + JSON.stringify(d).substring(0, 100));
-      }
-    } catch(e) {
-      toast(e.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-check-lg"></i> Cập nhật';
-    }
-  }
-
-  // ── Init ──
-  async function init() {
-    try {
-      await initAuth();
-    } catch(e) {
-      console.warn('[GenZTech] initAuth error (non-fatal):', e.message);
-    }
-    // Auto load if has token or jwt
-    if (S.token || S.jwt) {
-      loadAccounts();
-    }
-    // Event delegation for account rows (survives re-renders)
-    document.getElementById('tbody-accounts').addEventListener('click', function(e) {
-      const btn = e.target.closest('.edit-tz-btn');
-      if (btn) {
-        e.stopPropagation();
-        const id = btn.dataset.accid;
-        const acc = (window._accMap && window._accMap[id]) || {};
-        openEditTzModal(id, acc.name || id, acc.timezone_name || '', acc.country || '');
-        return;
-      }
-      const row = e.target.closest('.acc-row');
-      if (row) {
-        const id = row.dataset.accid;
-        const name = row.dataset.accname || id;
-        selectAccount(id, name);
-      }
+  // ── Stars Canvas ──
+  const cs = document.getElementById('gz-stars');
+  if (!cs) return;
+  const ctxS = cs.getContext('2d');
+  function resizeS(){ cs.width=window.innerWidth; cs.height=window.innerHeight; }
+  resizeS();
+  const stars = [];
+  const N = isMobile ? 80 : 180;
+  for(let i=0;i<N;i++){
+    stars.push({
+      x: Math.random()*cs.width, y: Math.random()*cs.height,
+      r: Math.random()*1.6+0.2,
+      a: Math.random(), da: (Math.random()-0.5)*0.004,
+      vx: (Math.random()-0.5)*0.07, vy: (Math.random()-0.5)*0.07,
+      hue: [210,195,270,180][Math.floor(Math.random()*4)] // xanh dương, cyan, tím, xanh lá
     });
   }
+  function animStars(){
+    ctxS.clearRect(0,0,cs.width,cs.height);
+    stars.forEach(s=>{
+      s.x+=s.vx; s.y+=s.vy; s.a+=s.da;
+      if(s.a<0.08) s.da=Math.abs(s.da);
+      if(s.a>0.95) s.da=-Math.abs(s.da);
+      if(s.x<0) s.x=cs.width; if(s.x>cs.width) s.x=0;
+      if(s.y<0) s.y=cs.height; if(s.y>cs.height) s.y=0;
+      const g=ctxS.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*2.5);
+      g.addColorStop(0,`hsla(${s.hue},100%,90%,${s.a*0.9})`);
+      g.addColorStop(0.5,`hsla(${s.hue},100%,70%,${s.a*0.4})`);
+      g.addColorStop(1,`hsla(${s.hue},100%,60%,0)`);
+      ctxS.fillStyle=g;
+      ctxS.beginPath(); ctxS.arc(s.x,s.y,s.r*2.5,0,Math.PI*2); ctxS.fill();
+    });
+    requestAnimationFrame(animStars);
+  }
+  animStars();
 
-  // ── Background ──
-  (function() {
-    const isMobile = window.innerWidth < 768;
-    const isTouchDevice = 'ontouchstart' in window;
-    const canvas = document.getElementById('stars-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    const stars = [];
-    for (let i = 0; i < (isMobile ? 80 : 180); i++) {
-      stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5+0.3, a: Math.random(), da: (Math.random()-0.5)*0.005, vx: (Math.random()-0.5)*0.08, vy: (Math.random()-0.5)*0.08 });
-    }
-    function animStars() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      stars.forEach(s => {
-        s.x += s.vx; s.y += s.vy; s.a += s.da;
-        if (s.a < 0.1) s.da = Math.abs(s.da);
-        if (s.a > 1) s.da = -Math.abs(s.da);
-        if (s.x < 0) s.x = canvas.width; if (s.x > canvas.width) s.x = 0;
-        if (s.y < 0) s.y = canvas.height; if (s.y > canvas.height) s.y = 0;
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255,255,255,${s.a * 0.7})`; ctx.fill();
-      });
-      requestAnimationFrame(animStars);
-    }
-    animStars();
-    // Data particles
-    const canvasData = document.getElementById('data-particles');
-    const ctxData = canvasData.getContext('2d');
-    canvasData.width = window.innerWidth; canvasData.height = window.innerHeight;
-    const particles = [];
-    for (let i = 0; i < (isMobile ? 10 : 20); i++) {
-      particles.push({ x:0, y:0, r: Math.random()*2+1, path:{ cx:Math.random()*canvasData.width, cy:Math.random()*canvasData.height, rx:Math.random()*100+50, ry:Math.random()*100+50, angle:Math.random()*Math.PI*2, speed:Math.random()*0.01+0.005 }, pulse:Math.random()*Math.PI*2, ps:Math.random()*0.02+0.01 });
-    }
-    function animPart() {
-      ctxData.clearRect(0,0,canvasData.width,canvasData.height);
-      particles.forEach(p => {
-        p.path.angle += p.path.speed; p.x = p.path.cx + Math.cos(p.path.angle)*p.path.rx; p.y = p.path.cy + Math.sin(p.path.angle)*p.path.ry;
-        p.pulse += p.ps; const ps = 1 + Math.sin(p.pulse)*0.5;
-        const g = ctxData.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*ps*3);
-        g.addColorStop(0,'rgba(24,119,242,'+(0.7*ps)+')'); g.addColorStop(0.5,'rgba(0,212,255,'+(0.3*ps)+')'); g.addColorStop(1,'rgba(0,212,255,0)');
-        ctxData.fillStyle = g; ctxData.beginPath(); ctxData.arc(p.x,p.y,p.r*ps*3,0,Math.PI*2); ctxData.fill();
-      });
-      requestAnimationFrame(animPart);
-    }
-    animPart();
-    // Cursor
-    const cursor = document.getElementById('custom-cursor');
-    if (cursor && !isTouchDevice) {
-      let mx=0,my=0,cx=0,cy=0,mv=false;
-      document.body.style.cursor='none';
-      document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; if(!mv){mv=true;cursor.style.opacity='1';} });
-      document.addEventListener('mouseleave', () => { mv=false; cursor.style.opacity='0'; });
-      function animCursor() { if(mv){ cx+=(mx-cx)*0.15; cy+=(my-cy)*0.15; cursor.style.left=cx+'px'; cursor.style.top=cy+'px'; } requestAnimationFrame(animCursor); }
-      animCursor();
-    }
-    window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; canvasData.width=window.innerWidth; canvasData.height=window.innerHeight; });
-  })();
+  // ── Data Particles Canvas ──
+  const cp = document.getElementById('gz-particles');
+  if(!cp) return;
+  const ctxP = cp.getContext('2d');
+  function resizeP(){ cp.width=window.innerWidth; cp.height=window.innerHeight; }
+  resizeP();
+  const parts = [];
+  const NP = isMobile ? 8 : 18;
+  for(let i=0;i<NP;i++){
+    parts.push({
+      x:0, y:0,
+      r: Math.random()*2.5+1,
+      cx: Math.random()*cp.width, cy: Math.random()*cp.height,
+      rx: Math.random()*120+40, ry: Math.random()*120+40,
+      angle: Math.random()*Math.PI*2,
+      speed: Math.random()*0.008+0.004,
+      pulse: Math.random()*Math.PI*2, ps: Math.random()*0.02+0.01,
+      color: [[24,119,242],[0,212,255],[139,92,246],[6,182,212]][Math.floor(Math.random()*4)]
+    });
+  }
+  function animParts(){
+    ctxP.clearRect(0,0,cp.width,cp.height);
+    parts.forEach(p=>{
+      p.angle+=p.speed;
+      p.x=p.cx+Math.cos(p.angle)*p.rx;
+      p.y=p.cy+Math.sin(p.angle)*p.ry;
+      p.pulse+=p.ps;
+      const ps=1+Math.sin(p.pulse)*0.5;
+      const [r,g,b]=p.color;
+      const grd=ctxP.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*ps*4);
+      grd.addColorStop(0,`rgba(${r},${g},${b},${0.75*ps})`);
+      grd.addColorStop(0.4,`rgba(${r},${g},${b},${0.3*ps})`);
+      grd.addColorStop(1,`rgba(${r},${g},${b},0)`);
+      ctxP.fillStyle=grd;
+      ctxP.beginPath(); ctxP.arc(p.x,p.y,p.r*ps*4,0,Math.PI*2); ctxP.fill();
+    });
+    requestAnimationFrame(animParts);
+  }
+  animParts();
 
-  // ── RULE ENGINE ──
-  let rules = JSON.parse(localStorage.getItem('gz_ad_rules') || '[]');
-  let ruleEditId = null;
-  let ruleCheckInterval = null;
-  let ruleLogs = JSON.parse(localStorage.getItem('gz_rule_logs') || '[]');
-
-  const COND_UNITS = {
-    spend_spike: '%', cpc_above: 'VND', cpm_above: 'VND', ctr_below: '%',
-    balance_below: 'VND', spend_above: 'VND', account_disabled: '', no_conversion: 'giờ'
-  };
-  const COND_LABELS = {
-    spend_spike: 'Tăng % so với trung bình', cpc_above: 'CPC tối đa (VND)',
-    cpm_above: 'CPM tối đa (VND)', ctr_below: 'CTR tối thiểu (%)',
-    balance_below: 'Số dư tối thiểu (VND)', spend_above: 'Giới hạn chi tiêu (VND)',
-    account_disabled: 'Không cần giá trị', no_conversion: 'Sau bao nhiêu giờ'
-  };
-  const ACTION_LABELS = {
-    pause_campaign: 'Tạm dừng chiến dịch', pause_adset: 'Tạm dừng nhóm QC',
-    pause_ad: 'Tạm dừng quảng cáo', notify_only: 'Chỉ cảnh báo'
-  };
-
-  function saveRules() {
-    localStorage.setItem('gz_ad_rules', JSON.stringify(rules));
-    document.getElementById('countRules').textContent = rules.filter(r=>r.enabled).length;
+  // ── Custom Cursor ──
+  const cur=document.getElementById('custom-cursor');
+  if(cur && !('ontouchstart' in window)){
+    let mx=0,my=0,cx=0,cy=0,shown=false;
+    document.body.style.cursor='none';
+    document.addEventListener('mousemove',e=>{
+      mx=e.clientX; my=e.clientY;
+      if(!shown){ shown=true; cur.style.opacity='1'; }
+    });
+    document.addEventListener('mouseleave',()=>{ shown=false; cur.style.opacity='0'; });
+    function animCur(){ if(shown){ cx+=(mx-cx)*0.15; cy+=(my-cy)*0.15; cur.style.left=cx+'px'; cur.style.top=cy+'px'; } requestAnimationFrame(animCur); }
+    animCur();
   }
 
-  function addRuleLog(ruleId, msg, type='ok') {
-    const log = { id: Date.now(), ruleId, msg, type, time: new Date().toLocaleString('vi-VN') };
-    ruleLogs.unshift(log);
-    if (ruleLogs.length > 100) ruleLogs = ruleLogs.slice(0, 100);
-    localStorage.setItem('gz_rule_logs', JSON.stringify(ruleLogs));
-  }
-
-  function openRuleModal(editId) {
-    ruleEditId = editId || null;
-    if (editId) {
-      const r = rules.find(x=>x.id===editId);
-      if (!r) return;
-      document.getElementById('ruleName').value = r.name;
-      document.getElementById('ruleCondType').value = r.condType;
-      document.getElementById('ruleCondValue').value = r.condValue || '';
-      document.getElementById('ruleAction').value = r.action;
-      document.getElementById('ruleScope').value = r.scope;
-      document.getElementById('ruleNotifyBrowser').checked = r.notifyBrowser !== false;
-      document.getElementById('ruleNotifyLog').checked = r.notifyLog !== false;
-    } else {
-      document.getElementById('ruleName').value = '';
-      document.getElementById('ruleCondType').value = 'spend_spike';
-      document.getElementById('ruleCondValue').value = '';
-      document.getElementById('ruleAction').value = 'pause_campaign';
-      document.getElementById('ruleScope').value = 'all';
-      document.getElementById('ruleNotifyBrowser').checked = true;
-      document.getElementById('ruleNotifyLog').checked = true;
-    }
-    updateCondUnit();
-    document.getElementById('ruleModal').style.display = 'flex';
-  }
-  function closeRuleModal() { document.getElementById('ruleModal').style.display = 'none'; }
-
-  function updateCondUnit() {
-    const t = document.getElementById('ruleCondType').value;
-    document.getElementById('condUnit').textContent = COND_UNITS[t] || '';
-    document.getElementById('condValueLabel').textContent = COND_LABELS[t] || 'Giá trị ngưỡng';
-    const noVal = t === 'account_disabled';
-    document.getElementById('ruleCondValue').disabled = noVal;
-    document.getElementById('ruleCondValue').placeholder = noVal ? 'Không cần' : '50';
-  }
-
-  function saveRule() {
-    const name = document.getElementById('ruleName').value.trim();
-    if (!name) { toast('Vui lòng nhập tên quy tắc', 'error'); return; }
-    const condType = document.getElementById('ruleCondType').value;
-    const condValue = parseFloat(document.getElementById('ruleCondValue').value) || 0;
-    const action = document.getElementById('ruleAction').value;
-    const scope = document.getElementById('ruleScope').value;
-    const notifyBrowser = document.getElementById('ruleNotifyBrowser').checked;
-    const notifyLog = document.getElementById('ruleNotifyLog').checked;
-
-    if (ruleEditId) {
-      const idx = rules.findIndex(r=>r.id===ruleEditId);
-      if (idx >= 0) rules[idx] = { ...rules[idx], name, condType, condValue, action, scope, notifyBrowser, notifyLog };
-    } else {
-      rules.push({ id: Date.now(), name, condType, condValue, action, scope, notifyBrowser, notifyLog, enabled: true, createdAt: new Date().toISOString(), lastTriggered: null, triggerCount: 0 });
-    }
-    saveRules();
-    closeRuleModal();
-    renderRules();
-    toast('Lưu quy tắc thành công!', 'success');
-  }
-
-  function toggleRule(id) {
-    const r = rules.find(x=>x.id===id);
-    if (r) { r.enabled = !r.enabled; saveRules(); renderRules(); }
-  }
-
-  function deleteRule(id) {
-    if (!confirm('Xóa quy tắc này?')) return;
-    rules = rules.filter(r=>r.id!==id);
-    saveRules(); renderRules();
-    toast('Dạ xóa rồi!', 'info');
-  }
-
-  function applyPreset(type) {
-    const presets = {
-      spend_spike: { name: 'Tắt khi thốc tiền đột ngột', condType: 'spend_spike', condValue: 50, action: 'pause_campaign', scope: 'all' },
-      high_cpc: { name: 'Tắt khi CPC quá đắt', condType: 'cpc_above', condValue: 50000, action: 'pause_campaign', scope: 'all' },
-      low_balance: { name: 'Cảnh báo sắp hết tiền', condType: 'balance_below', condValue: 500000, action: 'notify_only', scope: 'all' },
-      account_disabled: { name: 'Tài khoản bị vô hiệu hóa', condType: 'account_disabled', condValue: 0, action: 'pause_campaign', scope: 'all' }
-    };
-    const p = presets[type];
-    if (!p) return;
-    rules.push({ id: Date.now(), ...p, notifyBrowser: true, notifyLog: true, enabled: true, createdAt: new Date().toISOString(), lastTriggered: null, triggerCount: 0 });
-    saveRules(); renderRules();
-    toast(`Đã thêm quy tắc: ${p.name}`, 'success');
-  }
-
-  function renderRules() {
-    const el = document.getElementById('rulesList');
-    if (!rules.length) {
-      el.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">
-        <i class="bi bi-robot" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3"></i>
-        Chưa có quy tắc nào. Chọn mẫu có sẵn hoặc tạo mới.
-      </div>`;
-      return;
-    }
-    const logsHtml = ruleLogs.length ? `
-      <div class="log-section">
-        <div class="log-title"><i class="bi bi-journal-text"></i> Lịch sử kích hoạt (${ruleLogs.length})</div>
-        ${ruleLogs.slice(0,10).map(l=>`<div class="log-item"><span class="log-time">${l.time}</span><span class="log-msg ${l.type}">${l.msg}</span></div>`).join('')}
-      </div>` : '';
-
-    el.innerHTML = rules.map(r => {
-      const lastT = r.lastTriggered ? `Kích hoạt lần cuối: ${new Date(r.lastTriggered).toLocaleString('vi-VN')}` : 'Chưa kích hoạt';
-      const condText = COND_LABELS[r.condType] + (r.condValue ? ` ≥ ${r.condValue.toLocaleString('vi-VN')} ${COND_UNITS[r.condType]}` : '');
-      return `<div class="rule-card ${r.enabled ? 'active-rule' : ''}" id="rule-${r.id}">
-        <label class="rule-toggle"><input type="checkbox" ${r.enabled?'checked':''} onchange="toggleRule(${r.id})"><span class="rule-slider"></span></label>
-        <div class="rule-info">
-          <div class="rule-name">${r.name}</div>
-          <div class="rule-meta"><i class="bi bi-funnel" style="color:#c084fc"></i> ${condText} &nbsp;•&nbsp; <i class="bi bi-lightning" style="color:#fbbf24"></i> ${ACTION_LABELS[r.action]} &nbsp;•&nbsp; <i class="bi bi-people"></i> ${r.scope==='all'?'Tất cả TKQC':'TKQC đang chọn'}</div>
-          <div class="rule-log">⚡ ${lastT} &nbsp;•&nbsp; Kích hoạt ${r.triggerCount||0} lần</div>
-        </div>
-        <div class="rule-actions">
-          <button class="btn-icon btn-sm" onclick="openRuleModal(${r.id})" title="Sửa"><i class="bi bi-pencil"></i></button>
-          <button class="btn-icon btn-sm" onclick="deleteRule(${r.id})" title="Xóa" style="color:#f87171"><i class="bi bi-trash"></i></button>
-        </div>
-      </div>`;
-    }).join('') + logsHtml;
-  }
-
-  // Rule checker - runs every 15 minutes
-  async function checkRules() {
-    const enabledRules = rules.filter(r => r.enabled);
-    if (!enabledRules.length) return;
-    if (!S.token && !S.jwt) return;
-
-    try {
-      let accounts = S.accounts;
-      if (!accounts.length) {
-        // Load minimal account data for rule checking
-        if (S.token) {
-          const r = await fetch(`${FB_GRAPH}/me/adaccounts?fields=id,name,account_status,balance,amount_spent&limit=50&access_token=${S.token}`);
-          const d = await r.json();
-          accounts = d.data || [];
-        }
-      }
-
-      for (const rule of enabledRules) {
-        for (const acc of accounts) {
-          let triggered = false;
-          let triggerMsg = '';
-
-          if (rule.condType === 'account_disabled') {
-            if ([2,7,9].includes(acc.account_status)) {
-              triggered = true;
-              triggerMsg = `TKQC "${acc.name}" bị vô hiệu hóa (trạng thái: ${acc.account_status})`;
-            }
-          } else if (rule.condType === 'balance_below') {
-            const bal = parseFloat(acc.balance || 0);
-            if (bal < rule.condValue) {
-              triggered = true;
-              triggerMsg = `TKQC "${acc.name}" số dư ${bal.toLocaleString('vi-VN')} VND dưới ngưỡng ${rule.condValue.toLocaleString('vi-VN')} VND`;
-            }
-          } else if (rule.condType === 'spend_above') {
-            const spent = parseFloat(acc.amount_spent || 0);
-            if (spent > rule.condValue) {
-              triggered = true;
-              triggerMsg = `TKQC "${acc.name}" chi tiêu ${spent.toLocaleString('vi-VN')} VND vượt giới hạn ${rule.condValue.toLocaleString('vi-VN')} VND`;
-            }
-          }
-          // CPC/CPM/CTR checks require insights data (loaded separately)
-          else if (rule.condType === 'cpc_above' && acc._insights) {
-            const cpc = parseFloat(acc._insights.cpc || 0);
-            if (cpc > rule.condValue) {
-              triggered = true;
-              triggerMsg = `TKQC "${acc.name}" CPC ${cpc.toLocaleString('vi-VN')} VND vượt ngưỡng ${rule.condValue.toLocaleString('vi-VN')} VND`;
-            }
-          }
-
-          if (triggered) {
-            rule.lastTriggered = new Date().toISOString();
-            rule.triggerCount = (rule.triggerCount || 0) + 1;
-            if (rule.notifyLog) addRuleLog(rule.id, `[${rule.name}] ${triggerMsg}`, 'triggered');
-            if (rule.notifyBrowser && 'Notification' in window) {
-              Notification.requestPermission().then(p => {
-                if (p === 'granted') new Notification('GenZTech Alert ⚡', { body: triggerMsg, icon: 'https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff' });
-              });
-            }
-            toast(`⚡ Quy tắc kích hoạt: ${triggerMsg}`, 'error');
-            // Execute action
-            if (rule.action !== 'notify_only' && S.jwt) {
-              try {
-                await fetch(`${API_BASE}/api/facebook/proxy/pause-campaigns`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${S.jwt}` },
-                  body: JSON.stringify({ accountId: acc.id, level: rule.action.replace('pause_',''), reason: rule.name })
-                });
-                addRuleLog(rule.id, `→ Đã thực hiện: ${ACTION_LABELS[rule.action]} cho ${acc.name}`, 'ok');
-              } catch(e) { addRuleLog(rule.id, `Lỗi thực hiện: ${e.message}`, 'triggered'); }
-            }
-          }
-        }
-      }
-      saveRules();
-      if (S.currentTab === 'rules') renderRules();
-    } catch(e) { console.warn('Rule check error:', e); }
-  }
-
-  // Start rule checker
-  function startRuleChecker() {
-    if (ruleCheckInterval) clearInterval(ruleCheckInterval);
-    ruleCheckInterval = setInterval(checkRules, 15 * 60 * 1000); // 15 min
-    document.getElementById('countRules').textContent = rules.filter(r=>r.enabled).length;
-  }
-
-  init();
-  startRuleChecker();
-  </script>
+  // ── Resize handler ──
+  window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
+})();
+</script>
 </body>
 </html>
