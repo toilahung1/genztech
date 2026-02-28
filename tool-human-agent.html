@@ -235,6 +235,7 @@
     /* ── Loading ── */
     .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#00d4ff;border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
     /* ── Responsive ── */
     @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-row{grid-template-columns:repeat(2,1fr)}.config-layout{grid-template-columns:1fr}.conv-list{width:100%}}
@@ -290,6 +291,10 @@
       AI Human Agent
     </div>
     <div class="topbar-actions">
+      <div id="pollingStatus" style="display:none;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.4);margin-right:4px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+        <span>Live</span>
+      </div>
       <button class="btn secondary" onclick="openSetupModal()" style="font-size:12px">
         <i class="bi bi-gear"></i> Cài đặt Server
       </button>
@@ -306,7 +311,7 @@
     </button>
     <button class="tab-btn" id="tab-conversations" onclick="switchTab('conversations')">
       <i class="bi bi-chat-dots"></i> Hội thoại
-      <span class="tab-badge red" id="badge-conversations">0</span>
+      <span class="tab-badge" id="badge-conversations" style="display:none">0</span>
     </button>
     <button class="tab-btn" id="tab-config" onclick="switchTab('config')">
       <i class="bi bi-sliders"></i> Cấu hình AI
@@ -324,30 +329,30 @@
       <!-- Stats -->
       <div class="stats-row">
         <div class="stat-card">
-          <div class="stat-icon blue"><i class="bi bi-robot"></i></div>
+          <div class="stat-icon blue"><i class="bi bi-facebook"></i></div>
           <div>
             <div class="stat-label">Tổng Pages</div>
             <div class="stat-value" id="stat-total-pages">0</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+          <div class="stat-icon green"><i class="bi bi-robot"></i></div>
           <div>
-            <div class="stat-label">AI đang hoạt động</div>
+            <div class="stat-label">AI đang bật</div>
             <div class="stat-value" id="stat-enabled-pages">0</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon orange"><i class="bi bi-chat-dots"></i></div>
           <div>
-            <div class="stat-label">Hội thoại hôm nay</div>
+            <div class="stat-label">Hội thoại</div>
             <div class="stat-value" id="stat-conversations">0</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon purple"><i class="bi bi-person-raised-hand"></i></div>
+          <div class="stat-icon purple"><i class="bi bi-envelope-open"></i></div>
           <div>
-            <div class="stat-label">Chờ Human Agent</div>
+            <div class="stat-label">Chưa đọc</div>
             <div class="stat-value" id="stat-pending">0</div>
           </div>
         </div>
@@ -386,9 +391,14 @@
         <div class="conv-list">
           <div class="conv-list-header">
             <span class="conv-list-title">Hội thoại</span>
-            <select id="convPageFilter" onchange="loadConversations()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;outline:none">
-              <option value="">Tất cả Pages</option>
-            </select>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button onclick="loadConversationsDirect(true)" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;padding:2px 4px;font-size:13px" title="Tải lại">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+              <select id="convPageFilter" onchange="loadConversationsDirect(true)" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;outline:none">
+                <option value="">Tất cả Pages</option>
+              </select>
+            </div>
           </div>
           <div class="conv-search">
             <input type="text" placeholder="Tìm kiếm..." id="convSearch" oninput="filterConversations()">
@@ -416,7 +426,10 @@
                   <div class="chat-header-sub" id="chatSub">Page: —</div>
                 </div>
               </div>
-              <div style="display:flex;gap:8px">
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn-sm gray" id="btnRefreshMsgs" title="Tải lại tin nhắn" style="padding:6px 10px">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
                 <button class="btn-sm gray" id="btnTakeover" onclick="takeoverConv()">
                   <i class="bi bi-person-raised-hand"></i> Tiếp quản
                 </button>
@@ -885,8 +898,15 @@ function loadStatsLocal() {
   el('stat-pending', pending);
   el('stat-convs', totalConvs);
   el('stat-waiting', pending);
+  // Update tab badge for conversations
   const badge = document.getElementById('badge-conversations');
-  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-block' : 'none'; }
+  if (badge) { 
+    badge.textContent = totalConvs; 
+    badge.style.display = totalConvs > 0 ? 'inline-block' : 'none';
+    badge.className = pending > 0 ? 'tab-badge red' : 'tab-badge';
+  }
+  // Update stat-ai (enabled pages count)
+  el('stat-ai', enabledPages);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -945,7 +965,10 @@ function renderConvList(convs) {
 function filterConversations() {
   const q = document.getElementById('convSearch').value.toLowerCase();
   const filtered = allConversations.filter(c =>
-    c.userId.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q)
+    (c.userName || '').toLowerCase().includes(q) ||
+    c.userId.toLowerCase().includes(q) ||
+    (c.lastMessage || '').toLowerCase().includes(q) ||
+    (c.pageName || '').toLowerCase().includes(q)
   );
   renderConvList(filtered);
 }
@@ -1101,17 +1124,22 @@ async function releaseConv() {
 function renderConfigPageList() {
   const el = document.getElementById('configPageList');
   if (allPages.length === 0) {
-    el.innerHTML = `<div class="empty-state" style="padding:24px 0"><i class="bi bi-facebook"></i><p style="font-size:12px">Chưa có Pages</p></div>`;
+    el.innerHTML = `<div class="empty-state" style="padding:24px 0">
+      <i class="bi bi-facebook"></i>
+      <p style="font-size:12px">Chưa có Pages</p>
+    </div>`;
     return;
   }
   el.innerHTML = allPages.map(p => `
-    <div class="config-page-item ${selectedConfigPageId === p.pageId ? 'active' : ''}"
-      onclick="openConfigPage('${p.pageId}')">
-      <div class="page-avatar" style="width:32px;height:32px;font-size:14px">
-        ${p.pageAvatar ? `<img src="${p.pageAvatar}" style="width:32px;height:32px;border-radius:50%">` : p.pageName[0]}
+    <div class="config-page-item ${selectedConfigPageId === p.pageId ? 'active' : ''}" onclick="openConfigPage('${p.pageId}')">
+      <div class="page-avatar" style="width:32px;height:32px;font-size:13px">
+        ${p.pageAvatar ? `<img src="${p.pageAvatar}" alt="${p.pageName[0]}" onerror="this.parentElement.textContent='${p.pageName[0]}'">` : p.pageName[0]}
       </div>
-      <div>
-        <div class="config-page-name">${escHtml(p.pageName)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="config-page-name" style="display:flex;align-items:center;gap:5px">
+          ${escHtml(p.pageName)}
+          ${p.enabled ? '<span style="width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0" title="AI đang bật"></span>' : ''}
+        </div>
         <div class="config-page-sub">${p.documentCount} tài liệu · ${p.ruleCount} quy tắc</div>
       </div>
     </div>
@@ -1621,12 +1649,16 @@ async function loadConversationsDirect(showLoading = true) {
 
   // Determine which pages to load
   let pagesToLoad = [];
-  if (selectedConvPageId) {
-    const p = allPages.find(p => p.pageId === selectedConvPageId);
+  const pageFilterVal = document.getElementById('convPageFilter')?.value;
+  if (pageFilterVal) {
+    const p = allPages.find(p => p.pageId === pageFilterVal);
     if (p) pagesToLoad = [p];
+  } else if (selectedConvPageId && !pageFilterVal) {
+    // Load all pages if no filter selected
+    pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 15);
   } else {
-    // Load from all pages (limit to first 10 to avoid too many requests)
-    pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 10);
+    // Load from all pages (limit to first 15 to avoid too many requests)
+    pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 15);
   }
 
   if (!pagesToLoad.length) {
@@ -1638,7 +1670,7 @@ async function loadConversationsDirect(showLoading = true) {
     allConversations = [];
     for (const page of pagesToLoad) {
       try {
-        const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,message_count,unread_count,participants&limit=20&access_token=${page.accessToken}`;
+        const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,message_count,unread_count,participants&limit=30&access_token=${page.accessToken}`;
         const r = await fetch(url);
         const d = await r.json();
         if (d.error || !d.data) continue;
@@ -1730,6 +1762,7 @@ async function openConversationDirect(pageId, userId, userName) {
   // Update buttons with direct API handlers
   const btnTakeover = document.getElementById('btnTakeover');
   const btnRelease = document.getElementById('btnRelease');
+  const btnRefresh = document.getElementById('btnRefreshMsgs');
   if (btnTakeover) {
     btnTakeover.style.display = 'flex';
     btnTakeover.onclick = () => takeoverConvDirect(convId);
@@ -1737,6 +1770,9 @@ async function openConversationDirect(pageId, userId, userName) {
   if (btnRelease) {
     btnRelease.style.display = 'none';
     btnRelease.onclick = () => releaseConvDirect(convId);
+  }
+  if (btnRefresh) {
+    btnRefresh.onclick = () => openConversationDirect(pageId, conv?.userId || userId, name);
   }
 
   // Update send button and input
@@ -1821,11 +1857,26 @@ async function sendMessageDirect(convId, recipientId) {
   if (!page) return;
   input.value = '';
   input.disabled = true;
+  
+  // Check if Human Agent Tag should be used
+  const useHumanTag = document.getElementById('useHumanTag')?.checked || false;
+  const isHumanMode = document.getElementById('btnRelease')?.style.display !== 'none';
+  
+  const msgBody = { 
+    recipient: { id: recipientId }, 
+    message: { text }, 
+    access_token: page.accessToken 
+  };
+  // Add Human Agent Tag if in takeover mode and checkbox is checked
+  if (isHumanMode && useHumanTag) {
+    msgBody.tag = 'HUMAN_AGENT';
+  }
+  
   try {
     const r = await fetch(`https://graph.facebook.com/v19.0/${page.pageId}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipient: { id: recipientId }, message: { text }, access_token: page.accessToken })
+      body: JSON.stringify(msgBody)
     });
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
@@ -1833,7 +1884,8 @@ async function sendMessageDirect(convId, recipientId) {
     if (container) {
       const div = document.createElement('div');
       div.className = 'msg-row assistant';
-      div.innerHTML = `<div><div class="msg-bubble assistant human">${escHtml(text)}</div><div class="msg-meta">Vừa xong</div></div>`;
+      const tagLabel = (isHumanMode && useHumanTag) ? ' <span style="font-size:9px;background:rgba(249,115,22,.2);color:#f97316;padding:1px 5px;border-radius:3px">7 ngày</span>' : '';
+      div.innerHTML = `<div><div class="msg-bubble assistant human">${escHtml(text)}</div><div class="msg-meta">Nhân viên · Vừa xong${tagLabel}</div></div>`;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
@@ -1869,6 +1921,9 @@ function takeoverConvDirect(convId) {
   document.getElementById('btnTakeover').style.display = 'none';
   document.getElementById('btnRelease').style.display = 'flex';
   document.getElementById('chatSub').textContent = '👨‍💼 Human Agent đang tiếp quản';
+  // Show Human Agent Tag option
+  const tagArea = document.getElementById('humanAgentTag');
+  if (tagArea) tagArea.style.display = 'block';
   showToast('Bạn đang tiếp quản hội thoại này. AI sẽ không tự động trả lời.', 'info');
 }
 
@@ -1876,7 +1931,10 @@ function releaseConvDirect(convId) {
   document.getElementById('btnTakeover').style.display = 'flex';
   document.getElementById('btnRelease').style.display = 'none';
   const page = allPages.find(p => p.pageId === selectedConvPageId);
-  document.getElementById('chatSub').textContent = page?.enabled ? '🤖 AI đang trả lời tự động' : 'AI đang tắt';
+  document.getElementById('chatSub').textContent = page?.enabled ? '🤖 AI đang trả lời tự động' : `Page: ${page?.pageName || ''}`;
+  // Hide Human Agent Tag option
+  const tagArea = document.getElementById('humanAgentTag');
+  if (tagArea) tagArea.style.display = 'none';
   showToast('Đã trả hội thoại về cho AI', 'success');
 }
 
@@ -1993,11 +2051,23 @@ async function openConfigPageDirect(pageId) {
     <div class="config-section">
       <div class="config-section-title"><i class="bi bi-broadcast"></i> Đăng ký Webhook</div>
       <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px">
-        Đăng ký webhook để Facebook gửi tin nhắn đến server của bạn.
+        Đăng ký webhook để Facebook gửi tin nhắn đến server của bạn. (Tùy chọn - không bắt buộc cho chế độ Direct API)
       </p>
       <button class="btn success" onclick="subscribeWebhookDirect('${pageId}')">
         <i class="bi bi-broadcast"></i> Đăng ký Webhook cho Page này
       </button>
+    </div>
+
+    <div class="config-section" style="background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.15)">
+      <div class="config-section-title"><i class="bi bi-info-circle" style="color:#00d4ff"></i> Hướng dẫn AI Auto-Response</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.7">
+        <p>✅ <strong style="color:#fff">Bật AI</strong> bằng toggle ở trên → AI sẽ tự động trả lời khi có tin nhắn mới (polling mỗi 15 giây)</p>
+        <p>✅ <strong style="color:#fff">Upload tài liệu</strong> để AI học nội dung sản phẩm, chính sách, FAQ</p>
+        <p>✅ <strong style="color:#fff">Thêm Q&A rules</strong> để AI trả lời chính xác hơn theo từng chủ đề</p>
+        <p>✅ <strong style="color:#fff">Tiếp quản</strong> bất kỳ lúc nào trong tab Hội thoại → AI sẽ dừng trả lời hội thoại đó</p>
+        <p>✅ <strong style="color:#fff">Human Agent Tag</strong> cho phép nhắn tin trong 7 ngày sau lần tương tác cuối</p>
+        <p style="margin-top:8px;color:rgba(255,165,0,.7)"><i class="bi bi-exclamation-triangle"></i> Cần có <strong>OpenAI API Key</strong> trong Cài đặt để AI hoạt động</p>
+      </div>
     </div>`;
 }
 
@@ -2174,6 +2244,7 @@ async function testAIDirect(pageId) {
   }
   const systemPrompt = (cfg.aiConfig?.systemPrompt || `Bạn là nhân viên CSKH của ${page?.pageName || 'cửa hàng'}. Hãy trả lời lịch sự, ngắn gọn và chính xác bằng tiếng Việt.`) + context;
   try {
+    // Try OpenAI API directly
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
@@ -2186,10 +2257,17 @@ async function testAIDirect(pageId) {
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
     document.getElementById('testThinking')?.remove();
-    container.innerHTML += `<div class="test-msg ai">${escHtml(d.choices[0].message.content)}</div>`;
+    const aiText = d.choices[0].message.content;
+    container.innerHTML += `<div class="test-msg ai">${escHtml(aiText).replace(/\n/g, '<br>')}</div>`;
   } catch(e) {
     document.getElementById('testThinking')?.remove();
-    container.innerHTML += `<div class="test-msg ai" style="color:#f87171">Lỗi: ${escHtml(e.message)}</div>`;
+    let errMsg = e.message;
+    if (errMsg.includes('401') || errMsg.includes('Incorrect API key')) {
+      errMsg = 'API Key không hợp lệ. Kiểm tra lại trong Cài đặt.';
+    } else if (errMsg.includes('429')) {
+      errMsg = 'Quá nhiều yêu cầu. Vui lòng thử lại sau.';
+    }
+    container.innerHTML += `<div class="test-msg ai" style="color:#f87171">Lỗi: ${escHtml(errMsg)}</div>`;
   }
   container.scrollTop = container.scrollHeight;
 }
@@ -2211,6 +2289,262 @@ async function subscribeWebhookDirect(pageId) {
   } catch(e) {
     showToast('Lỗi: ' + e.message, 'error');
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// AI AUTO-RESPONSE ENGINE
+// ═══════════════════════════════════════════════════════
+
+// Track last message IDs to detect new messages
+let lastMessageIds = {}; // pageId -> { convId -> lastMsgId }
+let aiProcessingConvs = new Set(); // convIds being processed by AI
+
+async function checkAndAutoRespond() {
+  // Only run if any page has AI enabled
+  const enabledPages = allPages.filter(p => p.enabled);
+  if (!enabledPages.length) return;
+  
+  for (const page of enabledPages) {
+    try {
+      // Get latest conversations for this page
+      const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,unread_count,participants&limit=10&access_token=${page.accessToken}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.error || !d.data) continue;
+      
+      for (const conv of d.data) {
+        // Skip if no unread messages
+        if (!conv.unread_count || conv.unread_count === 0) continue;
+        // Skip if already processing
+        if (aiProcessingConvs.has(conv.id)) continue;
+        // Skip if human has taken over this conv
+        if (humanTakeoverConvs.has(conv.id)) continue;
+        
+        const customer = (conv.participants?.data || []).find(p => p.id !== page.pageId);
+        if (!customer) continue;
+        
+        // Get latest message
+        const msgUrl = `https://graph.facebook.com/v19.0/${conv.id}?fields=messages{id,message,from,created_time}&access_token=${page.accessToken}`;
+        const mr = await fetch(msgUrl);
+        const md = await mr.json();
+        if (md.error || !md.messages?.data?.length) continue;
+        
+        const msgs = md.messages.data;
+        const latestMsg = msgs[0]; // Most recent first
+        
+        // Skip if latest message is from the page (already replied)
+        if (latestMsg.from?.id === page.pageId) continue;
+        
+        // Check if this is a new message we haven't processed
+        const lastId = lastMessageIds[page.pageId]?.[conv.id];
+        if (lastId === latestMsg.id) continue; // Already processed
+        
+        // Mark as processing
+        aiProcessingConvs.add(conv.id);
+        if (!lastMessageIds[page.pageId]) lastMessageIds[page.pageId] = {};
+        lastMessageIds[page.pageId][conv.id] = latestMsg.id;
+        
+        // Generate AI response
+        try {
+          const aiReply = await generateAIResponse(page, latestMsg.message, msgs.slice(0, 5));
+          if (aiReply) {
+            // Send AI response
+            await fetch(`https://graph.facebook.com/v19.0/${page.pageId}/messages`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                recipient: { id: customer.id },
+                message: { text: aiReply },
+                access_token: page.accessToken
+              })
+            });
+            // Update conversation list if visible
+            const convInList = allConversations.find(c => c.convId === conv.id);
+            if (convInList) {
+              convInList.lastMessage = aiReply;
+              convInList.updatedAt = new Date().toISOString();
+            }
+            // If this conv is currently open, refresh messages
+            if (selectedConvPageId === page.pageId && selectedConvUserId === customer.id) {
+              const container = document.getElementById('chatMessages');
+              if (container) {
+                const div = document.createElement('div');
+                div.className = 'msg-row assistant';
+                div.innerHTML = `<div><div class="msg-bubble assistant ai">${escHtml(aiReply)}</div><div class="msg-meta"><i class="bi bi-robot"></i> AI · Vừa xong</div></div>`;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+              }
+            }
+          }
+        } catch(e) {
+          console.warn('AI auto-response error:', e.message);
+        } finally {
+          aiProcessingConvs.delete(conv.id);
+        }
+      }
+    } catch(e) {
+      // Silent fail for auto-response
+    }
+  }
+}
+
+async function generateAIResponse(page, userMessage, recentMsgs = []) {
+  const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
+  if (!openaiKey) return null;
+  
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  const cfg = savedConfigs[page.pageId] || {};
+  
+  // Build context from documents and rules
+  let context = '';
+  if (cfg.documents?.length) {
+    context += '\n\n=== TÀI LIỆU KIẾN THỨC ===\n';
+    cfg.documents.forEach(d => { 
+      context += `\n--- ${d.name} ---\n${(d.content || '').substring(0, 4000)}\n`; 
+    });
+  }
+  if (cfg.rules?.length) {
+    context += '\n\n=== QUY TẮC Q&A ===\n';
+    cfg.rules.forEach(r => { context += `Hỏi: ${r.trigger}\nTrả lời: ${r.response}\n\n`; });
+  }
+  
+  const systemPrompt = (cfg.aiConfig?.systemPrompt || 
+    `Bạn là nhân viên CSKH của ${page.pageName}. Hãy trả lời lịch sự, ngắn gọn và chính xác bằng tiếng Việt. Không đề cập đến việc bạn là AI.`) + context;
+  
+  // Build conversation history
+  const messages = [{ role: 'system', content: systemPrompt }];
+  // Add recent messages as context (reversed to chronological order)
+  const historyMsgs = [...recentMsgs].reverse().slice(-4);
+  historyMsgs.forEach(m => {
+    if (m.from?.id === page.pageId) {
+      messages.push({ role: 'assistant', content: m.message || '' });
+    } else {
+      messages.push({ role: 'user', content: m.message || '' });
+    }
+  });
+  // Add current message if not already in history
+  if (!historyMsgs.find(m => m.message === userMessage && m.from?.id !== page.pageId)) {
+    messages.push({ role: 'user', content: userMessage });
+  }
+  
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages,
+        max_tokens: cfg.aiConfig?.maxTokens || 300,
+        temperature: 0.7
+      })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    return d.choices[0].message.content;
+  } catch(e) {
+    console.warn('OpenAI error:', e.message);
+    return null;
+  }
+}
+
+// Track human takeover conversations
+let humanTakeoverConvs = new Set();
+
+// Override takeoverConvDirect to track
+const _origTakeoverDirect = takeoverConvDirect;
+takeoverConvDirect = function(convId) {
+  humanTakeoverConvs.add(convId);
+  _origTakeoverDirect(convId);
+};
+
+// Override releaseConvDirect to untrack
+const _origReleaseDirect = releaseConvDirect;
+releaseConvDirect = function(convId) {
+  humanTakeoverConvs.delete(convId);
+  _origReleaseDirect(convId);
+};
+
+// ═══════════════════════════════════════════════════════
+// REAL-TIME POLLING
+// ═══════════════════════════════════════════════════════
+
+let pollingInterval = null;
+let lastConvTimestamps = {}; // convId -> timestamp
+
+async function pollNewMessages() {
+  if (!allPages.length) return;
+  
+  // Get enabled pages or first 5 pages
+  const pagesToPoll = allPages.filter(p => p.accessToken).slice(0, 5);
+  let hasNewMessages = false;
+  
+  for (const page of pagesToPoll) {
+    try {
+      const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,unread_count,participants&limit=10&access_token=${page.accessToken}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.error || !d.data) continue;
+      
+      for (const conv of d.data) {
+        const newTs = new Date(conv.updated_time).getTime();
+        const oldTs = lastConvTimestamps[conv.id] || 0;
+        
+        if (newTs > oldTs && oldTs > 0) {
+          hasNewMessages = true;
+          // Update in allConversations
+          const existing = allConversations.find(c => c.convId === conv.id);
+          if (existing) {
+            existing.lastMessage = conv.snippet || existing.lastMessage;
+            existing.updatedAt = conv.updated_time;
+            existing.lastTimestamp = newTs;
+            existing.unreadCount = conv.unread_count || 0;
+            existing.unread = conv.unread_count || 0;
+          }
+          // If this conv is open, refresh messages
+          if (selectedConvPageId === page.pageId) {
+            const convInList = allConversations.find(c => c.convId === conv.id);
+            const customer = (conv.participants?.data || []).find(p => p.id !== page.pageId);
+            if (customer && selectedConvUserId === customer.id) {
+              // Refresh messages for open conversation
+              openConversationDirect(page.pageId, customer.id, customer.name || '');
+            }
+          }
+        }
+        lastConvTimestamps[conv.id] = newTs;
+      }
+    } catch(e) { /* silent */ }
+  }
+  
+  if (hasNewMessages) {
+    // Re-sort and re-render conv list
+    allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    renderConvList(allConversations);
+    loadStatsLocal();
+    // Show notification
+    const badge = document.getElementById('tab-conversations')?.querySelector('.tab-badge');
+    if (badge) badge.classList.add('red');
+  }
+  
+  // Run AI auto-response if any page has AI enabled
+  const hasEnabledPages = allPages.some(p => p.enabled);
+  if (hasEnabledPages) {
+    await checkAndAutoRespond();
+  }
+}
+
+function startPolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  // Poll every 15 seconds
+  pollingInterval = setInterval(pollNewMessages, 15000);
+  // Show live indicator
+  const status = document.getElementById('pollingStatus');
+  if (status) status.style.display = 'flex';
+}
+
+function stopPolling() {
+  if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+  const status = document.getElementById('pollingStatus');
+  if (status) status.style.display = 'none';
 }
 
 // Override saveSetup to also save OpenAI key
@@ -2239,7 +2573,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL') || localStorage.getItem('fb_token');
   if (token) {
     FB_TOKEN = token;
-    setTimeout(loadPagesDirect, 500);
+    setTimeout(async () => {
+      await loadPagesDirect();
+      // Start polling after pages are loaded
+      setTimeout(() => {
+        startPolling();
+        // Initialize lastConvTimestamps from current conversations
+        allConversations.forEach(c => {
+          if (c.updatedAt) lastConvTimestamps[c.convId] = new Date(c.updatedAt).getTime();
+        });
+      }, 2000);
+    }, 500);
   }
 });
 </script>
