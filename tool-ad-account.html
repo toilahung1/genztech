@@ -301,7 +301,7 @@
                     <th onclick="sortTable('accounts','balance')">Số dư <i class="bi bi-arrow-down-up"></i></th>
                     <th onclick="sortTable('accounts','amount_spent')">Chi tiêu (kỳ) <i class="bi bi-arrow-down-up"></i></th>
                     <th>Chi tiêu hôm nay</th>
-                    <th style="min-width:160px">Theo giờ (sparkline)</th>
+                    <th style="min-width:160px">7 ngày gần đây</th>
                     <th style="width:80px">Thao tác</th>
                   </tr>
                 </thead>
@@ -927,26 +927,28 @@ async function loadAccountsInsights(accounts) {
   // Gọi insights từng TKQC tuần tự (tránh burst rate limit)
   for (const acc of accounts) {
     try {
-      // Lấy chi tiêu hôm nay với breakdown theo giờ (dùng breakdowns, không dùng time_increment=hourly)
-      // time_range phải là ngày hôm nay theo định dạng YYYY-MM-DD
+      // Lấy chi tiêu hôm nay (1 call đơn giản, chắc chắn hoạt động)
       const todayStr = new Date().toISOString().slice(0, 10);
-      const insData = await fbGet(`/${acc.id}/insights`, {
-        fields: 'spend,hourly_stats_aggregated_by_advertiser_time_zone',
-        breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
-        time_range: JSON.stringify({ since: todayStr, until: todayStr }),
-        limit: 24
-      }, { noCache: false });
-      const hourlyData = insData?.data || [];
+      const [todayIns, weekIns] = await Promise.all([
+        fbGet(`/${acc.id}/insights`, {
+          fields: 'spend',
+          date_preset: 'today',
+          limit: 1
+        }, { noCache: false }),
+        fbGet(`/${acc.id}/insights`, {
+          fields: 'spend,date_start',
+          date_preset: 'last_7d',
+          time_increment: 1,
+          limit: 7
+        }, { noCache: false })
+      ]);
       // Tổng chi tiêu hôm nay
-      const todaySpend = hourlyData.reduce((s, h) => s + parseFloat(h.spend || 0), 0);
-      // Map giờ 0-23 vào mảng dựa vào hourly_stats_aggregated_by_advertiser_time_zone
-      const hourArr = Array(24).fill(0);
-      hourlyData.forEach(h => {
-        // Giá trị có dạng '00:00:00' đến '23:00:00'
-        const hrStr = h.hourly_stats_aggregated_by_advertiser_time_zone || '';
-        const hr = hrStr ? parseInt(hrStr.split(':')[0]) : -1;
-        if (hr >= 0 && hr < 24) hourArr[hr] = parseFloat(h.spend || 0);
-      });
+      const todaySpend = parseFloat(todayIns?.data?.[0]?.spend || 0);
+      // Dữ liệu 7 ngày cho sparkline (thay cho hourly)
+      const weekData = weekIns?.data || [];
+      // hourArr giờ → dùng dayArr 7 ngày thay thế
+      const hourArr = Array(7).fill(0);
+      weekData.forEach((d, i) => { hourArr[i] = parseFloat(d.spend || 0); });
       // Cập nhật cell chi tiêu hôm nay
       const todayCell = document.getElementById(`today-${acc.id}`);
       if (todayCell) {
@@ -973,26 +975,25 @@ async function loadAccountsInsights(accounts) {
   }
 }
 
-function renderSparkline(hourArr, nowHour, currency) {
-  const maxVal = Math.max(...hourArr, 1);
-  // Chỉ hiển thị từ giờ 0 đến giờ hiện tại (không hiển giờ tương lai)
-  const displayHours = hourArr.slice(0, nowHour + 1);
-  if (displayHours.every(v => v === 0)) {
+function renderSparkline(dayArr, nowHour, currency) {
+  const maxVal = Math.max(...dayArr, 1);
+  const days = ['−6', '−5', '−–4', '−–3', '−–2', 'Hôm qua', 'Hôm nay'];
+  if (dayArr.every(v => v === 0)) {
     return `<span style="color:rgba(255,255,255,.2);font-size:10px">Chưa có chi tiêu</span>`;
   }
-  const bars = displayHours.map((val, hr) => {
+  const bars = dayArr.map((val, i) => {
     const pct = Math.round((val / maxVal) * 26);
     const h = Math.max(pct, 2);
-    const isCurrent = hr === nowHour;
-    const label = `${hr}:00 — ${fmtMoney(val, currency)}`;
-    return `<div class="spark-bar${isCurrent ? ' current-hour' : ''}" style="height:${h}px" title="${label}">
+    const isToday = i === dayArr.length - 1;
+    const label = `${days[i] || ('Ngày ' + (i+1))} — ${fmtMoney(val, currency)}`;
+    return `<div class="spark-bar${isToday ? ' current-hour' : ''}" style="height:${h}px" title="${label}">
       <div class="spark-tooltip">${label}</div>
     </div>`;
   }).join('');
-  const totalToday = displayHours.reduce((s, v) => s + v, 0);
+  const total = dayArr.reduce((s, v) => s + v, 0);
   return `<div style="display:flex;flex-direction:column;gap:2px">
     <div class="sparkline-wrap">${bars}</div>
-    <div style="font-size:9.5px;color:rgba(255,255,255,.3)">${nowHour + 1} giờ • tổng ${fmtMoney(totalToday, currency)}</div>
+    <div style="font-size:9.5px;color:rgba(255,255,255,.3)">7 ngày • tổng ${fmtMoney(total, currency)}</div>
   </div>`;
 }
 
