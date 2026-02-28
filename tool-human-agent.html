@@ -1566,6 +1566,7 @@ async function loadPagesDirect() {
     renderPageList();
     renderConfigPageList();
     loadStatsLocal();
+    updateConvPageFilter(); // Populate dropdown filter theo page
     showToast(`Đã tải ${allPages.length} Pages`, 'success');
   } catch(e) {
     showToast('Lỗi tải Pages: ' + e.message, 'error');
@@ -1616,6 +1617,7 @@ syncPages = async function() {
           renderPageList();
           renderConfigPageList();
           loadStatsLocal();
+          updateConvPageFilter(); // Populate dropdown filter theo page
           showToast(`Đã đồng bộ ${allPages.length} Pages`, 'success');
           return;
         }
@@ -2612,34 +2614,14 @@ function stopPolling() {
   if (status) status.style.display = 'none';
 }
 
-// Override saveSetup to also save OpenAI key
-const _origSaveSetup = saveSetup;
-saveSetup = async function() {
-  const openaiKey = document.getElementById('openaiKeyInput')?.value?.trim();
-  if (openaiKey) localStorage.setItem('HA_OPENAI_KEY', openaiKey);
-  return _origSaveSetup();
-};
-
-// Add OpenAI key field to setup modal
 document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('setupModal');
-  if (modal) {
-    const footer = modal.querySelector('.modal-footer');
-    if (footer) {
-      const div = document.createElement('div');
-      div.className = 'form-group';
-      div.innerHTML = `<label class="form-label">OpenAI API Key (cho AI trả lời)</label>
-        <input type="password" class="form-input" id="openaiKeyInput" placeholder="sk-..." value="${localStorage.getItem('HA_OPENAI_KEY') || ''}">
-        <div class="form-hint">Dùng GPT-4o-mini để AI tự động trả lời dựa trên tài liệu</div>`;
-      footer.parentNode.insertBefore(div, footer);
-    }
-  }
   // Auto-load pages if token exists (always try, server is optional)
   const token = localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL') || localStorage.getItem('fb_token');
   if (token) {
     FB_TOKEN = token;
     setTimeout(async () => {
       await loadPagesDirect();
+      updateConvPageFilter(); // Populate dropdown filter sau khi load pages
       // Start polling after pages are loaded
       setTimeout(() => {
         startPolling();
