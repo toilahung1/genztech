@@ -1055,8 +1055,102 @@ async function loadCampaigns(accountId) {
     renderCampaigns(data);
     document.getElementById('countCampaigns').textContent = data.length;
     updateContextBar();
+    // Tự động load tất cả adsets và ads sau khi có campaigns
+    if (data.length > 0) {
+      loadAllAdsets(data);
+    }
   } catch(e) {
     setTableMsg('campaigns', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
+  }
+}
+
+// Load tất cả adsets từ tất cả campaigns song song
+async function loadAllAdsets(campaigns) {
+  setLoading('adsets');
+  setLoading('ads');
+  try {
+    const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    // Lấy adsets của tất cả campaigns song song
+    const adsetPromises = campaigns.map(c =>
+      fbGetAll(`/${c.id}/adsets`, {
+        fields: 'id,name,status,effective_status,campaign_id,daily_budget',
+        limit: 50
+      }).catch(() => [])
+    );
+    const adsetResults = await Promise.all(adsetPromises);
+    const allAdsetData = adsetResults.flat();
+
+    // Lấy insights cho tất cả adsets song song
+    if (allAdsetData.length > 0) {
+      try {
+        const insPromises = allAdsetData.map(s =>
+          fbGet(`/${s.id}/insights`, {
+            fields: 'spend,impressions,clicks,cpm,cpc',
+            date_preset: datePreset
+          }, { noCache: false }).catch(() => null)
+        );
+        const insResults = await Promise.all(insPromises);
+        allAdsetData.forEach((s, i) => {
+          s._ins = insResults[i]?.data?.[0] || {};
+        });
+      } catch(e2) { allAdsetData.forEach(s => { s._ins = {}; }); }
+    }
+
+    allAdsets = allAdsetData;
+    renderAdsets(allAdsetData);
+    document.getElementById('countAdsets').textContent = allAdsetData.length;
+    updateContextBar();
+
+    // Tự động load tất cả ads sau khi có adsets
+    if (allAdsetData.length > 0) {
+      loadAllAds(allAdsetData);
+    } else {
+      document.getElementById('tbody-ads').innerHTML = '<tr class="loading-row"><td colspan="10">Không có quảng cáo nào</td></tr>';
+      document.getElementById('countAds').textContent = '0';
+    }
+  } catch(e) {
+    setTableMsg('adsets', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
+  }
+}
+
+// Load tất cả ads từ tất cả adsets song song
+async function loadAllAds(adsets) {
+  setLoading('ads');
+  try {
+    const datePreset = document.getElementById('datePreset')?.value || 'last_7d';
+    // Lấy ads của tất cả adsets song song (giới hạn 10 adsets đầu để tránh rate limit)
+    const topAdsets = adsets.slice(0, 20);
+    const adsPromises = topAdsets.map(s =>
+      fbGetAll(`/${s.id}/ads`, {
+        fields: 'id,name,status,effective_status,adset_id',
+        limit: 50
+      }).catch(() => [])
+    );
+    const adsResults = await Promise.all(adsPromises);
+    const allAdsData = adsResults.flat();
+
+    // Lấy insights cho tất cả ads song song
+    if (allAdsData.length > 0) {
+      try {
+        const insPromises = allAdsData.map(ad =>
+          fbGet(`/${ad.id}/insights`, {
+            fields: 'spend,impressions,clicks,ctr,cpc,cpm',
+            date_preset: datePreset
+          }, { noCache: false }).catch(() => null)
+        );
+        const insResults = await Promise.all(insPromises);
+        allAdsData.forEach((ad, i) => {
+          ad._ins = insResults[i]?.data?.[0] || {};
+        });
+      } catch(e2) { allAdsData.forEach(ad => { ad._ins = {}; }); }
+    }
+
+    allAds = allAdsData;
+    renderAds(allAdsData);
+    document.getElementById('countAds').textContent = allAdsData.length;
+    updateContextBar();
+  } catch(e) {
+    setTableMsg('ads', `<span style="color:#f87171">Lỗi: ${e.message}</span>`);
   }
 }
 
@@ -1088,8 +1182,18 @@ function renderCampaigns(data) {
 function selectCampaign(campaignId, campaignName) {
   selectedCampaignId = campaignId;
   selectedCampaignName = campaignName;
-  setLoading('adsets'); // Hiển spinner trước khi switch tab
   switchTab('adsets');
+  // Nếu đã có allAdsets thì lọc theo campaign, không cần gọi API lại
+  if (allAdsets.length > 0) {
+    const filtered = allAdsets.filter(s => s.campaign_id === campaignId);
+    if (filtered.length > 0) {
+      renderAdsets(filtered);
+      document.getElementById('countAdsets').textContent = filtered.length;
+      updateContextBar();
+      return;
+    }
+  }
+  // Nếu chưa có thì load mới
   loadAdsets(campaignId);
 }
 
@@ -1154,8 +1258,18 @@ function renderAdsets(data) {
 function selectAdset(adsetId, adsetName) {
   selectedAdsetId = adsetId;
   selectedAdsetName = adsetName;
-  setLoading('ads'); // Hiển spinner trước khi switch tab
   switchTab('ads');
+  // Nếu đã có allAds thì lọc theo adset, không cần gọi API lại
+  if (allAds.length > 0) {
+    const filtered = allAds.filter(ad => ad.adset_id === adsetId);
+    if (filtered.length > 0) {
+      renderAds(filtered);
+      document.getElementById('countAds').textContent = filtered.length;
+      updateContextBar();
+      return;
+    }
+  }
+  // Nếu chưa có thì load mới
   loadAds(adsetId);
 }
 
@@ -1232,15 +1346,40 @@ function updateContextBar() {
   if (!bar) return;
   if (selectedAccountName && currentTab !== 'accounts') {
     bar.style.display = 'flex';
-    bar.innerHTML = `<i class="bi bi-credit-card" style="color:#00d4ff"></i> <span style="color:rgba(255,255,255,.5)">TKQC:</span> <strong style="color:#00d4ff">${selectedAccountName}</strong>`;
+    let html = `<i class="bi bi-credit-card" style="color:#00d4ff"></i> <span style="color:rgba(255,255,255,.5)">TKQC:</span> <strong style="color:#00d4ff" style="cursor:pointer" onclick="switchTab('accounts')">${selectedAccountName}</strong>`;
+    if (currentTab === 'adsets' && selectedCampaignId) {
+      html += ` <span style="color:rgba(255,255,255,.3)">›</span> <span style="color:rgba(255,255,255,.5)">Chiến dịch:</span> <strong style="color:#a78bfa">${selectedCampaignName}</strong>`;
+      html += ` <button onclick="showAllAdsets()" style="margin-left:8px;padding:2px 8px;font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:4px;color:rgba(255,255,255,.6);cursor:pointer">Xem tất cả nhóm QC</button>`;
+    }
+    if (currentTab === 'ads' && selectedAdsetId) {
+      html += ` <span style="color:rgba(255,255,255,.3)">›</span> <span style="color:rgba(255,255,255,.5)">Nhóm QC:</span> <strong style="color:#34d399">${selectedAdsetName}</strong>`;
+      html += ` <button onclick="showAllAds()" style="margin-left:8px;padding:2px 8px;font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:4px;color:rgba(255,255,255,.6);cursor:pointer">Xem tất cả QC</button>`;
+    }
+    bar.innerHTML = html;
   } else {
     bar.style.display = 'none';
   }
 }
 
+function showAllAdsets() {
+  selectedCampaignId = null;
+  selectedCampaignName = '';
+  renderAdsets(allAdsets);
+  document.getElementById('countAdsets').textContent = allAdsets.length;
+  updateContextBar();
+}
+
+function showAllAds() {
+  selectedAdsetId = null;
+  selectedAdsetName = '';
+  renderAds(allAds);
+  document.getElementById('countAds').textContent = allAds.length;
+  updateContextBar();
+}
+
 function loadCurrentTab() {
   if (currentTab === 'accounts') loadAccounts();
-  else if (currentTab === 'campaigns' && selectedAccountId) loadCampaigns(selectedAccountId);
+  else if (selectedAccountId) loadCampaigns(selectedAccountId);
 }
 
 function refreshData() {
