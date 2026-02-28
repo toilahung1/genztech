@@ -1436,6 +1436,667 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     if (e.target === overlay) overlay.classList.remove('open');
   });
 });
+
+// ═══════════════════════════════════════════════════════
+// HYBRID MODE: Direct Facebook API + OpenAI (no server needed)
+// ═══════════════════════════════════════════════════════
+
+// Override loadPages to work directly with Facebook API
+const _originalLoadPages = loadPages;
+loadPages = async function() {
+  // Try server first, fallback to direct FB API
+  if (SERVER_URL) {
+    try { return await _originalLoadPages(); } catch(e) {}
+  }
+  await loadPagesDirect();
+};
+
+async function loadPagesDirect() {
+  const token = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL');
+  if (!token) return;
+  try {
+    const pages = await fetchAllFBPages(token);
+    // Load saved configs from localStorage
+    const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+    allPages = pages.map(p => ({
+      pageId: p.id,
+      pageName: p.name,
+      pageAvatar: p.picture?.data?.url || '',
+      pageCategory: p.category || '',
+      fanCount: p.fan_count || 0,
+      enabled: savedConfigs[p.id]?.enabled || false,
+      accessToken: p.access_token,
+      aiConfig: savedConfigs[p.id]?.aiConfig || { systemPrompt: '', maxTokens: 500, language: 'vi' },
+      documentCount: (savedConfigs[p.id]?.documents || []).length,
+      ruleCount: (savedConfigs[p.id]?.rules || []).length
+    }));
+    renderPageList();
+    renderConfigPageList();
+    loadStats();
+    showToast(`Đã tải ${allPages.length} Pages`, 'success');
+  } catch(e) {
+    showToast('Lỗi tải Pages: ' + e.message, 'error');
+  }
+}
+
+async function fetchAllFBPages(token) {
+  const pages = [];
+  let url = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,category,fan_count,picture&limit=100&access_token=${token}`;
+  while (url) {
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    pages.push(...(d.data || []));
+    url = d.paging?.next || null;
+  }
+  return pages;
+}
+
+// Override syncPages
+const _originalSyncPages = typeof syncPages !== 'undefined' ? syncPages : null;
+syncPages = async function() {
+  const btn = document.getElementById('syncBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> Đang tải...'; }
+  try {
+    if (SERVER_URL) {
+      try {
+        const data = await api('POST', '/api/human-agent/sync-pages', { fbToken: FB_TOKEN });
+        allPages = data.pages || [];
+        renderPageList();
+        renderConfigPageList();
+        loadStats();
+        showToast(`Đã đồng bộ ${allPages.length} Pages`, 'success');
+        return;
+      } catch(e) {}
+    }
+    await loadPagesDirect();
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Đồng bộ Pages'; }
+  }
+};
+
+// Override loadConversations to work directly with Facebook API
+const _origLoadConversations = loadConversations;
+loadConversations = async function(showLoading = true) {
+  if (SERVER_URL) {
+    try { return await _origLoadConversations(showLoading); } catch(e) {}
+  }
+  await loadConversationsDirect(showLoading);
+};
+
+async function loadConversationsDirect(showLoading = true) {
+  const page = allPages.find(p => p.pageId === selectedConvPageId);
+  if (!page || !page.accessToken) {
+    const el = document.getElementById('convItems');
+    if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chọn Page để xem hội thoại</p></div>';
+    return;
+  }
+  const el = document.getElementById('convItems');
+  if (showLoading && el) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
+  try {
+    const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,message_count,unread_count,participants&limit=30&access_token=${page.accessToken}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    allConversations = (d.data || []).map(c => {
+      const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
+      return {
+        convId: c.id,
+        userId: customer.id || '',
+        userName: customer.name || 'Khách hàng',
+        lastMessage: c.snippet || '',
+        updatedAt: c.updated_time,
+        unreadCount: c.unread_count || 0,
+        pageId: page.pageId,
+        fbConvId: c.id
+      };
+    });
+    renderConvList();
+    // Update stats
+    const unread = allConversations.filter(c => c.unreadCount > 0).length;
+    document.getElementById('stat-convs').textContent = allConversations.length;
+    document.getElementById('stat-waiting').textContent = unread;
+    if (unread > 0) {
+      const badge = document.getElementById('tab-conversations')?.querySelector('.tab-badge');
+      if (badge) { badge.textContent = unread; badge.style.display = ''; }
+    }
+  } catch(e) {
+    if (el) el.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
+  }
+}
+
+// Override openConversation to load messages directly from Facebook API
+const _origOpenConv = openConversation;
+openConversation = async function(pageId, userId, userName) {
+  selectedConvPageId = pageId;
+  selectedConvUserId = userId;
+  if (SERVER_URL) {
+    try { return await _origOpenConv(pageId, userId, userName); } catch(e) {}
+  }
+  await openConversationDirect(pageId, userId, userName);
+};
+
+async function openConversationDirect(pageId, userId, userName) {
+  const page = allPages.find(p => p.pageId === pageId);
+  if (!page) return;
+  const conv = allConversations.find(c => c.userId === userId || c.convId === userId);
+  const convId = conv?.fbConvId || userId;
+  const name = conv?.userName || userName || 'Khách hàng';
+  const initials = name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase() || 'K';
+
+  // Update conv list active state
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.conv-item').forEach(el => {
+    if (el.getAttribute('onclick')?.includes(userId)) el.classList.add('active');
+  });
+
+  const chatArea = document.getElementById('chatArea');
+  if (!chatArea) return;
+  chatArea.innerHTML = `
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="conv-avatar" style="width:36px;height:36px">${initials}</div>
+        <div>
+          <div class="chat-header-name">${escHtml(name)}</div>
+          <div class="chat-header-sub" id="chatSub">${page.enabled ? '🤖 AI đang trả lời tự động' : 'AI đang tắt'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm primary" id="btnTakeover" onclick="takeoverConvDirect('${convId}')"><i class="bi bi-person-fill"></i> Tiếp quản</button>
+        <button class="btn-sm success" id="btnRelease" style="display:none" onclick="releaseConvDirect('${convId}')"><i class="bi bi-robot"></i> Trả về AI</button>
+        <button class="btn-sm gray" onclick="sendHumanAgentTagDirect('${convId}', '${escHtml(conv?.userId || userId)}')"><i class="bi bi-clock-history"></i> Human Tag 7 ngày</button>
+      </div>
+    </div>
+    <div class="chat-messages" id="chatMessages"><div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div></div>
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="Nhập tin nhắn..." rows="1"
+          oninput="autoResize(this)"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessageDirect('${convId}','${escHtml(conv?.userId || userId)}')}"></textarea>
+        <button class="chat-send-btn" onclick="sendMessageDirect('${convId}','${escHtml(conv?.userId || userId)}')"><i class="bi bi-send-fill"></i></button>
+      </div>
+    </div>`;
+
+  // Load messages
+  try {
+    const url = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time&limit=30&access_token=${page.accessToken}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    const msgs = (d.data || []).reverse();
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    if (!msgs.length) {
+      container.innerHTML = '<div class="empty-state"><i class="bi bi-chat"></i><p>Chưa có tin nhắn</p></div>';
+      return;
+    }
+    container.innerHTML = msgs.map(m => {
+      const isPage = m.from?.id === pageId;
+      const time = formatTime(m.created_time);
+      return `<div class="msg-row ${isPage ? 'assistant' : 'user'}">
+        ${!isPage ? `<div class="msg-avatar">${initials}</div>` : ''}
+        <div>
+          <div class="msg-bubble ${isPage ? 'assistant ai' : 'user'}">${escHtml(m.message || '')}</div>
+          <div class="msg-meta">${time}</div>
+        </div>
+      </div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  } catch(e) {
+    const container = document.getElementById('chatMessages');
+    if (container) container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
+  }
+}
+
+async function sendMessageDirect(convId, recipientId) {
+  const input = document.getElementById('chatInput');
+  const text = input?.value.trim();
+  if (!text) return;
+  const page = allPages.find(p => p.pageId === selectedConvPageId);
+  if (!page) return;
+  input.value = '';
+  input.disabled = true;
+  try {
+    const r = await fetch(`https://graph.facebook.com/v19.0/${page.pageId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipient: { id: recipientId }, message: { text }, access_token: page.accessToken })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    const container = document.getElementById('chatMessages');
+    if (container) {
+      const div = document.createElement('div');
+      div.className = 'msg-row assistant';
+      div.innerHTML = `<div><div class="msg-bubble assistant human">${escHtml(text)}</div><div class="msg-meta">Vừa xong</div></div>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+    showToast('Đã gửi tin nhắn', 'success');
+  } catch(e) {
+    showToast('Lỗi gửi: ' + e.message, 'error');
+    if (input) input.value = text;
+  } finally {
+    if (input) { input.disabled = false; input.focus(); }
+  }
+}
+
+async function sendHumanAgentTagDirect(convId, recipientId) {
+  const page = allPages.find(p => p.pageId === selectedConvPageId);
+  if (!page) return;
+  const text = prompt('Nhập tin nhắn gửi với Human Agent Tag (cho phép nhắn trong 7 ngày):');
+  if (!text) return;
+  try {
+    const r = await fetch(`https://graph.facebook.com/v19.0/${page.pageId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipient: { id: recipientId }, message: { text }, tag: 'HUMAN_AGENT', access_token: page.accessToken })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    showToast('Gửi với Human Agent Tag thành công!', 'success');
+  } catch(e) {
+    showToast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+function takeoverConvDirect(convId) {
+  document.getElementById('btnTakeover').style.display = 'none';
+  document.getElementById('btnRelease').style.display = 'flex';
+  document.getElementById('chatSub').textContent = '👨‍💼 Human Agent đang tiếp quản';
+  showToast('Bạn đang tiếp quản hội thoại này. AI sẽ không tự động trả lời.', 'info');
+}
+
+function releaseConvDirect(convId) {
+  document.getElementById('btnTakeover').style.display = 'flex';
+  document.getElementById('btnRelease').style.display = 'none';
+  const page = allPages.find(p => p.pageId === selectedConvPageId);
+  document.getElementById('chatSub').textContent = page?.enabled ? '🤖 AI đang trả lời tự động' : 'AI đang tắt';
+  showToast('Đã trả hội thoại về cho AI', 'success');
+}
+
+// Override openConfigPage to work with localStorage
+const _origOpenConfigPage = openConfigPage;
+openConfigPage = async function(pageId) {
+  if (SERVER_URL) {
+    try { return await _origOpenConfigPage(pageId); } catch(e) {}
+  }
+  await openConfigPageDirect(pageId);
+};
+
+async function openConfigPageDirect(pageId) {
+  selectedConfigPageId = pageId;
+  switchTab('config');
+  document.querySelectorAll('.config-page-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.config-page-item').forEach(el => {
+    if (el.getAttribute('onclick')?.includes(pageId)) el.classList.add('active');
+  });
+  const page = allPages.find(p => p.pageId === pageId);
+  if (!page) return;
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  const cfg = savedConfigs[pageId] || { aiConfig: {}, documents: [], rules: [] };
+  const docs = cfg.documents || [];
+  const rules = cfg.rules || [];
+  const main = document.getElementById('configMain');
+  if (!main) return;
+  main.innerHTML = `
+    <div class="config-section">
+      <div class="config-section-title"><i class="bi bi-robot"></i> Cấu hình AI — ${escHtml(page.pageName)}</div>
+      <div class="form-group">
+        <label class="form-label">System Prompt (Hướng dẫn cho AI)</label>
+        <textarea class="form-input" id="cfg_systemPrompt" rows="5"
+          placeholder="Bạn là trợ lý AI chăm sóc khách hàng của ${escHtml(page.pageName)}. Hãy trả lời lịch sự, ngắn gọn và chính xác bằng tiếng Việt...">${escHtml(cfg.aiConfig?.systemPrompt || '')}</textarea>
+        <div class="form-hint">Mô tả vai trò, phong cách trả lời và các giới hạn của AI</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Độ dài tối đa (tokens)</label>
+          <input type="number" class="form-input" id="cfg_maxTokens" value="${cfg.aiConfig?.maxTokens || 500}" min="100" max="2000">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Ngôn ngữ chính</label>
+          <select class="form-input" id="cfg_language">
+            <option value="vi" ${cfg.aiConfig?.language !== 'en' ? 'selected' : ''}>Tiếng Việt</option>
+            <option value="en" ${cfg.aiConfig?.language === 'en' ? 'selected' : ''}>English</option>
+            <option value="auto">Tự động theo khách</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+        <button class="btn primary" onclick="saveAIConfigDirect('${pageId}')">
+          <i class="bi bi-check2"></i> Lưu cấu hình
+        </button>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.6)">
+          <input type="checkbox" id="cfg_enabled" ${page.enabled ? 'checked' : ''} onchange="togglePageDirect('${pageId}', this.checked)" style="accent-color:#22c55e">
+          Bật AI cho Page này
+        </label>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-section-title"><i class="bi bi-file-earmark-text"></i> Tài liệu kiến thức (${docs.length})</div>
+      <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px">
+        Upload tài liệu để AI học và trả lời dựa trên nội dung. Hỗ trợ: TXT, MD, PDF, DOCX, CSV, JSON, HTML
+      </p>
+      <div class="doc-list" id="docList_${pageId}">
+        ${docs.length === 0 ? '<div style="font-size:12px;color:rgba(255,255,255,.3);padding:8px 0">Chưa có tài liệu nào</div>' :
+          docs.map((d,i) => renderDocItemDirect(d, pageId, i)).join('')}
+      </div>
+      <div class="upload-zone" id="uploadZone_${pageId}"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleFileDropDirect(event,'${pageId}')"
+        onclick="document.getElementById('fileInput_${pageId}').click()">
+        <i class="bi bi-cloud-upload"></i>
+        <p>Kéo thả file vào đây hoặc nhấn để chọn</p>
+        <span>TXT, MD, PDF, DOCX, CSV, JSON, HTML — Tối đa 10MB/file</span>
+      </div>
+      <input type="file" id="fileInput_${pageId}" style="display:none" multiple
+        accept=".txt,.md,.pdf,.docx,.doc,.csv,.json,.html"
+        onchange="uploadDocumentsDirect('${pageId}', this.files)">
+    </div>
+
+    <div class="config-section">
+      <div class="config-section-title"><i class="bi bi-list-check"></i> Quy tắc Q&A (${rules.length})</div>
+      <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px">
+        Thêm các cặp câu hỏi - trả lời cụ thể. AI sẽ ưu tiên dùng quy tắc này khi khách hỏi về chủ đề tương ứng.
+      </p>
+      <div id="ruleList_${pageId}" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        ${rules.length === 0 ? '<div style="font-size:12px;color:rgba(255,255,255,.3);padding:8px 0">Chưa có quy tắc nào</div>' :
+          rules.map((r,i) => renderRuleItemDirect(r, pageId, i)).join('')}
+      </div>
+      <button class="btn secondary" onclick="openAddRuleDirect('${pageId}')">
+        <i class="bi bi-plus"></i> Thêm quy tắc
+      </button>
+    </div>
+
+    <div class="config-section">
+      <div class="config-section-title"><i class="bi bi-chat-square-text"></i> Test AI</div>
+      <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px">Thử nghiệm AI trả lời với cấu hình hiện tại</p>
+      <div class="test-chat">
+        <div class="test-chat-messages" id="testMessages_${pageId}">
+          <div class="test-msg ai">Xin chào! Tôi là AI trợ lý của ${escHtml(page.pageName)}. Bạn cần hỗ trợ gì?</div>
+        </div>
+        <div class="test-input-row">
+          <input type="text" class="test-input" id="testInput_${pageId}"
+            placeholder="Nhập câu hỏi để test AI..."
+            onkeydown="if(event.key==='Enter')testAIDirect('${pageId}')">
+          <button class="btn-sm primary" onclick="testAIDirect('${pageId}')">
+            <i class="bi bi-send"></i> Gửi
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-section-title"><i class="bi bi-broadcast"></i> Đăng ký Webhook</div>
+      <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px">
+        Đăng ký webhook để Facebook gửi tin nhắn đến server của bạn.
+      </p>
+      <button class="btn success" onclick="subscribeWebhookDirect('${pageId}')">
+        <i class="bi bi-broadcast"></i> Đăng ký Webhook cho Page này
+      </button>
+    </div>`;
+}
+
+function renderDocItemDirect(doc, pageId, idx) {
+  const icons = { pdf: 'bi-file-pdf', docx: 'bi-file-word', doc: 'bi-file-word', txt: 'bi-file-text', md: 'bi-markdown', csv: 'bi-table', json: 'bi-braces', html: 'bi-code' };
+  const ext = doc.name?.split('.').pop()?.toLowerCase() || '';
+  return `<div class="doc-item" id="docD_${pageId}_${idx}">
+    <div class="doc-icon"><i class="bi ${icons[ext] || 'bi-file-earmark'}"></i></div>
+    <div><div class="doc-name">${escHtml(doc.name)}</div><div class="doc-size">${formatBytes(doc.size || 0)} · ${(doc.chars || 0).toLocaleString()} ký tự</div></div>
+    <button class="btn-sm danger" onclick="deleteDocumentDirect('${pageId}',${idx})"><i class="bi bi-trash"></i></button>
+  </div>`;
+}
+
+function renderRuleItemDirect(rule, pageId, idx) {
+  const catColors = { product: '#00d4ff', price: '#22c55e', shipping: '#f97316', policy: '#a855f7', support: '#f59e0b', general: '#64748b' };
+  const color = catColors[rule.category] || '#64748b';
+  return `<div class="rule-item" id="ruleD_${pageId}_${idx}">
+    <div class="rule-content">
+      <div class="rule-trigger"><span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span> ${escHtml(rule.trigger)}</div>
+      <div class="rule-response">${escHtml(rule.response)}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn-sm danger" onclick="deleteRuleDirect('${pageId}',${idx})"><i class="bi bi-trash"></i></button>
+    </div>
+  </div>`;
+}
+
+function saveAIConfigDirect(pageId) {
+  const systemPrompt = document.getElementById('cfg_systemPrompt')?.value || '';
+  const maxTokens = parseInt(document.getElementById('cfg_maxTokens')?.value) || 500;
+  const language = document.getElementById('cfg_language')?.value || 'vi';
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  if (!savedConfigs[pageId]) savedConfigs[pageId] = {};
+  savedConfigs[pageId].aiConfig = { systemPrompt, maxTokens, language };
+  localStorage.setItem('HA_PAGE_CONFIGS', JSON.stringify(savedConfigs));
+  const page = allPages.find(p => p.pageId === pageId);
+  if (page) page.aiConfig = { systemPrompt, maxTokens, language };
+  showToast('Đã lưu cấu hình AI', 'success');
+}
+
+function togglePageDirect(pageId, enabled) {
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  if (!savedConfigs[pageId]) savedConfigs[pageId] = {};
+  savedConfigs[pageId].enabled = enabled;
+  localStorage.setItem('HA_PAGE_CONFIGS', JSON.stringify(savedConfigs));
+  const page = allPages.find(p => p.pageId === pageId);
+  if (page) page.enabled = enabled;
+  renderPageList();
+  const aiActive = allPages.filter(p => p.enabled).length;
+  document.getElementById('stat-ai').textContent = aiActive;
+  showToast(enabled ? 'AI đã bật cho Page này' : 'AI đã tắt', enabled ? 'success' : 'info');
+}
+
+async function uploadDocumentsDirect(pageId, files) {
+  if (!files || !files.length) return;
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  if (!savedConfigs[pageId]) savedConfigs[pageId] = {};
+  if (!savedConfigs[pageId].documents) savedConfigs[pageId].documents = [];
+  for (const file of files) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    let content = '';
+    if (['txt','md','csv','json','html'].includes(ext)) {
+      content = await file.text();
+    } else {
+      content = `[${ext.toUpperCase()}: ${file.name}] - Nội dung sẽ được xử lý trên server khi kết nối`;
+    }
+    savedConfigs[pageId].documents.push({ name: file.name, size: file.size, chars: content.length, content: content.substring(0, 50000) });
+    showToast(`Đã tải lên: ${file.name}`, 'success');
+  }
+  localStorage.setItem('HA_PAGE_CONFIGS', JSON.stringify(savedConfigs));
+  const page = allPages.find(p => p.pageId === pageId);
+  if (page) page.documentCount = savedConfigs[pageId].documents.length;
+  renderConfigPageList();
+  await openConfigPageDirect(pageId);
+}
+
+function handleFileDropDirect(event, pageId) {
+  event.preventDefault();
+  document.getElementById(`uploadZone_${pageId}`)?.classList.remove('dragover');
+  uploadDocumentsDirect(pageId, event.dataTransfer.files);
+}
+
+function deleteDocumentDirect(pageId, idx) {
+  if (!confirm('Xóa tài liệu này?')) return;
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  if (savedConfigs[pageId]?.documents) {
+    savedConfigs[pageId].documents.splice(idx, 1);
+    localStorage.setItem('HA_PAGE_CONFIGS', JSON.stringify(savedConfigs));
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page) page.documentCount = savedConfigs[pageId].documents.length;
+    renderConfigPageList();
+    openConfigPageDirect(pageId);
+    showToast('Đã xóa tài liệu', 'info');
+  }
+}
+
+let _currentRulePageIdDirect = null;
+function openAddRuleDirect(pageId) {
+  _currentRulePageIdDirect = pageId;
+  document.getElementById('ruleModalTitle').textContent = 'Thêm Quy Tắc';
+  document.getElementById('editRuleId').value = '';
+  document.getElementById('ruleTrigger').value = '';
+  document.getElementById('ruleResponse').value = '';
+  document.getElementById('ruleCategory').value = 'general';
+  openModal('ruleModal');
+  // Override saveRule for direct mode
+  window._saveRuleDirect = true;
+}
+
+const _origSaveRule = saveRule;
+saveRule = function() {
+  if (!window._saveRuleDirect) return _origSaveRule();
+  const pageId = _currentRulePageIdDirect;
+  const trigger = document.getElementById('ruleTrigger').value.trim();
+  const response = document.getElementById('ruleResponse').value.trim();
+  const category = document.getElementById('ruleCategory').value;
+  if (!trigger || !response) return showToast('Vui lòng điền đầy đủ thông tin', 'error');
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  if (!savedConfigs[pageId]) savedConfigs[pageId] = {};
+  if (!savedConfigs[pageId].rules) savedConfigs[pageId].rules = [];
+  savedConfigs[pageId].rules.push({ trigger, response, category, id: Date.now().toString() });
+  localStorage.setItem('HA_PAGE_CONFIGS', JSON.stringify(savedConfigs));
+  const page = allPages.find(p => p.pageId === pageId);
+  if (page) page.ruleCount = savedConfigs[pageId].rules.length;
+  renderConfigPageList();
+  closeModal('ruleModal');
+  openConfigPageDirect(pageId);
+  showToast('Đã thêm quy tắc mới', 'success');
+  window._saveRuleDirect = false;
+};
+
+function deleteRuleDirect(pageId, idx) {
+  if (!confirm('Xóa quy tắc này?')) return;
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  if (savedConfigs[pageId]?.rules) {
+    savedConfigs[pageId].rules.splice(idx, 1);
+    localStorage.setItem('HA_PAGE_CONFIGS', JSON.stringify(savedConfigs));
+    const page = allPages.find(p => p.pageId === pageId);
+    if (page) page.ruleCount = savedConfigs[pageId].rules.length;
+    renderConfigPageList();
+    openConfigPageDirect(pageId);
+    showToast('Đã xóa quy tắc', 'info');
+  }
+}
+
+async function testAIDirect(pageId) {
+  const input = document.getElementById(`testInput_${pageId}`);
+  const msg = input?.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const container = document.getElementById(`testMessages_${pageId}`);
+  if (!container) return;
+  container.innerHTML += `<div class="test-msg user">${escHtml(msg)}</div>`;
+  container.innerHTML += `<div class="test-msg ai" id="testThinking"><span class="loading-spinner"></span> Đang suy nghĩ...</div>`;
+  container.scrollTop = container.scrollHeight;
+  // Try server first
+  if (SERVER_URL) {
+    try {
+      const data = await api('POST', `/api/human-agent/pages/${pageId}/test`, { message: msg });
+      document.getElementById('testThinking')?.remove();
+      container.innerHTML += `<div class="test-msg ai">${escHtml(data.reply)}</div>`;
+      container.scrollTop = container.scrollHeight;
+      return;
+    } catch(e) {}
+  }
+  // Fallback: direct OpenAI
+  const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
+  if (!openaiKey) {
+    document.getElementById('testThinking')?.remove();
+    container.innerHTML += `<div class="test-msg ai" style="color:#f97316">Cần OpenAI API Key. Vào Cài đặt để thêm.</div>`;
+    return;
+  }
+  const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
+  const cfg = savedConfigs[pageId] || {};
+  const page = allPages.find(p => p.pageId === pageId);
+  let context = '';
+  if (cfg.documents?.length) {
+    context += '\n\n=== TÀI LIỆU KIẾN THỨC ===\n';
+    cfg.documents.forEach(d => { context += `\n--- ${d.name} ---\n${(d.content || '').substring(0, 6000)}\n`; });
+  }
+  if (cfg.rules?.length) {
+    context += '\n\n=== QUY TẮC Q&A ===\n';
+    cfg.rules.forEach(r => { context += `Hỏi: ${r.trigger}\nTrả lời: ${r.response}\n\n`; });
+  }
+  const systemPrompt = (cfg.aiConfig?.systemPrompt || `Bạn là nhân viên CSKH của ${page?.pageName || 'cửa hàng'}. Hãy trả lời lịch sự, ngắn gọn và chính xác bằng tiếng Việt.`) + context;
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: msg }],
+        max_tokens: cfg.aiConfig?.maxTokens || 500, temperature: 0.7
+      })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    document.getElementById('testThinking')?.remove();
+    container.innerHTML += `<div class="test-msg ai">${escHtml(d.choices[0].message.content)}</div>`;
+  } catch(e) {
+    document.getElementById('testThinking')?.remove();
+    container.innerHTML += `<div class="test-msg ai" style="color:#f87171">Lỗi: ${escHtml(e.message)}</div>`;
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+async function subscribeWebhookDirect(pageId) {
+  const page = allPages.find(p => p.pageId === pageId);
+  if (!page) return;
+  if (SERVER_URL) {
+    try {
+      await api('POST', `/api/human-agent/pages/${pageId}/subscribe`, { pageAccessToken: page.accessToken });
+      showToast('Đăng ký webhook thành công!', 'success');
+      return;
+    } catch(e) {}
+  }
+  // Direct subscribe via Facebook API
+  try {
+    const r = await fetch(`https://graph.facebook.com/v19.0/${pageId}/subscribed_apps`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscribed_fields: 'messages,messaging_postbacks,messaging_handovers', access_token: page.accessToken })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    if (d.success) showToast('Đăng ký webhook thành công!', 'success');
+    else showToast('Cần cấu hình App ID trong Facebook App trước', 'info');
+  } catch(e) {
+    showToast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+// Override saveSetup to also save OpenAI key
+const _origSaveSetup = saveSetup;
+saveSetup = async function() {
+  const openaiKey = document.getElementById('openaiKeyInput')?.value?.trim();
+  if (openaiKey) localStorage.setItem('HA_OPENAI_KEY', openaiKey);
+  return _origSaveSetup();
+};
+
+// Add OpenAI key field to setup modal
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('setupModal');
+  if (modal) {
+    const footer = modal.querySelector('.modal-footer');
+    if (footer) {
+      const div = document.createElement('div');
+      div.className = 'form-group';
+      div.innerHTML = `<label class="form-label">OpenAI API Key (cho AI trả lời)</label>
+        <input type="password" class="form-input" id="openaiKeyInput" placeholder="sk-..." value="${localStorage.getItem('HA_OPENAI_KEY') || ''}">
+        <div class="form-hint">Dùng GPT-4o-mini để AI tự động trả lời dựa trên tài liệu</div>`;
+      footer.parentNode.insertBefore(div, footer);
+    }
+  }
+  // Auto-load pages if token exists
+  const token = localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL');
+  if (token && !SERVER_URL) {
+    FB_TOKEN = token;
+    setTimeout(loadPagesDirect, 500);
+  }
+});
 </script>
 </body>
 </html>
