@@ -9,6 +9,7 @@ const facebookRoutes = require('./api/facebook');
 const proxyRoutes = require('./api/proxy');
 const postsRoutes = require('./api/posts');
 const aiRoutes = require('./api/ai');
+const humanAgentRoutes = require('./api/human-agent');
 const { startScheduler } = require('./services/scheduler');
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/facebook/proxy', proxyRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/human-agent', humanAgentRoutes);
 
 // ── 404 Handler ──
 app.use((req, res) => res.status(404).json({ error: `Route không tồn tại: ${req.method} ${req.path}` }));
