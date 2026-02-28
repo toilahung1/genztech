@@ -2,11 +2,11 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dịch Thuật — Genztech</title>
+  <title>Dịch Thuật AI — Genztech</title>
   <link rel="stylesheet" href="css/main.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none;background:#080c1e;color:#fff;font-family:Inter,sans-serif}
+    html,body{scrollbar-width:none;-ms-overflow-style:none;cursor:none;background:#080c1e;color:#fff;font-family:Inter,sans-serif;overflow-x:hidden}
     html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0}
     .app-layout{display:flex;min-height:100vh}
     .sidebar{width:260px;flex-shrink:0;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
@@ -20,78 +20,124 @@
     .nav-item:hover{color:#fff;background:rgba(255,255,255,.04)}
     .nav-item.active{color:#00d4ff;background:rgba(0,212,255,.08);border-left-color:#00d4ff}
     .nav-item i{width:18px;text-align:center;font-size:15px}
-    .nav-sub .nav-item{font-size:12.5px;padding:7px 20px 7px 36px}
-    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between}
-    .breadcrumb{font-size:13px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
-    .breadcrumb span{color:#fff;font-weight:600}
-    .btn-sm{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
-    .btn-primary{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
-    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
-    .btn-outline{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}
-    .btn-outline:hover{border-color:#a855f7;color:#a855f7}
-    .page-body{padding:28px;flex:1}
-    .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
-    .page-subtitle{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
-    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:20px}
-    .card-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
-    .card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
-    .card-title i{color:#c084fc}
-    .card-body{padding:20px}
-    .lang-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-    .lang-select{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:13px;cursor:pointer}
-    .lang-select:focus{outline:none;border-color:#a855f7}
-    .lang-select option{background:#1a2035}
-    .swap-btn{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 12px;color:#c084fc;cursor:pointer;transition:all .2s;font-size:16px}
-    .swap-btn:hover{background:rgba(124,58,237,.25);transform:rotate(180deg)}
-    .translate-area{width:100%;min-height:160px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;color:#fff;font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;transition:border-color .2s}
-    .translate-area:focus{outline:none;border-color:#a855f7}
-    .translate-area::placeholder{color:rgba(255,255,255,.2)}
-    .translate-area[readonly]{background:rgba(124,58,237,.05);border-color:rgba(124,58,237,.2);cursor:default}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
-    .quick-langs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-    .quick-lang{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s}
-    .quick-lang:hover,.quick-lang.active{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#c084fc}
-    .char-count{font-size:11px;color:rgba(255,255,255,.3);text-align:right;margin-top:4px}
-    .history-item{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer;transition:all .15s}
-    .history-item:hover{border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.05)}
-    .history-langs{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:4px}
-    .history-source{font-size:12.5px;color:rgba(255,255,255,.6);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .history-target{font-size:12.5px;color:#c084fc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#a855f7;border-radius:50%;animation:spin .6s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
-    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .3s}
-    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}
-    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}}
-      .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 34px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent;width:100%;box-sizing:border-box}
+    .nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 34px;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;border-left:2px solid transparent;width:100%;box-sizing:border-box}
     .nav-sub-item:hover{color:#fff;background:rgba(255,255,255,.04)}
     .nav-sub-item.active{color:#00d4ff;background:rgba(0,212,255,.06);border-left-color:#00d4ff}
     .nav-sub-item i{width:15px;text-align:center;font-size:13px}
-  
+    .main-content{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(10,14,39,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between}
+    .breadcrumb{font-size:12px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:5px}
+    .breadcrumb span{color:#fff;font-weight:600}
+    .btn-sm{padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    .btn-primary{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+    .btn-primary:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .btn-outline{background:transparent;color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.15)}
+    .btn-outline:hover{border-color:#a855f7;color:#c084fc}
+    .page-body{padding:24px 28px;flex:1}
+    .page-title{font-size:20px;font-weight:700;margin-bottom:3px}
+    .page-subtitle{font-size:12.5px;color:rgba(255,255,255,.4);margin-bottom:20px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;margin-bottom:18px}
+    .card-header{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .card-title i{color:#c084fc}
+    .card-body{padding:18px}
+
+    /* ── Quick lang bar ── */
+    .quick-langs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+    .quick-lang{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s}
+    .quick-lang:hover,.quick-lang.active{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#c084fc}
+
+    /* ── Lang selector bar ── */
+    .lang-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .lang-select{flex:1;min-width:0;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:13px;cursor:pointer;-webkit-appearance:none;appearance:none}
+    .lang-select:focus{outline:none;border-color:#a855f7}
+    .lang-select option{background:#1a2035}
+    .swap-btn{flex-shrink:0;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 14px;color:#c084fc;cursor:pointer;transition:all .2s;font-size:16px}
+    .swap-btn:hover{background:rgba(124,58,237,.25);transform:rotate(180deg)}
+
+    /* ── Translate areas ── */
+    .translate-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:860px){.translate-grid{grid-template-columns:1fr}}
+    .translate-area{width:100%;min-height:180px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;color:#fff;font-size:13.5px;resize:vertical;font-family:inherit;line-height:1.65;box-sizing:border-box;transition:border-color .2s}
+    .translate-area:focus{outline:none;border-color:#a855f7}
+    .translate-area::placeholder{color:rgba(255,255,255,.2)}
+    .translate-area[readonly]{background:rgba(124,58,237,.05);border-color:rgba(124,58,237,.2);cursor:default}
+    .area-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+    .char-count{font-size:11px;color:rgba(255,255,255,.3)}
+    .area-actions{display:flex;gap:5px}
+    .icon-btn{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);border-radius:6px;padding:4px 10px;color:#c084fc;cursor:pointer;font-size:12px;transition:all .15s}
+    .icon-btn:hover{background:rgba(124,58,237,.3)}
+
+    /* ── Tone selector ── */
+    .tone-section{margin-top:16px}
+    .tone-label{font-size:11.5px;color:rgba(255,255,255,.4);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .tone-grid{display:flex;flex-wrap:wrap;gap:7px}
+    .tone-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+    .tone-btn:hover{border-color:rgba(168,85,247,.5);color:#c084fc;background:rgba(124,58,237,.1)}
+    .tone-btn.active{background:rgba(124,58,237,.2);border-color:#a855f7;color:#e9d5ff}
+    .tone-btn.active-ai{background:rgba(0,212,255,.12);border-color:#00d4ff;color:#7dd3fc}
+
+    /* ── Custom instruction ── */
+    .custom-instruction{margin-top:12px}
+    .custom-input{width:100%;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:9px 13px;color:#fff;font-size:12.5px;font-family:inherit;resize:none;box-sizing:border-box;transition:border-color .2s;min-height:52px}
+    .custom-input:focus{outline:none;border-color:#a855f7}
+    .custom-input::placeholder{color:rgba(255,255,255,.2)}
+
+    /* ── Action bar ── */
+    .action-bar{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+    /* ── AI badge ── */
+    .ai-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(124,58,237,.15));border:1px solid rgba(0,212,255,.3);border-radius:10px;padding:2px 8px;color:#7dd3fc;letter-spacing:.3px}
+
+    /* ── Result card ── */
+    .result-card{background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px;margin-top:10px;display:none}
+    .result-card.show{display:block}
+    .result-meta{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .result-text{font-size:14px;line-height:1.7;color:#fff;white-space:pre-wrap;word-break:break-word}
+    .result-note{font-size:11.5px;color:rgba(255,255,255,.4);margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);line-height:1.6;font-style:italic}
+
+    /* ── Bulk translate ── */
+    .bulk-area{width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:#fff;font-size:12.5px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box}
+    .bulk-area:focus{outline:none;border-color:#a855f7}
+    .bulk-area::placeholder{color:rgba(255,255,255,.2)}
+    .bulk-item{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+    .bulk-source{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px}
+    .bulk-target{font-size:13px;color:#c084fc;line-height:1.5}
+
+    /* ── History ── */
+    .history-item{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+    .history-item:hover{border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.05)}
+    .history-langs{font-size:10.5px;color:rgba(255,255,255,.35);margin-bottom:3px}
+    .history-source{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .history-target{font-size:12px;color:#c084fc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* ── Spinner ── */
+    .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#a855f7;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Toast ── */
+    .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+    .toast{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .toast.success{border-left:3px solid #22c55e}.toast.error{border-left:3px solid #ef4444}.toast.info{border-left:3px solid #60a5fa}.toast.warn{border-left:3px solid #f59e0b}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
     /* ── Universe Background ── */
     canvas.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
     #custom-cursor{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,212,255,.8);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:opacity .3s;opacity:0;mix-blend-mode:screen}
     .nebula-overlay{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(24,119,242,.07) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 70%,rgba(0,212,255,.06) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 50% 10%,rgba(139,92,246,.05) 0%,transparent 50%)}
+    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}}
   </style>
 </head>
-<body class="bg-space-black text-white antialiased overflow-x-hidden">
+<body>
   <!-- Universe Background -->
   <canvas class="bg-canvas" id="gz-stars"></canvas>
   <canvas class="bg-canvas" id="gz-particles"></canvas>
   <div class="nebula-overlay"></div>
   <div id="custom-cursor"></div>
-  <canvas id="starfield-far" class="fixed inset-0 pointer-events-none z-0"></canvas>
-  <canvas id="starfield-mid" class="fixed inset-0 pointer-events-none z-1"></canvas>
-  <canvas id="starfield-near" class="fixed inset-0 pointer-events-none z-2"></canvas>
-  <div id="custom-cursor" class="fixed pointer-events-none z-[100] opacity-0 transition-opacity duration-200 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 will-change-transform">
-    <img src="images/logo.png" alt="" class="w-10 h-10 object-cover rounded-full filter drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] pointer-events-none">
-  </div>
   <div class="toast-container" id="toastContainer"></div>
 
-  <div class="app-layout relative z-10">
+  <div class="app-layout" style="position:relative;z-index:1">
     <aside class="sidebar">
       <a href="index.html" class="sidebar-logo">
         <img src="https://ui-avatars.com/api/?name=GZ&background=1877f2&color=fff&bold=true" alt="logo">
@@ -128,36 +174,37 @@
     <div class="main-content">
       <header class="topbar">
         <div class="breadcrumb">
-          <i class="bi bi-house"></i><i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <i class="bi bi-house"></i>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
           <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
-          <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Dịch Thuật</span>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Dịch Thuật AI</span>
         </div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="ai-badge"><i class="bi bi-stars"></i> AI Powered</span>
           <button class="btn-sm btn-outline" onclick="clearAll()"><i class="bi bi-x-circle"></i> Xóa</button>
-          <button class="btn-sm btn-primary" onclick="doTranslate()" id="translateBtn"><i class="bi bi-translate"></i> Dịch Ngay</button>
         </div>
       </header>
 
       <main class="page-body">
-        <h1 class="page-title"><i class="bi bi-translate" style="color:#c084fc"></i> Dịch Thuật Hội Thoại</h1>
-        <p class="page-subtitle">Dịch tin nhắn khách hàng, nội dung quảng cáo đa ngôn ngữ. Hỗ trợ 8 ngôn ngữ Đông Nam Á và quốc tế</p>
+        <h1 class="page-title"><i class="bi bi-translate" style="color:#c084fc"></i> Dịch Thuật AI Bán Hàng</h1>
+        <p class="page-subtitle">Dịch thông minh với AI — tùy chỉnh tone giọng, phong cách, tối ưu cho bán hàng đa ngôn ngữ</p>
 
         <!-- Quick language shortcuts -->
-        <div style="margin-bottom:16px">
-          <div style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:8px">Chuyển đổi nhanh ngôn ngữ đích:</div>
-          <div class="quick-langs" id="quickLangs">
-            <button class="quick-lang" onclick="setTargetLang('en')">🇺🇸 Tiếng Anh</button>
-            <button class="quick-lang active" onclick="setTargetLang('vi')">🇻🇳 Tiếng Việt</button>
-            <button class="quick-lang" onclick="setTargetLang('zh-CN')">🇨🇳 Tiếng Trung</button>
-            <button class="quick-lang" onclick="setTargetLang('ko')">🇰🇷 Tiếng Hàn</button>
-            <button class="quick-lang" onclick="setTargetLang('ja')">🇯🇵 Tiếng Nhật</button>
-            <button class="quick-lang" onclick="setTargetLang('th')">🇹🇭 Tiếng Thái</button>
-            <button class="quick-lang" onclick="setTargetLang('id')">🇮🇩 Tiếng Indo</button>
-            <button class="quick-lang" onclick="setTargetLang('fr')">🇫🇷 Tiếng Pháp</button>
-          </div>
+        <div class="quick-langs" id="quickLangs">
+          <button class="quick-lang" onclick="setTargetLang('en',this)">🇺🇸 Tiếng Anh</button>
+          <button class="quick-lang active" onclick="setTargetLang('vi',this)">🇻🇳 Tiếng Việt</button>
+          <button class="quick-lang" onclick="setTargetLang('zh-CN',this)">🇨🇳 Tiếng Trung</button>
+          <button class="quick-lang" onclick="setTargetLang('ko',this)">🇰🇷 Tiếng Hàn</button>
+          <button class="quick-lang" onclick="setTargetLang('ja',this)">🇯🇵 Tiếng Nhật</button>
+          <button class="quick-lang" onclick="setTargetLang('th',this)">🇹🇭 Tiếng Thái</button>
+          <button class="quick-lang" onclick="setTargetLang('id',this)">🇮🇩 Tiếng Indo</button>
+          <button class="quick-lang" onclick="setTargetLang('fr',this)">🇫🇷 Tiếng Pháp</button>
+          <button class="quick-lang" onclick="setTargetLang('de',this)">🇩🇪 Tiếng Đức</button>
+          <button class="quick-lang" onclick="setTargetLang('es',this)">🇪🇸 Tiếng Tây Ban Nha</button>
         </div>
 
-        <!-- Main translate area -->
+        <!-- Main translate card -->
         <div class="card">
           <div class="card-body">
             <!-- Language bar -->
@@ -176,6 +223,8 @@
                 <option value="de">🇩🇪 Tiếng Đức</option>
                 <option value="es">🇪🇸 Tiếng Tây Ban Nha</option>
                 <option value="ru">🇷🇺 Tiếng Nga</option>
+                <option value="ar">🇸🇦 Tiếng Ả Rập</option>
+                <option value="pt">🇧🇷 Tiếng Bồ Đào Nha</option>
               </select>
               <button class="swap-btn" onclick="swapLangs()" title="Đổi chiều dịch">⇄</button>
               <select class="lang-select" id="targetLang">
@@ -191,38 +240,73 @@
                 <option value="de">🇩🇪 Tiếng Đức</option>
                 <option value="es">🇪🇸 Tiếng Tây Ban Nha</option>
                 <option value="ru">🇷🇺 Tiếng Nga</option>
+                <option value="ar">🇸🇦 Tiếng Ả Rập</option>
+                <option value="pt">🇧🇷 Tiếng Bồ Đào Nha</option>
               </select>
             </div>
 
-            <div class="grid-2">
+            <!-- Translate areas -->
+            <div class="translate-grid">
               <div>
-                <textarea class="translate-area" id="sourceText" placeholder="Nhập văn bản cần dịch...&#10;&#10;Ví dụ: Sản phẩm của chúng tôi giúp tăng doanh số bán hàng lên 300% chỉ trong 30 ngày!" oninput="updateCharCount()" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter')doTranslate()"></textarea>
-                <div class="char-count"><span id="charCount">0</span> ký tự | Ctrl+Enter để dịch</div>
-              </div>
-              <div style="position:relative">
-                <textarea class="translate-area" id="targetText" placeholder="Bản dịch sẽ hiện ở đây..." readonly></textarea>
-                <div style="position:absolute;bottom:28px;right:8px;display:flex;gap:5px">
-                  <button onclick="copyTranslation()" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:6px;padding:4px 10px;color:#c084fc;cursor:pointer;font-size:11px"><i class="bi bi-clipboard"></i></button>
-                  <button onclick="speakText()" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:6px;padding:4px 10px;color:#c084fc;cursor:pointer;font-size:11px"><i class="bi bi-volume-up"></i></button>
+                <textarea class="translate-area" id="sourceText"
+                  placeholder="Nhập văn bản cần dịch...&#10;&#10;Ví dụ: Sản phẩm giúp tăng doanh số 300% trong 30 ngày!"
+                  oninput="updateCharCount()"
+                  onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter')doTranslateAI()"></textarea>
+                <div class="area-footer">
+                  <span class="char-count"><span id="charCount">0</span> ký tự · Ctrl+Enter để dịch</span>
                 </div>
-                <div class="char-count" id="targetCharCount">0 ký tự</div>
+              </div>
+              <div>
+                <textarea class="translate-area" id="targetText" placeholder="Bản dịch AI sẽ hiện ở đây..." readonly></textarea>
+                <div class="area-footer">
+                  <span class="char-count" id="targetCharCount">0 ký tự</span>
+                  <div class="area-actions">
+                    <button class="icon-btn" onclick="copyTranslation()" title="Copy"><i class="bi bi-clipboard"></i></button>
+                    <button class="icon-btn" onclick="speakText()" title="Đọc to"><i class="bi bi-volume-up"></i></button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn-sm btn-primary" onclick="doTranslate()" id="translateBtn2">
-                <i class="bi bi-translate"></i> Dịch
+            <!-- Tone selector -->
+            <div class="tone-section">
+              <div class="tone-label"><i class="bi bi-sliders" style="color:#a855f7"></i> Tone giọng & Phong cách</div>
+              <div class="tone-grid" id="toneGrid">
+                <button class="tone-btn active" data-tone="" onclick="selectTone(this,'','Dịch chuẩn xác')">📝 Chuẩn xác</button>
+                <button class="tone-btn" data-tone="sales_hot" onclick="selectTone(this,'sales_hot','Bán hàng nhiệt tình, tạo urgency')">🔥 Bán hàng nóng</button>
+                <button class="tone-btn" data-tone="sales_soft" onclick="selectTone(this,'sales_soft','Bán hàng nhẹ nhàng, thuyết phục')">💎 Bán hàng sang trọng</button>
+                <button class="tone-btn" data-tone="friendly" onclick="selectTone(this,'friendly','Thân thiện, gần gũi như bạn bè')">😊 Thân thiện</button>
+                <button class="tone-btn" data-tone="formal" onclick="selectTone(this,'formal','Trang trọng, chuyên nghiệp')">👔 Trang trọng</button>
+                <button class="tone-btn" data-tone="ads_fb" onclick="selectTone(this,'ads_fb','Tối ưu cho quảng cáo Facebook Ads')">📣 Facebook Ads</button>
+                <button class="tone-btn" data-tone="ads_tiktok" onclick="selectTone(this,'ads_tiktok','Ngắn gọn, viral cho TikTok')">🎵 TikTok</button>
+                <button class="tone-btn" data-tone="customer_care" onclick="selectTone(this,'customer_care','Chăm sóc khách hàng, lịch sự')">🤝 CSKH</button>
+                <button class="tone-btn" data-tone="persuasive" onclick="selectTone(this,'persuasive','Thuyết phục mạnh, tạo niềm tin')">💪 Thuyết phục</button>
+                <button class="tone-btn" data-tone="luxury" onclick="selectTone(this,'luxury','Cao cấp, sang trọng, premium')">✨ Luxury</button>
+                <button class="tone-btn active-ai" data-tone="custom" onclick="selectTone(this,'custom','Yêu cầu tùy chỉnh')">⚙️ Tùy chỉnh</button>
+              </div>
+            </div>
+
+            <!-- Custom instruction -->
+            <div class="custom-instruction" id="customInstructionBox">
+              <textarea class="custom-input" id="customInstruction"
+                placeholder="Mô tả yêu cầu tùy chỉnh của bạn...&#10;Ví dụ: Dịch theo phong cách bán hàng online Việt Nam, thêm emoji phù hợp, tạo urgency với deadline 24h, nhắm vào mẹ bỉm sữa 25-35 tuổi"></textarea>
+            </div>
+
+            <!-- Action bar -->
+            <div class="action-bar">
+              <button class="btn-sm btn-primary" onclick="doTranslateAI()" id="translateBtn">
+                <i class="bi bi-stars"></i> Dịch AI
               </button>
-              <button class="btn-sm btn-outline" onclick="doTranslateAds()">
-                <i class="bi bi-megaphone"></i> Dịch theo phong cách quảng cáo
+              <button class="btn-sm btn-outline" onclick="doTranslateMulti()" id="multiBtn" title="Dịch 3 phiên bản khác nhau">
+                <i class="bi bi-layers"></i> 3 Phiên Bản
               </button>
-              <button class="btn-sm btn-outline" onclick="doTranslateFormal()">
-                <i class="bi bi-briefcase"></i> Dịch trang trọng
-              </button>
-              <button class="btn-sm btn-outline" onclick="doTranslateCasual()">
-                <i class="bi bi-chat-heart"></i> Dịch thân thiện
+              <button class="btn-sm btn-outline" onclick="swapLangs()">
+                <i class="bi bi-arrow-left-right"></i> Đổi chiều
               </button>
             </div>
+
+            <!-- Multi-version result -->
+            <div id="multiResult"></div>
           </div>
         </div>
 
@@ -236,9 +320,9 @@
             </div>
           </div>
           <div class="card-body">
-            <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px">Mỗi dòng một câu/đoạn cần dịch. Tối đa 20 đoạn mỗi lần.</div>
-            <textarea class="translate-area" id="bulkSource" placeholder="Câu 1 cần dịch&#10;Câu 2 cần dịch&#10;Câu 3 cần dịch..." style="min-height:100px;font-size:12px"></textarea>
-            <div id="bulkResults" style="margin-top:14px"></div>
+            <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px">Mỗi dòng một câu/đoạn. Tối đa 20 đoạn mỗi lần. Dùng tone đang chọn.</div>
+            <textarea class="bulk-area" id="bulkSource" placeholder="Câu 1 cần dịch&#10;Câu 2 cần dịch&#10;Câu 3 cần dịch..."></textarea>
+            <div id="bulkResults" style="margin-top:12px"></div>
           </div>
         </div>
 
@@ -259,17 +343,52 @@
 
   <script src="js/ads-shared.js"></script>
   <script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+  const BACKEND = (typeof window.GZ_BACKEND !== 'undefined') ? window.GZ_BACKEND : 'https://genztech-production.up.railway.app';
   let transHistory = JSON.parse(localStorage.getItem('genz_trans_history') || '[]');
+  let currentTone = '';
+  let currentToneLabel = 'Dịch chuẩn xác';
 
-  function updateCharCount() {
-    const n = document.getElementById('sourceText').value.length;
-    document.getElementById('charCount').textContent = n;
+  // Tone definitions
+  const TONE_PROMPTS = {
+    '': 'Dịch chính xác, tự nhiên, giữ nguyên ý nghĩa gốc.',
+    'sales_hot': 'Dịch theo phong cách bán hàng nhiệt tình: tạo urgency (hôm nay, ngay bây giờ, còn X suất), thêm emoji phù hợp 🔥💥, dùng từ ngữ kích thích mua hàng, tạo FOMO (sợ bỏ lỡ).',
+    'sales_soft': 'Dịch theo phong cách bán hàng sang trọng: lịch sự, tinh tế, nhấn mạnh giá trị và chất lượng cao cấp, dùng từ ngữ premium, tránh từ ngữ thô tục hay quá nhiệt tình.',
+    'friendly': 'Dịch theo phong cách thân thiện, gần gũi như nói chuyện với bạn bè: dùng từ ngữ đời thường, tự nhiên, có thể thêm emoji vui vẻ 😊👍.',
+    'formal': 'Dịch trang trọng, chuyên nghiệp: dùng kính ngữ phù hợp (Quý khách, Kính gửi...), văn phong lịch sự, không dùng từ lóng hay emoji.',
+    'ads_fb': 'Dịch tối ưu cho quảng cáo Facebook Ads: hook mạnh ở câu đầu, CTA rõ ràng (Nhấn Mua Ngay, Đặt Hàng Ngay...), ngắn gọn súc tích, tạo tò mò, thêm emoji chiến lược.',
+    'ads_tiktok': 'Dịch theo phong cách TikTok: cực ngắn gọn, viral, dùng ngôn ngữ Gen Z, hashtag trend, emoji nhiều, câu đầu phải gây sốc hoặc tạo tò mò ngay lập tức.',
+    'customer_care': 'Dịch theo phong cách chăm sóc khách hàng: lịch sự, đồng cảm, giải quyết vấn đề, dùng từ ngữ tích cực, thể hiện sự quan tâm đến khách hàng.',
+    'persuasive': 'Dịch theo phong cách thuyết phục: đưa ra bằng chứng, số liệu cụ thể, xây dựng niềm tin, giải quyết objection (lo ngại), nhấn mạnh lợi ích thực tế.',
+    'luxury': 'Dịch theo phong cách luxury/cao cấp: từ ngữ sang trọng, tinh tế, nhấn mạnh tính độc quyền và đẳng cấp, không dùng từ "rẻ" hay "giảm giá", thay bằng "ưu đãi đặc biệt" hay "giá trị vượt trội".'
+  };
+
+  const LANG_NAMES = {
+    'auto':'Tự động','vi':'Tiếng Việt','en':'Tiếng Anh','zh-CN':'Tiếng Trung (Giản thể)',
+    'zh-TW':'Tiếng Trung (Phồn thể)','ko':'Tiếng Hàn','ja':'Tiếng Nhật','th':'Tiếng Thái',
+    'id':'Tiếng Indonesia','fr':'Tiếng Pháp','de':'Tiếng Đức','es':'Tiếng Tây Ban Nha',
+    'ru':'Tiếng Nga','ar':'Tiếng Ả Rập','pt':'Tiếng Bồ Đào Nha'
+  };
+
+  // ── UI helpers ───────────────────────────────────────────────────────────────
+  function toast(msg, type='info') {
+    if (window.GZ?.toast) { window.GZ.toast(msg, type); return; }
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3000);
   }
 
-  function setTargetLang(lang) {
+  function updateCharCount() {
+    document.getElementById('charCount').textContent = document.getElementById('sourceText').value.length;
+  }
+
+  function setTargetLang(lang, btn) {
     document.getElementById('targetLang').value = lang;
     document.querySelectorAll('.quick-lang').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    if (btn) btn.classList.add('active');
   }
 
   function swapLangs() {
@@ -277,285 +396,293 @@
     const tl = document.getElementById('targetLang');
     const st = document.getElementById('sourceText');
     const tt = document.getElementById('targetText');
-    if (sl.value === 'auto') { GZ.toast('Không thể đổi chiều khi đang ở chế độ tự động nhận diện', 'warn'); return; }
+    if (sl.value === 'auto') { toast('Không thể đổi chiều khi đang ở chế độ tự động', 'warn'); return; }
     [sl.value, tl.value] = [tl.value, sl.value];
     [st.value, tt.value] = [tt.value, st.value];
     updateCharCount();
     document.getElementById('targetCharCount').textContent = tt.value.length + ' ký tự';
   }
 
-  async function translateText(text, source, target) {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
-    const resp = await fetch(url);
-    const data = await resp.json();
-    return data[0].map(item => item[0]).join('');
-  }
-
-  async function doTranslate(style = '') {
-    const text = document.getElementById('sourceText').value.trim();
-    if (!text) { GZ.toast('Vui lòng nhập văn bản cần dịch', 'error'); return; }
-
-    const source = document.getElementById('sourceLang').value;
-    const target = document.getElementById('targetLang').value;
-
-    const btn = document.getElementById('translateBtn');
-    const btn2 = document.getElementById('translateBtn2');
-    [btn, btn2].forEach(b => { b.innerHTML = '<span class="spinner"></span> Đang dịch...'; b.disabled = true; });
-    document.getElementById('targetText').value = '';
-
-    try {
-      let translated = await translateText(text, source, target);
-
-      // Apply style via OpenAI if style requested
-      if (style && typeof window.OPENAI_AVAILABLE !== 'undefined') {
-        // Would call OpenAI here for style adaptation
-      }
-
-      document.getElementById('targetText').value = translated;
-      document.getElementById('targetCharCount').textContent = translated.length + ' ký tự';
-
-      // Save history
-      const sourceLangName = document.getElementById('sourceLang').options[document.getElementById('sourceLang').selectedIndex].text;
-      const targetLangName = document.getElementById('targetLang').options[document.getElementById('targetLang').selectedIndex].text;
-      transHistory.unshift({ source: text, target: translated, sourceLang: sourceLangName, targetLang: targetLangName, time: Date.now() });
-      if (transHistory.length > 50) transHistory.pop();
-      localStorage.setItem('genz_trans_history', JSON.stringify(transHistory));
-      renderTransHistory();
-
-      GZ.toast('Dịch thành công!', 'success');
-    } catch(e) {
-      GZ.toast('Lỗi dịch: ' + e.message, 'error');
-    } finally {
-      [btn, btn2].forEach(b => { b.innerHTML = '<i class="bi bi-translate"></i> Dịch'; b.disabled = false; });
-      btn.innerHTML = '<i class="bi bi-translate"></i> Dịch Ngay';
-    }
-  }
-
-  async function doTranslateAds() {
-    const text = document.getElementById('sourceText').value.trim();
-    if (!text) { GZ.toast('Vui lòng nhập văn bản', 'error'); return; }
-    const target = document.getElementById('targetLang').value;
-    const source = document.getElementById('sourceLang').value;
-    try {
-      const translated = await translateText(text, source, target);
-      // Thêm emoji và call-to-action phong cách quảng cáo
-      const adsStyle = '🔥 ' + translated + '\n\n👉 Nhấn để tìm hiểu thêm!';
-      document.getElementById('targetText').value = adsStyle;
-      GZ.toast('Dịch theo phong cách quảng cáo!', 'success');
-    } catch(e) { GZ.toast('Lỗi: ' + e.message, 'error'); }
-  }
-
-  async function doTranslateFormal() {
-    await doTranslate('formal');
-    const t = document.getElementById('targetText').value;
-    if (t) document.getElementById('targetText').value = t.replace(/bạn/gi, 'Quý khách').replace(/mình/gi, 'chúng tôi');
-  }
-
-  async function doTranslateCasual() {
-    await doTranslate('casual');
+  function selectTone(btn, tone, label) {
+    currentTone = tone;
+    currentToneLabel = label;
+    document.querySelectorAll('.tone-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('active-ai'); });
+    btn.classList.add(tone === 'custom' ? 'active-ai' : 'active');
+    // Hiện/ẩn custom instruction box
+    const box = document.getElementById('customInstructionBox');
+    box.style.display = (tone === 'custom') ? 'block' : 'none';
   }
 
   function copyTranslation() {
     const t = document.getElementById('targetText').value;
-    if (!t) { GZ.toast('Chưa có bản dịch', 'error'); return; }
-    navigator.clipboard.writeText(t);
-    GZ.toast('Đã copy bản dịch!', 'success');
+    if (!t) { toast('Chưa có bản dịch', 'error'); return; }
+    navigator.clipboard.writeText(t).then(() => toast('Đã copy!', 'success'));
   }
 
   function speakText() {
     const t = document.getElementById('targetText').value;
-    if (!t) { GZ.toast('Chưa có bản dịch', 'error'); return; }
+    if (!t) { toast('Chưa có bản dịch', 'error'); return; }
     const lang = document.getElementById('targetLang').value;
     const utter = new SpeechSynthesisUtterance(t);
     utter.lang = lang;
     window.speechSynthesis.speak(utter);
-    GZ.toast('Đang đọc...', 'info');
+    toast('Đang đọc...', 'info');
   }
 
-  async function doBulkTranslate() {
-    const lines = document.getElementById('bulkSource').value.split('\n').map(l => l.trim()).filter(Boolean);
-    if (!lines.length) { GZ.toast('Vui lòng nhập danh sách câu cần dịch', 'error'); return; }
-    if (lines.length > 20) { GZ.toast('Tối đa 20 câu mỗi lần', 'error'); return; }
+  function clearAll() {
+    document.getElementById('sourceText').value = '';
+    document.getElementById('targetText').value = '';
+    document.getElementById('charCount').textContent = '0';
+    document.getElementById('targetCharCount').textContent = '0 ký tự';
+    document.getElementById('multiResult').innerHTML = '';
+  }
+
+  // ── Core AI translate ────────────────────────────────────────────────────────
+  async function callTranslateAI(text, sourceLang, targetLang, tone, customInstruction) {
+    const resp = await fetch(`${BACKEND}/api/ai/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, source_lang: sourceLang, target_lang: targetLang, tone, custom_instruction: customInstruction })
+    });
+    if (!resp.ok) throw new Error(`Server lỗi: ${resp.status}`);
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Lỗi không xác định');
+    return data;
+  }
+
+  async function doTranslateAI() {
+    const text = document.getElementById('sourceText').value.trim();
+    if (!text) { toast('Vui lòng nhập văn bản cần dịch', 'error'); return; }
 
     const source = document.getElementById('sourceLang').value;
     const target = document.getElementById('targetLang').value;
+    const customInstr = currentTone === 'custom' ? document.getElementById('customInstruction').value.trim() : '';
+
+    const btn = document.getElementById('translateBtn');
+    btn.innerHTML = '<span class="spinner"></span> Đang dịch...';
+    btn.disabled = true;
+    document.getElementById('targetText').value = '';
+    document.getElementById('multiResult').innerHTML = '';
+
+    try {
+      const data = await callTranslateAI(text, source, target, currentTone, customInstr);
+      const translated = data.translated || '';
+      document.getElementById('targetText').value = translated;
+      document.getElementById('targetCharCount').textContent = translated.length + ' ký tự';
+
+      // Lưu lịch sử
+      const srcName = LANG_NAMES[source] || source;
+      const tgtName = LANG_NAMES[target] || target;
+      transHistory.unshift({ source: text, target: translated, sourceLang: srcName, targetLang: tgtName, tone: currentToneLabel, time: Date.now() });
+      if (transHistory.length > 50) transHistory.pop();
+      localStorage.setItem('genz_trans_history', JSON.stringify(transHistory));
+      renderTransHistory();
+
+      toast('Dịch AI thành công!', 'success');
+
+      // Hiển thị ghi chú nếu có
+      if (data.note) {
+        const noteEl = document.createElement('div');
+        noteEl.style.cssText = 'font-size:11.5px;color:rgba(255,255,255,.4);margin-top:6px;font-style:italic;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;border-left:2px solid rgba(168,85,247,.4)';
+        noteEl.innerHTML = '<i class="bi bi-info-circle" style="color:#a855f7;margin-right:4px"></i>' + data.note;
+        document.getElementById('targetText').parentNode.appendChild(noteEl);
+        setTimeout(() => noteEl.remove(), 8000);
+      }
+    } catch(e) {
+      toast('Lỗi: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-stars"></i> Dịch AI';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Dịch 3 phiên bản ────────────────────────────────────────────────────────
+  async function doTranslateMulti() {
+    const text = document.getElementById('sourceText').value.trim();
+    if (!text) { toast('Vui lòng nhập văn bản', 'error'); return; }
+
+    const source = document.getElementById('sourceLang').value;
+    const target = document.getElementById('targetLang').value;
+
+    const btn = document.getElementById('multiBtn');
+    btn.innerHTML = '<span class="spinner"></span> Đang tạo...';
+    btn.disabled = true;
+    document.getElementById('multiResult').innerHTML = '';
+
+    const tones = [
+      { tone: 'sales_hot', label: '🔥 Bán hàng nóng' },
+      { tone: 'friendly', label: '😊 Thân thiện' },
+      { tone: 'formal', label: '👔 Trang trọng' }
+    ];
+
+    try {
+      const results = await Promise.all(tones.map(t => callTranslateAI(text, source, target, t.tone, '')));
+      let html = '<div style="margin-top:14px"><div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px"><i class="bi bi-layers" style="color:#a855f7;margin-right:5px"></i>3 phiên bản dịch — click để dùng</div>';
+      results.forEach((r, i) => {
+        const t = tones[i];
+        html += `<div class="result-card show" style="margin-bottom:8px;cursor:pointer" onclick="useVersion('${escHtml(r.translated || '')}')">
+          <div class="result-meta"><span style="color:#a855f7;font-weight:600">${t.label}</span></div>
+          <div class="result-text">${escHtml(r.translated || '')}</div>
+          <div style="font-size:10.5px;color:rgba(255,255,255,.25);margin-top:6px"><i class="bi bi-cursor"></i> Click để dùng phiên bản này</div>
+        </div>`;
+      });
+      html += '</div>';
+      document.getElementById('multiResult').innerHTML = html;
+      toast('Đã tạo 3 phiên bản!', 'success');
+    } catch(e) {
+      toast('Lỗi: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-layers"></i> 3 Phiên Bản';
+      btn.disabled = false;
+    }
+  }
+
+  function useVersion(text) {
+    document.getElementById('targetText').value = text;
+    document.getElementById('targetCharCount').textContent = text.length + ' ký tự';
+    toast('Đã chọn phiên bản này!', 'success');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Bulk translate ───────────────────────────────────────────────────────────
+  async function doBulkTranslate() {
+    const lines = document.getElementById('bulkSource').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    if (!lines.length) { toast('Vui lòng nhập danh sách câu cần dịch', 'error'); return; }
+    if (lines.length > 20) { toast('Tối đa 20 câu mỗi lần', 'error'); return; }
+
+    const source = document.getElementById('sourceLang').value;
+    const target = document.getElementById('targetLang').value;
+    const customInstr = currentTone === 'custom' ? document.getElementById('customInstruction').value.trim() : '';
+
     const btn = document.getElementById('bulkTransBtn');
     btn.innerHTML = '<span class="spinner"></span> Đang dịch...';
     btn.disabled = true;
+    document.getElementById('bulkResults').innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.4);padding:10px">Đang dịch ' + lines.length + ' đoạn...</div>';
 
     const results = [];
-    const container = document.getElementById('bulkResults');
-    container.innerHTML = '';
-
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
       try {
-        const translated = await translateText(line, source, target);
-        results.push({ source: line, target: translated });
-        const row = document.createElement('div');
-        row.style.cssText = 'background:rgba(0,0,0,.2);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12.5px';
-        row.innerHTML = `<div style="color:rgba(255,255,255,.5)">${line}</div><div style="color:#c084fc">${translated} <button onclick="navigator.clipboard.writeText('${translated.replace(/'/g,"\\'")}');GZ.toast('Đã copy!','success')" style="background:none;border:none;color:#c084fc;cursor:pointer;font-size:11px;margin-left:4px"><i class="bi bi-clipboard"></i></button></div>`;
-        container.appendChild(row);
+        const data = await callTranslateAI(lines[i], source, target, currentTone, customInstr);
+        results.push({ source: lines[i], target: data.translated || '', ok: true });
       } catch(e) {
-        const row = document.createElement('div');
-        row.style.cssText = 'background:rgba(239,68,68,.05);border-radius:8px;padding:10px 14px;margin-bottom:6px;font-size:12.5px;color:#f87171';
-        row.textContent = `Lỗi: ${line}`;
-        container.appendChild(row);
+        results.push({ source: lines[i], target: 'Lỗi: ' + e.message, ok: false });
       }
     }
 
+    document.getElementById('bulkResults').innerHTML = results.map((r,i) => `
+      <div class="bulk-item">
+        <div class="bulk-source">${i+1}. ${escHtml(r.source)}</div>
+        <div class="bulk-target" style="${r.ok ? '' : 'color:#f87171'}">${escHtml(r.target)}</div>
+      </div>`).join('');
+
     btn.innerHTML = '<i class="bi bi-translate"></i> Dịch Tất Cả';
     btn.disabled = false;
-    GZ.toast(`Đã dịch ${results.length}/${lines.length} câu`, 'success');
+    toast('Dịch hàng loạt xong!', 'success');
+
+    // Lưu vào window để export
+    window._bulkResults = results;
+    window._bulkLangs = { source: LANG_NAMES[source]||source, target: LANG_NAMES[target]||target };
   }
 
   function exportBulkTranslation() {
-    const rows = document.querySelectorAll('#bulkResults > div');
-    if (!rows.length) { GZ.toast('Không có dữ liệu', 'error'); return; }
-    const csv = 'Gốc,Dịch\n' + Array.from(rows).map(r => {
-      const cells = r.querySelectorAll('div');
-      return `"${cells[0]?.textContent || ''}","${cells[1]?.textContent?.replace(/\s+/g,' ').trim() || ''}"`;
-    }).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `translation_${Date.now()}.csv`; a.click();
+    if (!window._bulkResults?.length) { toast('Chưa có kết quả để xuất', 'error'); return; }
+    const { source, target } = window._bulkLangs || {};
+    let csv = `"STT","${source || 'Nguồn'}","${target || 'Đích'}"\n`;
+    window._bulkResults.forEach((r,i) => {
+      csv += `"${i+1}","${r.source.replace(/"/g,'""')}","${r.target.replace(/"/g,'""')}"\n`;
+    });
+    const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'bulk_translate_' + Date.now() + '.csv';
+    a.click();
+    toast('Đã xuất CSV!', 'success');
   }
 
+  // ── History ──────────────────────────────────────────────────────────────────
   function renderTransHistory() {
     const el = document.getElementById('transHistoryList');
     if (!transHistory.length) {
       el.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:13px">Chưa có lịch sử dịch</div>';
       return;
     }
-    el.innerHTML = transHistory.slice(0, 20).map((h, i) => `
-      <div class="history-item" onclick="reuseTransHistory(${i})">
-        <div class="history-langs">${h.sourceLang} → ${h.targetLang} • ${new Date(h.time).toLocaleString('vi-VN')}</div>
-        <div class="history-source">${h.source}</div>
-        <div class="history-target">${h.target}</div>
-      </div>`).join('');
+    el.innerHTML = transHistory.slice(0,20).map(h => {
+      const d = new Date(h.time);
+      const timeStr = d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}) + ' ' + d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+      return `<div class="history-item" onclick="loadHistory(${JSON.stringify(escHtml(h.source))},${JSON.stringify(escHtml(h.target))})">
+        <div class="history-langs">${h.sourceLang||'?'} → ${h.targetLang||'?'} · ${h.tone||'Chuẩn xác'} · ${timeStr}</div>
+        <div class="history-source">${escHtml(h.source)}</div>
+        <div class="history-target">${escHtml(h.target)}</div>
+      </div>`;
+    }).join('');
   }
 
-  function reuseTransHistory(i) {
-    document.getElementById('sourceText').value = transHistory[i].source;
-    document.getElementById('targetText').value = transHistory[i].target;
+  function loadHistory(src, tgt) {
+    document.getElementById('sourceText').value = src;
+    document.getElementById('targetText').value = tgt;
     updateCharCount();
-    document.getElementById('targetCharCount').textContent = transHistory[i].target.length + ' ký tự';
+    document.getElementById('targetCharCount').textContent = tgt.length + ' ký tự';
   }
 
   function clearTransHistory() {
     transHistory = [];
     localStorage.removeItem('genz_trans_history');
     renderTransHistory();
-    GZ.toast('Đã xóa lịch sử', 'info');
+    toast('Đã xóa lịch sử', 'info');
   }
 
-  function clearAll() {
-    document.getElementById('sourceText').value = '';
-    document.getElementById('targetText').value = '';
-    updateCharCount();
-    document.getElementById('targetCharCount').textContent = '0 ký tự';
-  }
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  // Ẩn custom instruction box ban đầu
+  document.getElementById('customInstructionBox').style.display = 'none';
+  renderTransHistory();
 
-  document.addEventListener('DOMContentLoaded', renderTransHistory);
+  // Sync quick-lang với targetLang select
+  document.getElementById('targetLang').addEventListener('change', function() {
+    document.querySelectorAll('.quick-lang').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.quick-lang').forEach(b => {
+      if (b.getAttribute('onclick')?.includes("'" + this.value + "'")) b.classList.add('active');
+    });
+  });
+
+  function toggleSubNav(e, id) {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(id + 'Arrow');
+    if (el) { const open = el.style.display !== 'none'; el.style.display = open ? 'none' : 'flex'; if(arrow) arrow.style.transform = open ? '' : 'rotate(180deg)'; }
+  }
+  function openSettings() { if(window.GZ?.openSettings) window.GZ.openSettings(); }
   </script>
-  
 
-<script id="gz-universe-bg">
-(function(){
-  'use strict';
-  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-  // ── Stars Canvas ──
-  const cs = document.getElementById('gz-stars');
-  if (!cs) return;
-  const ctxS = cs.getContext('2d');
-  function resizeS(){ cs.width=window.innerWidth; cs.height=window.innerHeight; }
-  resizeS();
-  const stars = [];
-  const N = isMobile ? 80 : 180;
-  for(let i=0;i<N;i++){
-    stars.push({
-      x: Math.random()*cs.width, y: Math.random()*cs.height,
-      r: Math.random()*1.6+0.2,
-      a: Math.random(), da: (Math.random()-0.5)*0.004,
-      vx: (Math.random()-0.5)*0.07, vy: (Math.random()-0.5)*0.07,
-      hue: [210,195,270,180][Math.floor(Math.random()*4)] // xanh dương, cyan, tím, xanh lá
-    });
-  }
-  function animStars(){
-    ctxS.clearRect(0,0,cs.width,cs.height);
-    stars.forEach(s=>{
-      s.x+=s.vx; s.y+=s.vy; s.a+=s.da;
-      if(s.a<0.08) s.da=Math.abs(s.da);
-      if(s.a>0.95) s.da=-Math.abs(s.da);
-      if(s.x<0) s.x=cs.width; if(s.x>cs.width) s.x=0;
-      if(s.y<0) s.y=cs.height; if(s.y>cs.height) s.y=0;
-      const g=ctxS.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*2.5);
-      g.addColorStop(0,`hsla(${s.hue},100%,90%,${s.a*0.9})`);
-      g.addColorStop(0.5,`hsla(${s.hue},100%,70%,${s.a*0.4})`);
-      g.addColorStop(1,`hsla(${s.hue},100%,60%,0)`);
-      ctxS.fillStyle=g;
-      ctxS.beginPath(); ctxS.arc(s.x,s.y,s.r*2.5,0,Math.PI*2); ctxS.fill();
-    });
-    requestAnimationFrame(animStars);
-  }
-  animStars();
-
-  // ── Data Particles Canvas ──
-  const cp = document.getElementById('gz-particles');
-  if(!cp) return;
-  const ctxP = cp.getContext('2d');
-  function resizeP(){ cp.width=window.innerWidth; cp.height=window.innerHeight; }
-  resizeP();
-  const parts = [];
-  const NP = isMobile ? 8 : 18;
-  for(let i=0;i<NP;i++){
-    parts.push({
-      x:0, y:0,
-      r: Math.random()*2.5+1,
-      cx: Math.random()*cp.width, cy: Math.random()*cp.height,
-      rx: Math.random()*120+40, ry: Math.random()*120+40,
-      angle: Math.random()*Math.PI*2,
-      speed: Math.random()*0.008+0.004,
-      pulse: Math.random()*Math.PI*2, ps: Math.random()*0.02+0.01,
-      color: [[24,119,242],[0,212,255],[139,92,246],[6,182,212]][Math.floor(Math.random()*4)]
-    });
-  }
-  function animParts(){
-    ctxP.clearRect(0,0,cp.width,cp.height);
-    parts.forEach(p=>{
-      p.angle+=p.speed;
-      p.x=p.cx+Math.cos(p.angle)*p.rx;
-      p.y=p.cy+Math.sin(p.angle)*p.ry;
-      p.pulse+=p.ps;
-      const ps=1+Math.sin(p.pulse)*0.5;
-      const [r,g,b]=p.color;
-      const grd=ctxP.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*ps*4);
-      grd.addColorStop(0,`rgba(${r},${g},${b},${0.75*ps})`);
-      grd.addColorStop(0.4,`rgba(${r},${g},${b},${0.3*ps})`);
-      grd.addColorStop(1,`rgba(${r},${g},${b},0)`);
-      ctxP.fillStyle=grd;
-      ctxP.beginPath(); ctxP.arc(p.x,p.y,p.r*ps*4,0,Math.PI*2); ctxP.fill();
-    });
-    requestAnimationFrame(animParts);
-  }
-  animParts();
-
-  // ── Custom Cursor ──
-  const cur=document.getElementById('custom-cursor');
-  if(cur && !('ontouchstart' in window)){
-    let mx=0,my=0,cx=0,cy=0,shown=false;
-    document.body.style.cursor='none';
-    document.addEventListener('mousemove',e=>{
-      mx=e.clientX; my=e.clientY;
-      if(!shown){ shown=true; cur.style.opacity='1'; }
-    });
-    document.addEventListener('mouseleave',()=>{ shown=false; cur.style.opacity='0'; });
-    function animCur(){ if(shown){ cx+=(mx-cx)*0.15; cy+=(my-cy)*0.15; cur.style.left=cx+'px'; cur.style.top=cy+'px'; } requestAnimationFrame(animCur); }
-    animCur();
-  }
-
-  // ── Resize handler ──
-  window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
-})();
-</script>
+  <!-- Universe Background Script -->
+  <script>
+  (function(){
+    function initStars(){
+      const c=document.getElementById('gz-stars');if(!c)return;
+      const ctx=c.getContext('2d');
+      let W=c.width=window.innerWidth,H=c.height=window.innerHeight;
+      const stars=Array.from({length:180},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,a:Math.random(),da:(Math.random()-.5)*.008,vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.08,hue:[210,190,260,140,300][Math.floor(Math.random()*5)]}));
+      window.addEventListener('resize',()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight});
+      (function loop(){requestAnimationFrame(loop);ctx.clearRect(0,0,W,H);stars.forEach(s=>{s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;s.x=(s.x+s.vx+W)%W;s.y=(s.y+s.vy+H)%H;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`hsla(${s.hue},80%,80%,${s.a})`;ctx.fill();})})();
+    }
+    function initParticles(){
+      const c=document.getElementById('gz-particles');if(!c)return;
+      const ctx=c.getContext('2d');
+      let W=c.width=window.innerWidth,H=c.height=window.innerHeight;
+      const pts=Array.from({length:18},(_,i)=>({cx:Math.random()*W,cy:Math.random()*H,rx:60+Math.random()*120,ry:40+Math.random()*80,angle:Math.random()*Math.PI*2,speed:(Math.random()*.003+.001)*(Math.random()<.5?1:-1),hue:[210,180,260,140][i%4],size:Math.random()*2+1}));
+      window.addEventListener('resize',()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight});
+      (function loop(){requestAnimationFrame(loop);ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.angle+=p.speed;const x=p.cx+Math.cos(p.angle)*p.rx,y=p.cy+Math.sin(p.angle)*p.ry;const g=ctx.createRadialGradient(x,y,0,x,y,p.size*4);g.addColorStop(0,`hsla(${p.hue},90%,70%,.7)`);g.addColorStop(1,`hsla(${p.hue},90%,70%,0)`);ctx.beginPath();ctx.arc(x,y,p.size*4,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();})})();
+    }
+    function initCursor(){
+      const cur=document.getElementById('custom-cursor');if(!cur)return;
+      if(window.innerWidth<768){cur.style.display='none';return;}
+      document.addEventListener('mousemove',e=>{cur.style.opacity='1';cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';});
+      document.addEventListener('mouseleave',()=>cur.style.opacity='0');
+    }
+    initStars();initParticles();initCursor();
+  })();
+  </script>
 </body>
 </html>

@@ -1082,4 +1082,96 @@ router.post('/check-policy', async (req, res) => {
   }
 });
 
+// ── POST /translate ─────────────────────────────────────────────────────────
+router.post('/translate', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { text, targetLang, tone, customInstruction } = req.body;
+  if (!text || !targetLang) return res.status(400).json({ error: 'Thiếu text hoặc targetLang' });
+
+  const LANG_NAMES = {
+    vi: 'Vietnamese', en: 'English', zh: 'Chinese (Simplified)', ko: 'Korean',
+    ja: 'Japanese', th: 'Thai', id: 'Indonesian', fr: 'French', de: 'German',
+    es: 'Spanish', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', hi: 'Hindi'
+  };
+
+  const TONE_PROMPTS = {
+    natural: 'Use natural, everyday language that sounds native and fluent.',
+    sales: 'Use persuasive sales language: create urgency, highlight benefits, use power words like exclusive, limited, proven, transform. Make it compelling and action-oriented.',
+    formal: 'Use formal, professional business language. Polite, precise, and respectful.',
+    friendly: 'Use warm, friendly, conversational tone. Like talking to a friend. Approachable and casual.',
+    luxury: 'Use premium luxury brand language. Sophisticated, elegant, aspirational. Evoke exclusivity and prestige.',
+    viral: 'Use viral social media language. Energetic, trendy, with hooks that grab attention. Use rhetorical questions, bold claims, emotional triggers.',
+    empathy: 'Use empathetic, caring language. Acknowledge pain points, show understanding, offer solutions with warmth.',
+    urgent: 'Create extreme urgency and FOMO. Use time-limited language, scarcity signals, fear of missing out triggers.'
+  };
+
+  const targetLangName = LANG_NAMES[targetLang] || targetLang;
+  const toneInstruction = TONE_PROMPTS[tone] || TONE_PROMPTS.natural;
+  const customNote = customInstruction ? `\n\nAdditional instruction from user: ${customInstruction}` : '';
+
+  const systemPrompt = `You are an expert translator and copywriter specializing in e-commerce and digital marketing. You translate content while preserving the original meaning AND applying the requested tone/style for maximum effectiveness in the target market.\n\nRules:\n- Translate ONLY the provided text, nothing else\n- Apply the tone naturally - do not just translate words, adapt the message culturally\n- Keep brand names, product names, URLs, and numbers unchanged\n- For Vietnamese: use natural Vietnamese idioms and expressions, not literal translation\n- Return ONLY the translated text, no explanations, no quotes, no labels`;
+
+  const userPrompt = `Translate the following text to ${targetLangName}.\n\nTone/Style: ${toneInstruction}${customNote}\n\nText to translate:\n${text}`;
+
+  try {
+    const result = await callOpenAI(systemPrompt, userPrompt, 2000, false);
+    res.json({ success: true, translation: result.trim(), targetLang, tone });
+  } catch (e) {
+    const errDetail = e.response?.data?.error?.message || e.message;
+    console.error('[Translate Error]', errDetail);
+    res.status(500).json({ error: errDetail });
+  }
+});
+
+// ── POST /translate-bulk ──────────────────────────────────────────────────────
+router.post('/translate-bulk', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { items, targetLang, tone, customInstruction } = req.body;
+  if (!items || !Array.isArray(items) || !targetLang) {
+    return res.status(400).json({ error: 'Thiếu items hoặc targetLang' });
+  }
+  if (items.length > 20) return res.status(400).json({ error: 'Tối đa 20 đoạn mỗi lần' });
+
+  const LANG_NAMES = {
+    vi: 'Vietnamese', en: 'English', zh: 'Chinese (Simplified)', ko: 'Korean',
+    ja: 'Japanese', th: 'Thai', id: 'Indonesian', fr: 'French', de: 'German',
+    es: 'Spanish', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', hi: 'Hindi'
+  };
+
+  const TONE_PROMPTS = {
+    natural: 'Use natural, everyday language.',
+    sales: 'Use persuasive sales language with urgency and power words.',
+    formal: 'Use formal, professional business language.',
+    friendly: 'Use warm, friendly, conversational tone.',
+    luxury: 'Use premium luxury brand language, sophisticated and elegant.',
+    viral: 'Use viral social media language, energetic and attention-grabbing.',
+    empathy: 'Use empathetic, caring language that acknowledges pain points.',
+    urgent: 'Create extreme urgency and FOMO with scarcity signals.'
+  };
+
+  const targetLangName = LANG_NAMES[targetLang] || targetLang;
+  const toneInstruction = TONE_PROMPTS[tone] || TONE_PROMPTS.natural;
+  const customNote = customInstruction ? `\nAdditional instruction: ${customInstruction}` : '';
+
+  const systemPrompt = `You are an expert translator specializing in e-commerce and digital marketing. Translate each numbered item to ${targetLangName} with this tone: ${toneInstruction}${customNote}\n\nReturn ONLY a JSON array of translated strings in the same order. Example: ["translation 1", "translation 2"]`;
+
+  const userPrompt = `Translate these ${items.length} items:\n${items.map((t, i) => `${i+1}. ${t}`).join('\n')}`;
+
+  try {
+    const result = await callOpenAI(systemPrompt, userPrompt, 3000, false);
+    let translations;
+    try {
+      translations = safeParseJSON(result);
+      if (!Array.isArray(translations)) throw new Error('Not array');
+    } catch {
+      translations = result.split('\n').filter(l => l.trim()).map(l => l.replace(/^\d+\.\s*/, '').trim());
+    }
+    res.json({ success: true, translations, targetLang, tone });
+  } catch (e) {
+    const errDetail = e.response?.data?.error?.message || e.message;
+    console.error('[Translate Bulk Error]', errDetail);
+    res.status(500).json({ error: errDetail });
+  }
+});
+
 module.exports = router;
