@@ -296,7 +296,7 @@
         <span>Live</span>
       </div>
       <button class="btn secondary" onclick="openSetupModal()" style="font-size:12px">
-        <i class="bi bi-gear"></i> Cài đặt Server
+        <i class="bi bi-key"></i> Nhập Token
       </button>
       <button class="btn primary" onclick="syncPages()" id="syncBtn" style="font-size:12px">
         <i class="bi bi-arrow-repeat"></i> Đồng bộ Pages
@@ -395,7 +395,7 @@
               <button onclick="loadConversationsDirect(true)" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;padding:2px 4px;font-size:13px" title="Tải lại">
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
-              <select id="convPageFilter" onchange="loadConversationsDirect(true)" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;outline:none">
+              <select id="convPageFilter" onchange="filterConversations()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;outline:none">
                 <option value="">Tất cả Pages</option>
               </select>
             </div>
@@ -569,25 +569,26 @@
 <!-- ══ Modal: Setup Server ══ -->
 <div class="modal-overlay" id="setupModal">
   <div class="modal">
-    <div class="modal-title"><i class="bi bi-server"></i> Cài đặt kết nối Server</div>
-    <div class="form-group">
-      <label class="form-label">Server URL <span style="color:#f87171">*</span></label>
-      <input type="url" class="form-input" id="serverUrl" placeholder="https://api.yourdomain.com">
-      <div class="form-hint">URL của backend server đang chạy GenzTech API</div>
+    <div class="modal-title"><i class="bi bi-key"></i> Nhập Facebook Access Token</div>
+    <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,.6);line-height:1.7">
+      <i class="bi bi-info-circle" style="color:#00d4ff"></i> Chỉ cần nhập <strong style="color:#fff">Facebook Access Token</strong> là đủ. AI backend đã được cấu hình sẵn.
     </div>
     <div class="form-group">
       <label class="form-label">Facebook Access Token <span style="color:#f87171">*</span></label>
-      <input type="text" class="form-input" id="fbTokenInput" placeholder="EAALeRpq...">
-      <div class="form-hint">Token cần quyền: pages_messaging, pages_show_list, pages_manage_metadata</div>
+      <input type="text" class="form-input" id="fbTokenInput" placeholder="EAALeRpq..." autocomplete="off">
+      <div class="form-hint">Token cần quyền: <strong>pages_messaging</strong>, <strong>pages_show_list</strong>, <strong>pages_manage_metadata</strong></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Webhook Verify Token</label>
-      <input type="text" class="form-input" id="verifyTokenInput" placeholder="genztech_webhook_2024" value="genztech_webhook_2024">
-      <div class="form-hint">Phải khớp với FB_WEBHOOK_VERIFY_TOKEN trong .env của server</div>
+    <div style="margin-bottom:14px">
+      <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="font-size:12px;color:#00d4ff;display:inline-flex;align-items:center;gap:5px">
+        <i class="bi bi-box-arrow-up-right"></i> Lấy token tại Facebook Graph API Explorer
+      </a>
     </div>
+    <!-- Hidden fields for backward compat -->
+    <input type="hidden" id="serverUrl" value="">
+    <input type="hidden" id="verifyTokenInput" value="genztech_webhook_2024">
     <div class="modal-footer">
       <button class="btn secondary" onclick="closeModal('setupModal')">Hủy</button>
-      <button class="btn primary" onclick="saveSetup()"><i class="bi bi-check2"></i> Lưu & Kết nối</button>
+      <button class="btn primary" onclick="saveSetupSimple()"><i class="bi bi-check2"></i> Lưu & Tải Pages</button>
     </div>
   </div>
 </div>
@@ -711,42 +712,28 @@ async function checkServerStatus() {
 // SETUP
 // ═══════════════════════════════════════════════════════
 function openSetupModal() {
-  document.getElementById('serverUrl').value = SERVER_URL;
   document.getElementById('fbTokenInput').value = FB_TOKEN;
-  document.getElementById('verifyTokenInput').value = VERIFY_TOKEN;
   openModal('setupModal');
 }
 
-async function saveSetup() {
-  const url = document.getElementById('serverUrl').value.trim().replace(/\/$/, '');
+// Simplified setup - only Facebook Token needed
+async function saveSetupSimple() {
   const token = document.getElementById('fbTokenInput').value.trim();
-  const vToken = document.getElementById('verifyTokenInput').value.trim();
+  if (!token) return showToast('Vui lòng nhập Facebook Access Token', 'error');
 
-  if (!url) return showToast('Vui lòng nhập Server URL', 'error');
-  if (!token) return showToast('Vui lòng nhập Facebook Token', 'error');
-
-  SERVER_URL = url;
   FB_TOKEN = token;
-  VERIFY_TOKEN = vToken || 'genztech_webhook_2024';
-
-  localStorage.setItem('HA_SERVER_URL', SERVER_URL);
   localStorage.setItem('HA_FB_TOKEN', FB_TOKEN);
-  localStorage.setItem('HA_VERIFY_TOKEN', VERIFY_TOKEN);
   localStorage.setItem('FB_TOKEN_MANUAL', FB_TOKEN);
 
-  // Cập nhật UI
-  document.getElementById('webhookUrl').textContent = `${SERVER_URL}/api/human-agent/webhook`;
-  document.getElementById('verifyTokenDisplay').textContent = VERIFY_TOKEN;
-
   closeModal('setupModal');
+  showToast('Đang tải danh sách Pages...', 'info');
+  await loadPagesDirect();
+  startPolling();
+}
 
-  const ok = await checkServerStatus();
-  if (ok) {
-    showToast('Đã lưu cài đặt và kết nối server thành công!', 'success');
-    await syncPages();
-  } else {
-    showToast('Đã lưu cài đặt nhưng không kết nối được server', 'error');
-  }
+// Keep backward compat
+async function saveSetup() {
+  return saveSetupSimple();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -964,12 +951,19 @@ function renderConvList(convs) {
 
 function filterConversations() {
   const q = document.getElementById('convSearch').value.toLowerCase();
-  const filtered = allConversations.filter(c =>
-    (c.userName || '').toLowerCase().includes(q) ||
-    c.userId.toLowerCase().includes(q) ||
-    (c.lastMessage || '').toLowerCase().includes(q) ||
-    (c.pageName || '').toLowerCase().includes(q)
-  );
+  const pageFilter = document.getElementById('convPageFilter')?.value;
+  const filtered = allConversations.filter(c => {
+    // Filter by page
+    if (pageFilter && c.pageId !== pageFilter) return false;
+    // Filter by search text
+    if (q) {
+      return (c.userName || '').toLowerCase().includes(q) ||
+        (c.userId || '').toLowerCase().includes(q) ||
+        (c.lastMessage || '').toLowerCase().includes(q) ||
+        (c.pageName || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
   renderConvList(filtered);
 }
 
@@ -1647,54 +1641,88 @@ async function loadConversationsDirect(showLoading = true) {
   const el = document.getElementById('convList');
   if (showLoading && el) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
 
-  // Determine which pages to load
-  let pagesToLoad = [];
-  const pageFilterVal = document.getElementById('convPageFilter')?.value;
-  if (pageFilterVal) {
-    const p = allPages.find(p => p.pageId === pageFilterVal);
-    if (p) pagesToLoad = [p];
-  } else if (selectedConvPageId && !pageFilterVal) {
-    // Load all pages if no filter selected
-    pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 15);
-  } else {
-    // Load from all pages (limit to first 15 to avoid too many requests)
-    pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 15);
-  }
-
-  if (!pagesToLoad.length) {
-    if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chọn Page để xem hội thoại</p></div>';
+  const userToken = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL');
+  if (!userToken || !allPages.length) {
+    if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chưa có token hoặc Pages</p></div>';
     return;
   }
 
   try {
     allConversations = [];
-    for (const page of pagesToLoad) {
-      try {
-        const url = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,message_count,unread_count,participants&limit=30&access_token=${page.accessToken}`;
-        const r = await fetch(url);
-        const d = await r.json();
-        if (d.error || !d.data) continue;
-        const convs = (d.data || []).map(c => {
-          const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
-          return {
-            convId: c.id,
-            userId: customer.id || c.id,
-            userName: customer.name || '',
-            lastMessage: c.snippet || '',
-            updatedAt: c.updated_time,
-            lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
-            unread: c.unread_count || 0,
-            unreadCount: c.unread_count || 0,
-            pageId: page.pageId,
-            pageName: page.pageName,
-            fbConvId: c.id,
-            accessToken: page.accessToken,
-            isPending: false
-          };
+    // Dùng 1 lệnh /me/conversations để lấy tất cả conversations từ tất cả pages
+    // Facebook API trả về conversations từ tất cả pages mà token có quyền
+    const url = `https://graph.facebook.com/v19.0/me/conversations?fields=id,snippet,updated_time,unread_count,participants&limit=100&access_token=${userToken}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    
+    if (d.error || !d.data) {
+      // Fallback: gọi từng page nếu /me/conversations không hoạt động
+      const pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 20);
+      for (const page of pagesToLoad) {
+        try {
+          const pageUrl = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,unread_count,participants&limit=30&access_token=${page.accessToken}`;
+          const pr = await fetch(pageUrl);
+          const pd = await pr.json();
+          if (pd.error || !pd.data) continue;
+          const convs = (pd.data || []).map(c => {
+            const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
+            return {
+              convId: c.id, userId: customer.id || c.id, userName: customer.name || '',
+              lastMessage: c.snippet || '', updatedAt: c.updated_time,
+              lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
+              unread: c.unread_count || 0, unreadCount: c.unread_count || 0,
+              pageId: page.pageId, pageName: page.pageName,
+              fbConvId: c.id, accessToken: page.accessToken, isPending: false
+            };
+          });
+          allConversations.push(...convs);
+        } catch(e) { /* skip */ }
+      }
+    } else {
+      // Thành công với /me/conversations - map với page info
+      for (const c of (d.data || [])) {
+        const participants = c.participants?.data || [];
+        // Tìm page participant (match với allPages)
+        const pageParticipant = participants.find(p => allPages.some(pg => pg.pageId === p.id));
+        const customerParticipant = participants.find(p => !allPages.some(pg => pg.pageId === p.id));
+        const page = pageParticipant ? allPages.find(pg => pg.pageId === pageParticipant.id) : null;
+        if (!page) continue; // Bỏ qua nếu không tìm được page
+        allConversations.push({
+          convId: c.id, userId: customerParticipant?.id || c.id,
+          userName: customerParticipant?.name || '',
+          lastMessage: c.snippet || '', updatedAt: c.updated_time,
+          lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
+          unread: c.unread_count || 0, unreadCount: c.unread_count || 0,
+          pageId: page.pageId, pageName: page.pageName,
+          fbConvId: c.id, accessToken: page.accessToken, isPending: false
         });
-        allConversations.push(...convs);
-      } catch(e) { /* skip this page */ }
+      }
+      // Nếu /me/conversations trả về ít kết quả, bổ sung từ từng page
+      if (allConversations.length < 10) {
+        const pagesToLoad = allPages.filter(p => p.accessToken).slice(0, 10);
+        for (const page of pagesToLoad) {
+          try {
+            const pageUrl = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,unread_count,participants&limit=30&access_token=${page.accessToken}`;
+            const pr = await fetch(pageUrl);
+            const pd = await pr.json();
+            if (pd.error || !pd.data) continue;
+            for (const c of pd.data) {
+              if (allConversations.some(ex => ex.convId === c.id)) continue; // Skip duplicates
+              const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
+              allConversations.push({
+                convId: c.id, userId: customer.id || c.id, userName: customer.name || '',
+                lastMessage: c.snippet || '', updatedAt: c.updated_time,
+                lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
+                unread: c.unread_count || 0, unreadCount: c.unread_count || 0,
+                pageId: page.pageId, pageName: page.pageName,
+                fbConvId: c.id, accessToken: page.accessToken, isPending: false
+              });
+            }
+          } catch(e) { /* skip */ }
+        }
+      }
     }
+    
     // Deduplicate by convId
     const seen = new Set();
     allConversations = allConversations.filter(c => {
@@ -1704,7 +1732,14 @@ async function loadConversationsDirect(showLoading = true) {
     });
     // Sort by latest
     allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    renderConvList(allConversations);
+    
+    // Apply page filter if selected
+    const pageFilterVal = document.getElementById('convPageFilter')?.value;
+    const toRender = pageFilterVal 
+      ? allConversations.filter(c => c.pageId === pageFilterVal)
+      : allConversations;
+    renderConvList(toRender);
+    
     // Update stats
     const unread = allConversations.filter(c => c.unreadCount > 0).length;
     const statConvs = document.getElementById('stat-convs');
@@ -2066,7 +2101,7 @@ async function openConfigPageDirect(pageId) {
         <p>✅ <strong style="color:#fff">Thêm Q&A rules</strong> để AI trả lời chính xác hơn theo từng chủ đề</p>
         <p>✅ <strong style="color:#fff">Tiếp quản</strong> bất kỳ lúc nào trong tab Hội thoại → AI sẽ dừng trả lời hội thoại đó</p>
         <p>✅ <strong style="color:#fff">Human Agent Tag</strong> cho phép nhắn tin trong 7 ngày sau lần tương tác cuối</p>
-        <p style="margin-top:8px;color:rgba(255,165,0,.7)"><i class="bi bi-exclamation-triangle"></i> Cần có <strong>OpenAI API Key</strong> trong Cài đặt để AI hoạt động</p>
+        <p style="margin-top:8px;color:rgba(34,197,94,.7)"><i class="bi bi-check-circle"></i> <strong>AI backend đã được cấu hình sẵn</strong> — chỉ cần nhập Facebook Access Token là AI sẵn sàng hoạt động</p>
       </div>
     </div>`;
 }
@@ -2221,53 +2256,74 @@ async function testAIDirect(pageId) {
   const container = document.getElementById(`testMessages_${pageId}`);
   if (!container) return;
   container.innerHTML += `<div class="test-msg user">${escHtml(msg)}</div>`;
-  container.innerHTML += `<div class="test-msg ai" id="testThinking"><span class="loading-spinner"></span> Đang suy nghĩ...</div>`;
+  const thinkingId = 'testThinking_' + Date.now();
+  container.innerHTML += `<div class="test-msg ai" id="${thinkingId}"><span class="loading-spinner"></span> Đang suy nghĩ...</div>`;
   container.scrollTop = container.scrollHeight;
-  // Direct OpenAI (server is optional)
-  const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
-  if (!openaiKey) {
-    document.getElementById('testThinking')?.remove();
-    container.innerHTML += `<div class="test-msg ai" style="color:#f97316">Cần OpenAI API Key. Vào Cài đặt để thêm.</div>`;
-    return;
-  }
+
+  const page = allPages.find(p => p.pageId === pageId);
   const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
   const cfg = savedConfigs[pageId] || {};
-  const page = allPages.find(p => p.pageId === pageId);
-  let context = '';
-  if (cfg.documents?.length) {
-    context += '\n\n=== TÀI LIỆU KIẾN THỨC ===\n';
-    cfg.documents.forEach(d => { context += `\n--- ${d.name} ---\n${(d.content || '').substring(0, 6000)}\n`; });
-  }
-  if (cfg.rules?.length) {
-    context += '\n\n=== QUY TẮC Q&A ===\n';
-    cfg.rules.forEach(r => { context += `Hỏi: ${r.trigger}\nTrả lời: ${r.response}\n\n`; });
-  }
-  const systemPrompt = (cfg.aiConfig?.systemPrompt || `Bạn là nhân viên CSKH của ${page?.pageName || 'cửa hàng'}. Hãy trả lời lịch sự, ngắn gọn và chính xác bằng tiếng Việt.`) + context;
+  
+  // Đầu tiên thử gọi qua backend Railway (không cần user nhập API key)
+  const BACKEND = 'https://genztech-production.up.railway.app';
   try {
-    // Try OpenAI API directly
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Sync config to backend first
+    if (page?.accessToken) {
+      await fetch(`${BACKEND}/api/human-agent/pages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-page-token': FB_TOKEN || '' },
+        body: JSON.stringify({
+          pageId, pageName: page.pageName, accessToken: page.accessToken,
+          enabled: page.enabled || false,
+          systemPrompt: cfg.aiConfig?.systemPrompt || '',
+          documents: (cfg.documents || []).map(d => ({ name: d.name, content: (d.content || '').substring(0, 5000) })),
+          rules: cfg.rules || []
+        })
+      }).catch(() => {});
+    }
+    // Call test endpoint
+    const r = await fetch(`${BACKEND}/api/human-agent/pages/${pageId}/test`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: msg }],
-        max_tokens: cfg.aiConfig?.maxTokens || 500, temperature: 0.7
-      })
+      headers: { 'Content-Type': 'application/json', 'x-page-token': FB_TOKEN || '' },
+      body: JSON.stringify({ message: msg })
     });
     const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    document.getElementById('testThinking')?.remove();
-    const aiText = d.choices[0].message.content;
+    if (d.error) throw new Error(d.error);
+    document.getElementById(thinkingId)?.remove();
+    const aiText = d.reply || d.message || 'Không có phản hồi';
     container.innerHTML += `<div class="test-msg ai">${escHtml(aiText).replace(/\n/g, '<br>')}</div>`;
   } catch(e) {
-    document.getElementById('testThinking')?.remove();
-    let errMsg = e.message;
-    if (errMsg.includes('401') || errMsg.includes('Incorrect API key')) {
-      errMsg = 'API Key không hợp lệ. Kiểm tra lại trong Cài đặt.';
-    } else if (errMsg.includes('429')) {
-      errMsg = 'Quá nhiều yêu cầu. Vui lòng thử lại sau.';
+    // Fallback: thử OpenAI trực tiếp nếu có key
+    const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
+    if (openaiKey) {
+      try {
+        let context = '';
+        if (cfg.documents?.length) {
+          context += '\n\n=== TÀI LIỆU KIẼN THỨC ===\n';
+          cfg.documents.forEach(d => { context += `\n--- ${d.name} ---\n${(d.content || '').substring(0, 4000)}\n`; });
+        }
+        if (cfg.rules?.length) {
+          context += '\n\n=== QUY TẮc Q&A ===\n';
+          cfg.rules.forEach(r => { context += `Hỏi: ${r.trigger}\nTrả lời: ${r.response}\n\n`; });
+        }
+        const systemPrompt = (cfg.aiConfig?.systemPrompt || `Bạn là nhân viên CSKH của ${page?.pageName || 'cửa hàng'}. Hãy trả lời lịch sự, ngắn gọn bằng tiếng Việt.`) + context;
+        const r2 = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: msg }], max_tokens: cfg.aiConfig?.maxTokens || 500, temperature: 0.7 })
+        });
+        const d2 = await r2.json();
+        if (d2.error) throw new Error(d2.error.message);
+        document.getElementById(thinkingId)?.remove();
+        container.innerHTML += `<div class="test-msg ai">${escHtml(d2.choices[0].message.content).replace(/\n/g, '<br>')}</div>`;
+      } catch(e2) {
+        document.getElementById(thinkingId)?.remove();
+        container.innerHTML += `<div class="test-msg ai" style="color:#f87171">Lỗi: ${escHtml(e2.message)}</div>`;
+      }
+    } else {
+      document.getElementById(thinkingId)?.remove();
+      container.innerHTML += `<div class="test-msg ai" style="color:#f97316">Backend không khả dụng: ${escHtml(e.message)}</div>`;
     }
-    container.innerHTML += `<div class="test-msg ai" style="color:#f87171">Lỗi: ${escHtml(errMsg)}</div>`;
   }
   container.scrollTop = container.scrollHeight;
 }
@@ -2389,61 +2445,70 @@ async function checkAndAutoRespond() {
 }
 
 async function generateAIResponse(page, userMessage, recentMsgs = []) {
-  const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
-  if (!openaiKey) return null;
-  
+  const BACKEND = 'https://genztech-production.up.railway.app';
   const savedConfigs = JSON.parse(localStorage.getItem('HA_PAGE_CONFIGS') || '{}');
   const cfg = savedConfigs[page.pageId] || {};
   
-  // Build context from documents and rules
-  let context = '';
-  if (cfg.documents?.length) {
-    context += '\n\n=== TÀI LIỆU KIẾN THỨC ===\n';
-    cfg.documents.forEach(d => { 
-      context += `\n--- ${d.name} ---\n${(d.content || '').substring(0, 4000)}\n`; 
-    });
-  }
-  if (cfg.rules?.length) {
-    context += '\n\n=== QUY TẮC Q&A ===\n';
-    cfg.rules.forEach(r => { context += `Hỏi: ${r.trigger}\nTrả lời: ${r.response}\n\n`; });
-  }
-  
-  const systemPrompt = (cfg.aiConfig?.systemPrompt || 
-    `Bạn là nhân viên CSKH của ${page.pageName}. Hãy trả lời lịch sự, ngắn gọn và chính xác bằng tiếng Việt. Không đề cập đến việc bạn là AI.`) + context;
-  
-  // Build conversation history
-  const messages = [{ role: 'system', content: systemPrompt }];
-  // Add recent messages as context (reversed to chronological order)
-  const historyMsgs = [...recentMsgs].reverse().slice(-4);
-  historyMsgs.forEach(m => {
-    if (m.from?.id === page.pageId) {
-      messages.push({ role: 'assistant', content: m.message || '' });
-    } else {
-      messages.push({ role: 'user', content: m.message || '' });
-    }
-  });
-  // Add current message if not already in history
-  if (!historyMsgs.find(m => m.message === userMessage && m.from?.id !== page.pageId)) {
-    messages.push({ role: 'user', content: userMessage });
-  }
-  
+  // Thử gọi qua backend Railway trước (không cần user nhập API key)
   try {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Sync config to backend
+    await fetch(`${BACKEND}/api/human-agent/pages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+      headers: { 'Content-Type': 'application/json', 'x-page-token': FB_TOKEN || '' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages,
-        max_tokens: cfg.aiConfig?.maxTokens || 300,
-        temperature: 0.7
+        pageId: page.pageId, pageName: page.pageName, accessToken: page.accessToken,
+        enabled: true,
+        systemPrompt: cfg.aiConfig?.systemPrompt || '',
+        documents: (cfg.documents || []).map(d => ({ name: d.name, content: (d.content || '').substring(0, 5000) })),
+        rules: cfg.rules || []
       })
     });
+    // Call test endpoint with user message
+    const r = await fetch(`${BACKEND}/api/human-agent/pages/${page.pageId}/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-page-token': FB_TOKEN || '' },
+      body: JSON.stringify({ message: userMessage })
+    });
     const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    return d.choices[0].message.content;
+    if (d.error) throw new Error(d.error);
+    return d.reply || null;
   } catch(e) {
-    console.warn('OpenAI error:', e.message);
-    return null;
+    // Fallback: thử OpenAI trực tiếp nếu có key
+    const openaiKey = localStorage.getItem('HA_OPENAI_KEY') || localStorage.getItem('OPENAI_KEY');
+    if (!openaiKey) return null;
+    
+    let context = '';
+    if (cfg.documents?.length) {
+      context += '\n\n=== TÀI LIỆU KIẼN THỨC ===\n';
+      cfg.documents.forEach(d => { context += `\n--- ${d.name} ---\n${(d.content || '').substring(0, 4000)}\n`; });
+    }
+    if (cfg.rules?.length) {
+      context += '\n\n=== QUY TẮc Q&A ===\n';
+      cfg.rules.forEach(r => { context += `Hỏi: ${r.trigger}\nTrả lời: ${r.response}\n\n`; });
+    }
+    const systemPrompt = (cfg.aiConfig?.systemPrompt || 
+      `Bạn là nhân viên CSKH của ${page.pageName}. Hãy trả lời lịch sự, ngắn gọn bằng tiếng Việt.`) + context;
+    const messages = [{ role: 'system', content: systemPrompt }];
+    const historyMsgs = [...recentMsgs].reverse().slice(-4);
+    historyMsgs.forEach(m => {
+      messages.push({ role: m.from?.id === page.pageId ? 'assistant' : 'user', content: m.message || '' });
+    });
+    if (!historyMsgs.find(m => m.message === userMessage && m.from?.id !== page.pageId)) {
+      messages.push({ role: 'user', content: userMessage });
+    }
+    try {
+      const r2 = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: 'gpt-4o-mini', messages, max_tokens: cfg.aiConfig?.maxTokens || 300, temperature: 0.7 })
+      });
+      const d2 = await r2.json();
+      if (d2.error) throw new Error(d2.error.message);
+      return d2.choices[0].message.content;
+    } catch(e2) {
+      console.warn('AI fallback error:', e2.message);
+      return null;
+    }
   }
 }
 
