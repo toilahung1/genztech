@@ -1492,6 +1492,9 @@ async function fetchAllFBPages(token) {
   return pages;
 }
 
+// Alias: renderPageList -> renderPageGrid (backward compat)
+function renderPageList() { renderPageGrid(); }
+
 // Override syncPages — always use direct FB API, server is optional
 syncPages = async function() {
   const btn = document.getElementById('syncBtn');
