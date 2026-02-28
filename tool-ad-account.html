@@ -1079,6 +1079,7 @@ function renderCampaigns(data) {
 function selectCampaign(campaignId, campaignName) {
   selectedCampaignId = campaignId;
   selectedCampaignName = campaignName;
+  setLoading('adsets'); // Hiển spinner trước khi switch tab
   switchTab('adsets');
   loadAdsets(campaignId);
 }
@@ -1144,6 +1145,7 @@ function renderAdsets(data) {
 function selectAdset(adsetId, adsetName) {
   selectedAdsetId = adsetId;
   selectedAdsetName = adsetName;
+  setLoading('ads'); // Hiển spinner trước khi switch tab
   switchTab('ads');
   loadAds(adsetId);
 }
