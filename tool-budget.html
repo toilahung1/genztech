@@ -142,6 +142,20 @@ textarea.form-control{resize:vertical;min-height:70px}
 .toast-item.error{border-left:3px solid #ef4444}
 .toast-item.info{border-left:3px solid #00d4ff}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+/* SSE streaming progress */
+.stream-progress{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:12px;padding:16px 20px;margin-bottom:16px}
+.stream-progress-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.stream-progress-title{font-size:13px;font-weight:700;color:#00d4ff}
+.stream-steps{display:flex;gap:8px}
+.stream-step{flex:1;text-align:center;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:600;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.35);transition:all .3s}
+.stream-step.active{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.3);color:#00d4ff}
+.stream-step.done{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#4ade80}
+.stream-step i{display:block;font-size:16px;margin-bottom:3px}
+.stream-label{font-size:12px;color:rgba(255,255,255,.5);margin-top:8px;min-height:18px;transition:all .3s}
+.stream-bar-wrap{background:rgba(255,255,255,.06);border-radius:4px;height:4px;margin-top:10px;overflow:hidden}
+.stream-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,#1877f2,#00d4ff);transition:width .5s ease;width:0%}
+.step-result-card{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.charts-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -690,72 +704,182 @@ async function runAnalysis() {
   renderStats(kpis);
   renderCharts(kpis);
 
-  document.getElementById('aiResult').innerHTML = `<div class="ai-loading"><div class="spin"></div><p>AI đang phân tích chuyên sâu theo ngành <strong>${industry}</strong>...</p></div>`;
-  document.getElementById('forecastResult').innerHTML = `<div class="ai-loading"><div class="spin"></div><p>Đang tính toán dự báo 3 tháng tới...</p></div>`;
-
   const btn = document.getElementById('btnAnalyze');
   btn.disabled = true;
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang phân tích...';
 
+  // Hiển thị SSE progress UI
+  document.getElementById('aiResult').innerHTML = `
+    <div class="stream-progress" id="streamProgress">
+      <div class="stream-progress-header">
+        <div class="spin" style="width:20px;height:20px;border-width:2px;margin:0"></div>
+        <div class="stream-progress-title">AI đang phân tích theo ngành <strong>${industry}</strong>...</div>
+      </div>
+      <div class="stream-steps">
+        <div class="stream-step" id="sstep1"><i class="bi bi-bar-chart"></i>Tổng quan &amp; KPI</div>
+        <div class="stream-step" id="sstep2"><i class="bi bi-lightbulb"></i>Đề xuất SMART</div>
+        <div class="stream-step" id="sstep3"><i class="bi bi-graph-up"></i>Dự báo 3 tháng</div>
+      </div>
+      <div class="stream-label" id="streamLabel">Chuẩn bị kết nối...</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" id="streamBar"></div></div>
+    </div>
+    <div id="streamResults"></div>`;
+  document.getElementById('forecastResult').innerHTML = `<div class="ai-loading"><div class="spin"></div><p>Đang chờ dự báo...</p></div>`;
+
+  const metrics = {
+    tong_chi_phi: kpis.spend, tong_doanh_thu: kpis.revenue,
+    luot_hien_thi: kpis.impressions, luot_nhap: kpis.clicks,
+    chuyen_doi: kpis.conversions, tan_suat: kpis.frequency,
+    gia_tri_don_hang_tb: kpis.aov, gia_von: kpis.cogs,
+    bien_phi_khac: kpis.otherCost, luot_tiep_can: kpis.reach,
+    them_vao_gio: kpis.addToCart,
+    ty_le_bo_gio: kpis.cartAbandonment.toFixed(1) + '%',
+    ngan_sach_thang_toi: +document.getElementById('nextBudget').value || kpis.spend,
+    cpm: Math.round(kpis.cpm), ctr: kpis.ctr.toFixed(2) + '%',
+    cpc: Math.round(kpis.cpc), cvr: kpis.cvr.toFixed(2) + '%',
+    cpa: Math.round(kpis.cpa), roas: kpis.roas.toFixed(2),
+    loi_nhuan: Math.round(kpis.profit), roi: kpis.roi.toFixed(1) + '%'
+  };
+
+  const payload = JSON.stringify({
+    metrics, industry,
+    objective: document.getElementById('objective').value,
+    currency: 'VNĐ',
+    yourBusiness: document.getElementById('businessDesc').value,
+    creative_type: document.getElementById('creativeType').value,
+    landing_page: document.getElementById('landingPage').value,
+    biz_stage: document.getElementById('bizStage').value,
+    main_problem: document.getElementById('mainProblem').value,
+    ad_set_count: document.getElementById('adSetCount').value,
+    creative_count: document.getElementById('creativeCount').value,
+    extra_notes: document.getElementById('extraNotes').value,
+    duration_days: document.getElementById('duration').value
+  });
+
+  // Hàm cập nhật UI progress
+  const setStep = (step, state) => { const el = document.getElementById('sstep'+step); if(el) el.className='stream-step '+state; };
+  const setLabel = (txt) => { const el = document.getElementById('streamLabel'); if(el) el.textContent=txt; };
+  const setBar = (pct) => { const el = document.getElementById('streamBar'); if(el) el.style.width=pct+'%'; };
+
+  let step1Data=null, step2Data=null, step3Data=null;
+
+  function handleSSEEvent(event, data) {
+    switch(event) {
+      case 'progress':
+        setStep(data.step, 'active');
+        setLabel(data.label||'');
+        setBar(((data.step-1)/data.total)*80);
+        break;
+      case 'chunk': break; // streaming indicator (không render JSON fragment)
+      case 'step_done':
+        setStep(data.step, 'done');
+        setBar((data.step/3)*90);
+        if (data.step===1) {
+          step1Data = data.data;
+          const r = document.getElementById('streamResults');
+          if(r) r.innerHTML = `<div class="step-result-card">${buildOverviewHTML(step1Data, kpis)}</div>`;
+          setLabel('✔ Tổng quan xong — Đang tạo đề xuất...');
+        }
+        if (data.step===2) {
+          step2Data = data.data;
+          const r = document.getElementById('streamResults');
+          if(r && step2Data.recommendations) r.innerHTML += `<div class="step-result-card">${buildRecommendationsHTML(step2Data.recommendations)}</div>`;
+          setLabel('✔ Đề xuất xong — Đang tính toán dự báo...');
+        }
+        if (data.step===3) { step3Data=data.data; setLabel('✔ Hoàn tất!'); setBar(100); }
+        break;
+      case 'done': {
+        const prog = document.getElementById('streamProgress');
+        if(prog) prog.style.display='none';
+        const merged = {...(step1Data||{}), ...(step2Data||{}), ...(step3Data||{})};
+        renderAIResult(merged, kpis);
+        if(step3Data) renderForecast(step3Data, kpis);
+        else document.getElementById('forecastResult').innerHTML = renderLocalForecast(kpis);
+        toast('Phân tích AI hoàn tất!', 'success');
+        break;
+      }
+      case 'error':
+        document.getElementById('aiResult').innerHTML = `<div style="text-align:center;padding:30px;color:#f87171"><i class="bi bi-exclamation-triangle" style="font-size:32px;display:block;margin-bottom:10px"></i><p>${data.message}</p></div>`;
+        document.getElementById('forecastResult').innerHTML = renderLocalForecast(kpis);
+        toast('Lỗi AI: '+data.message, 'error');
+        break;
+    }
+  }
+
   try {
-    const metrics = {
-      tong_chi_phi: kpis.spend,
-      tong_doanh_thu: kpis.revenue,
-      luot_hien_thi: kpis.impressions,
-      luot_nhap: kpis.clicks,
-      chuyen_doi: kpis.conversions,
-      tan_suat: kpis.frequency,
-      gia_tri_don_hang_tb: kpis.aov,
-      gia_von: kpis.cogs,
-      bien_phi_khac: kpis.otherCost,
-      luot_tiep_can: kpis.reach,
-      them_vao_gio: kpis.addToCart,
-      ty_le_bo_gio: kpis.cartAbandonment.toFixed(1) + '%',
-      ngan_sach_thang_toi: +document.getElementById('nextBudget').value || kpis.spend,
-      cpm: Math.round(kpis.cpm),
-      ctr: kpis.ctr.toFixed(2) + '%',
-      cpc: Math.round(kpis.cpc),
-      cvr: kpis.cvr.toFixed(2) + '%',
-      cpa: Math.round(kpis.cpa),
-      roas: kpis.roas.toFixed(2),
-      loi_nhuan: Math.round(kpis.profit),
-      loi_nhuan_rong: Math.round(kpis.profit),
-      roi: kpis.roi.toFixed(1) + '%'
-    };
-    const resp = await fetch(`${BACKEND}/api/ai/analyze-budget`, {
+    const resp = await fetch(`${BACKEND}/api/ai/analyze-budget/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        metrics,
-        industry,
-        objective: document.getElementById('objective').value,
-        currency: 'VNĐ',
-        yourBusiness: document.getElementById('businessDesc').value,
-        creative_type: document.getElementById('creativeType').value,
-        landing_page: document.getElementById('landingPage').value,
-        biz_stage: document.getElementById('bizStage').value,
-        main_problem: document.getElementById('mainProblem').value,
-        ad_set_count: document.getElementById('adSetCount').value,
-        creative_count: document.getElementById('creativeCount').value,
-        extra_notes: document.getElementById('extraNotes').value,
-        duration_days: document.getElementById('duration').value
-      })
-    });;
+      body: payload
+    });
+    if (!resp.ok) throw new Error(`Server lỗi: ${resp.status}`);
 
-    const data = await resp.json();
-    if (!data.success) throw new Error(data.error || 'Lỗi phân tích AI');
-
-    renderAIResult(data.analysis, kpis);
-    renderForecast(data.analysis, kpis);
-    toast('Phân tích AI hoàn tất!', 'success');
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      let evtName = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) { evtName = line.slice(7).trim(); }
+        else if (line.startsWith('data: ') && evtName) {
+          try { handleSSEEvent(evtName, JSON.parse(line.slice(6))); } catch {}
+          evtName = '';
+        }
+      }
+    }
   } catch (err) {
-    document.getElementById('aiResult').innerHTML = `<div style="text-align:center;padding:30px;color:#f87171"><i class="bi bi-exclamation-triangle" style="font-size:32px;display:block;margin-bottom:10px"></i><p>${err.message}</p></div>`;
+    document.getElementById('aiResult').innerHTML = `<div style="text-align:center;padding:30px;color:#f87171"><i class="bi bi-exclamation-triangle" style="font-size:32px;display:block;margin-bottom:10px"></i><p>${err.message}</p><p style="font-size:12px;color:rgba(255,255,255,.4);margin-top:6px">Kiểm tra kết nối hoặc thử lại sau.</p></div>`;
     document.getElementById('forecastResult').innerHTML = renderLocalForecast(kpis);
-    toast('Lỗi AI: ' + err.message, 'error');
+    toast('Lỗi kết nối: '+err.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-robot"></i> Phân Tích & Dự Báo AI';
+    btn.innerHTML = '<i class="bi bi-robot"></i> Phân Tích &amp; Dự Báo AI';
   }
+}
+
+// ─── Build HTML từng phần (dùng trong SSE streaming) ───────────────────────────
+function buildOverviewHTML(a, kpis) {
+  if (!a||a.raw) return `<pre style="font-size:12px;color:rgba(255,255,255,.6);white-space:pre-wrap;padding:20px">${a?.raw||''}</pre>`;
+  const scoreClass=(a.overview?.score>=70)?'score-good':(a.overview?.score>=40)?'score-avg':'score-bad';
+  const statusColor=a.overview?.status==='Tốt'?'#22c55e':a.overview?.status==='Trung bình'?'#f59e0b':'#ef4444';
+  let kpiHtml='';
+  if(a.kpi_analysis?.length){
+    kpiHtml=`<div class="kpi-grid">${a.kpi_analysis.map(k=>{
+      const cls=(k.status==='Tốt'||k.status==='Xuất sắc')?'kpi-good':k.status==='Trung bình'?'kpi-avg':'kpi-bad';
+      const vc=(k.status==='Tốt'||k.status==='Xuất sắc')?'#22c55e':k.status==='Trung bình'?'#f59e0b':'#ef4444';
+      return `<div class="kpi-item ${cls}"><div class="kpi-name">${k.kpi}</div><div class="kpi-val" style="color:${vc}">${k.value}</div><div class="kpi-bench">Benchmark ngành: ${k.benchmark_industry||'N/A'}</div><div class="kpi-comment">${k.comment}</div></div>`;
+    }).join('')}</div>`;
+  }
+  let swHtml='';
+  if(a.strengths?.length||a.weaknesses?.length){
+    swHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">
+      <div class="sw-box"><div class="sw-title str"><i class="bi bi-check-circle-fill"></i> Điểm Mạnh</div>${(a.strengths||[]).map(s=>{const p=typeof s==='string'?s:(s.point||'');const ev=typeof s==='object'&&s.evidence?`<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">${s.evidence}</div>`:'';return `<div class="sw-item"><span style="color:#4ade80">✓</span><div><strong>${p}</strong>${ev}</div></div>`;}).join('')}</div>
+      <div class="sw-box"><div class="sw-title weak"><i class="bi bi-x-circle-fill"></i> Điểm Yếu</div>${(a.weaknesses||[]).map(w=>{const p=typeof w==='string'?w:(w.point||'');const urg=typeof w==='object'&&w.urgency?`<span style="font-size:10px;background:rgba(239,68,68,.2);color:#f87171;padding:1px 5px;border-radius:3px;margin-left:4px">${w.urgency}</span>`:'';return `<div class="sw-item"><span style="color:#f87171">✗</span><div><strong>${p}</strong>${urg}</div></div>`;}).join('')}</div>
+    </div>`;
+  }
+  return `<div style="text-align:center;margin-bottom:20px">
+    <div class="score-circle ${scoreClass}">${a.overview?.score||'—'}<span style="font-size:12px;font-weight:500">/100</span></div>
+    <div style="font-size:18px;font-weight:700;color:${statusColor}">${a.overview?.status||''}</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:8px;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.7">${a.overview?.summary||''}</div>
+    ${a.industry_context?`<div style="margin-top:12px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:10px 16px;font-size:12.5px;color:rgba(255,255,255,.65);text-align:left;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.6"><i class="bi bi-info-circle" style="color:#00d4ff"></i> <strong>Đặc thù ngành ${a.industry_context?.industry||''}:</strong> ${a.industry_context?.note||a.industry_context}</div>`:''}
+  </div>${kpiHtml}${swHtml}`;
+}
+
+function buildRecommendationsHTML(recs) {
+  if(!recs?.length) return '';
+  return `<div style="margin-top:16px">
+    <div class="card-title"><i class="bi bi-lightbulb"></i> Đề Xuất Hành Động Cụ Thể</div>
+    ${recs.map(r=>{
+      const cls=r.priority==='Cao'?'rec-high':r.priority==='Trung bình'?'rec-mid':'rec-low';
+      const bc=r.priority==='Cao'?'rec-badge-high':r.priority==='Trung bình'?'rec-badge-mid':'rec-badge-low';
+      return `<div class="rec-item ${cls}"><div class="rec-header"><span class="rec-badge ${bc}">${r.priority}</span>${r.category?`<span class="rec-badge" style="background:rgba(0,212,255,.1);color:#00d4ff;margin-left:4px">${r.category}</span>`:''}<span class="rec-title">${r.title}</span></div><div class="rec-desc">${r.action||r.description||''}</div>${r.timeline?`<div style="font-size:11px;color:rgba(255,255,255,.38);margin-top:3px"><i class="bi bi-clock"></i> ${r.timeline}</div>`:''} ${r.expected_impact?`<div class="rec-impact"><i class="bi bi-arrow-up-right"></i> ${r.expected_impact}</div>`:''}</div>`;
+    }).join('')}
+  </div>`;
 }
 
 // ─── Render AI Result ─────────────────────────────────────────────────────────

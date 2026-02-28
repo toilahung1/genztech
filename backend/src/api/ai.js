@@ -4,7 +4,7 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// ─── Helper: gọi OpenAI ───────────────────────────────────────────────────────
+// ─── Helper: gọi OpenAI (non-stream) ──────────────────────────────────────────
 async function callOpenAI(systemPrompt, userPrompt, maxTokens = 2000, jsonMode = true) {
   const openaiKey = process.env.OPENAI_API_KEY;
   const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
@@ -23,9 +23,60 @@ async function callOpenAI(systemPrompt, userPrompt, maxTokens = 2000, jsonMode =
 
   const r = await axios.post(`${baseUrl}/chat/completions`, body, {
     headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
-    timeout: 25000
+    timeout: 55000
   });
   return r.data.choices[0].message.content;
+}
+
+// ─── Helper: gọi OpenAI với streaming, gửi từng chunk qua SSE ─────────────────────
+async function callOpenAIStreaming(systemPrompt, userPrompt, maxTokens, onChunk) {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+  if (!openaiKey) throw new Error('Chưa cấu hình OPENAI_API_KEY trên server');
+
+  const body = {
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    max_tokens: maxTokens,
+    temperature: 0.25,
+    stream: true,
+    response_format: { type: 'json_object' }
+  };
+
+  const resp = await axios.post(`${baseUrl}/chat/completions`, body, {
+    headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    responseType: 'stream',
+    timeout: 0 // không timeout khi stream
+  });
+
+  return new Promise((resolve, reject) => {
+    let fullText = '';
+    let buf = '';
+    resp.data.on('data', (chunk) => {
+      buf += chunk.toString();
+      const lines = buf.split('\n');
+      buf = lines.pop(); // giữ lại dòng chưa hoàn chỉnh
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const parsed = JSON.parse(trimmed.slice(6));
+            const delta = parsed.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              fullText += delta;
+              onChunk(delta); // gửi từng mảnh văn bản
+            }
+          } catch {}
+        }
+      }
+    });
+    resp.data.on('end', () => resolve(fullText));
+    resp.data.on('error', reject);
+  });
 }
 
 // ─── System Prompt v3: Phân tích Ngân sách Facebook Ads ──────────────────────
@@ -350,53 +401,324 @@ router.post('/generate', authMiddleware, async (req, res) => {
   }
 });
 
-// ─── POST /api/ai/analyze-budget (v3 - chuyên gia marketing) ─────────────────
-router.post('/analyze-budget', async (req, res) => {
+// ─── Helper: parse JSON an toàn ─────────────────────────────────────────────
+function safeParseJSON(raw) {
+  try { return JSON.parse(raw); } catch {}
+  try { return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()); } catch {}
+  return { raw };
+}
+
+// ─── Helper: tạo context ngắn gọn cho từng bước ──────────────────────────────
+function buildCampaignContext(metrics, industry, objective, currency, yourBusiness) {
+  return `NGÀNH: ${industry || 'Chưa xác định'} | MỤC TIÊU: ${objective || 'Chưa xác định'} | ĐVT: ${currency || 'VNĐ'}
+${yourBusiness ? `DN: ${yourBusiness}\n` : ''}DỮ LIỆU: ${JSON.stringify(metrics)}`;
+}
+
+// ─── GET /api/ai/analyze-budget/stream ───────────────────────────────────────
+// SSE streaming: phân tích 3 bước, stream từng bước về client ngay khi xong
+// Giải quyết hoàn toàn vấn đề timeout - kết nối giữ mãi cho đến khi xong
+router.post('/analyze-budget/stream', async (req, res) => {
+  const { metrics, industry, objective, currency, yourBusiness } = req.body;
+  if (!metrics) { res.status(400).json({ error: 'Thiếu dữ liệu metrics' }); return; }
+
+  // Thiết lập SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // tắt nginx buffering
+  res.flushHeaders();
+
+  // Helper gửi SSE event
+  const send = (event, data) => {
+    try {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      if (res.flush) res.flush(); // đẩy ngay lập tức
+    } catch {}
+  };
+
+  // Heartbeat mỗi 15s để giữ kết nối sống
+  const heartbeat = setInterval(() => {
+    try { res.write(': ping\n\n'); if (res.flush) res.flush(); } catch {}
+  }, 15000);
+
+  const ctx = buildCampaignContext(metrics, industry, objective, currency, yourBusiness);
+
+  try {
+    // ─── BƯỚC 1: Tổng quan + KPI + Tài chính ────────────────────────────────
+    send('progress', { step: 1, total: 3, label: 'Phân tích tổng quan & KPI...' });
+
+    const prompt1 = `Phân tích tổng quan chiến dịch Facebook Ads (BƯỚC 1/3):
+
+${ctx}
+
+Trả về JSON (KHÔNG có forecast, recommendations):
+{
+  "overview": { "status": "Tốt|Trung bình|Yếu kém", "score": <0-100>, "headline": "<1 câu với số liệu>", "summary": "<3-4 câu cụ thể>" },
+  "industry_context": { "industry": "<ngành>", "note": "<2-3 câu đặc thù>", "seasonality_warning": null },
+  "financial_analysis": { "break_even_roas": "<tính toán>", "profit_margin": "<%>", "cac": "<số>", "is_profitable": true, "profitability_comment": "<nhận xét>" },
+  "funnel_analysis": { "bottleneck": "<điểm nghẽn>", "bottleneck_evidence": "<số liệu>", "bottleneck_solution": "<giải pháp>" },
+  "kpi_analysis": [ { "kpi": "<tên>", "value": "<giá trị>", "benchmark_industry": "<benchmark ngành>", "benchmark_vn": "<benchmark VN>", "status": "Xuất sắc|Tốt|Trung bình|Cần cải thiện|Yếu kém", "gap": "<khoảng cách>", "comment": "<2-3 câu cụ thể>", "root_cause": "<nguyên nhân>" } ],
+  "strengths": [ { "point": "<điểm mạnh>", "evidence": "<số liệu>", "leverage": "<cách khai thác>" } ],
+  "weaknesses": [ { "point": "<điểm yếu>", "evidence": "<số liệu>", "urgency": "Cao|Trung bình|Thấp", "fix": "<cách khắc phục>" } ]
+}
+Phân tích THỰC TẾ, THẲNG THẮN, so sánh với benchmark ngành ${industry}.`;
+
+    let raw1 = '';
+    await callOpenAIStreaming(FB_ADS_SYSTEM_PROMPT_V3, prompt1, 1800, (chunk) => {
+      send('chunk', { step: 1, text: chunk });
+    });
+    // Lấy full JSON bằng non-stream sau khi stream xong (chắc chắn có JSON đầy đủ)
+    raw1 = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, prompt1, 1800, true);
+    const step1 = safeParseJSON(raw1);
+    send('step_done', { step: 1, data: step1 });
+
+    // Tóm tắt bước 1 để truyền sang bước 2
+    const overviewSummary = `Score: ${step1.overview?.score}, Status: ${step1.overview?.status}, Bottleneck: ${step1.funnel_analysis?.bottleneck}, Summary: ${step1.overview?.summary?.substring(0,200)}`;
+
+    // ─── BƯỚC 2: Đề xuất SMART ──────────────────────────────────────────────
+    send('progress', { step: 2, total: 3, label: 'Đang tạo đề xuất SMART...' });
+
+    const prompt2 = `Đề xuất chiến lược tối ưu Facebook Ads (BƯỚC 2/3):
+
+${ctx}
+TÓM TẮT BƯỚC 1: ${overviewSummary}
+
+Trả về JSON:
+{
+  "recommendations": [
+    {
+      "priority": "Cao|Trung bình|Thấp",
+      "category": "Quick Win|Big Bet|Fill-in",
+      "title": "<Tiêu đề bắt đầu bằng động từ>",
+      "problem": "<Vấn đề đang giải quyết>",
+      "action": "<Từng bước: Bước 1... Bước 2... Bước 3...>",
+      "tools": "<Công cụ Facebook>",
+      "expected_impact": "<Tác động cụ thể với số liệu>",
+      "timeline": "<Thời gian>",
+      "kpi_to_track": "<KPI cần theo dõi>"
+    }
+  ]
+}
+Đề xuất 4-6 hành động SMART, ưu tiên Quick Wins.`;
+
+    await callOpenAIStreaming(FB_ADS_SYSTEM_PROMPT_V3, prompt2, 1500, (chunk) => {
+      send('chunk', { step: 2, text: chunk });
+    });
+    const raw2 = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, prompt2, 1500, true);
+    const step2 = safeParseJSON(raw2);
+    send('step_done', { step: 2, data: step2 });
+
+    // ─── BƯỚC 3: Dự báo 3 tháng ───────────────────────────────────────────────
+    send('progress', { step: 3, total: 3, label: 'Đang tính toán dự báo 3 tháng...' });
+
+    const prompt3 = `Dự báo 3 tháng tới cho chiến dịch Facebook Ads (BƯỚC 3/3):
+
+${ctx}
+TÓM TẮT: ${overviewSummary}
+
+Tính toán theo công thức:
+- Kịch bản TỐI ƯU: CTR×1.07/tháng, CVR×1.10/tháng, CPM×0.97/tháng
+- Kịch bản GIỮ NGUYÊN: CTR×0.95/tháng, CPM×1.05/tháng
+
+Trả về JSON:
+{
+  "forecast": {
+    "executive_summary": "<3-4 câu so sánh 2 kịch bản với số liệu>",
+    "methodology": "<giải thích cách tính>",
+    "scenario_optimized": {
+      "label": "Kịch bản Tối ưu", "description": "<2-3 câu>",
+      "monthly": [
+        { "month": "Tháng 1 (Thực tế)", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Thực tế" },
+        { "month": "Tháng 2", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "actions_this_month": "<hành động>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 3", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "actions_this_month": "<hành động>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 4", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "actions_this_month": "<hành động>", "expected_change": "<thay đổi>" }
+      ],
+      "total_3month_revenue": <số>, "total_3month_profit": <số>, "total_3month_spend": <số>, "avg_roas": <số>,
+      "key_assumptions": ["<giả định 1>", "<giả định 2>", "<giả định 3>"]
+    },
+    "scenario_baseline": {
+      "label": "Kịch bản Giữ Nguyên", "description": "<2-3 câu>",
+      "monthly": [
+        { "month": "Tháng 1 (Thực tế)", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Thực tế" },
+        { "month": "Tháng 2", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "decay_reason": "<lý do>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 3", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "decay_reason": "<lý do>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 4", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "decay_reason": "<lý do>", "expected_change": "<thay đổi>" }
+      ],
+      "total_3month_revenue": <số>, "total_3month_profit": <số>, "total_3month_spend": <số>, "avg_roas": <số>,
+      "warning": "<cảnh báo>"
+    },
+    "comparison": { "revenue_difference": <số>, "profit_difference": <số>, "roas_difference": <số>, "verdict": "<kết luận>" },
+    "risk_factors": ["<rủi ro 1>", "<rủi ro 2>", "<rủi ro 3>"]
+  }
+}
+Tính toán số liệu CỤ THỂ, KHÔNG để giá trị 0.`;
+
+    await callOpenAIStreaming(FB_ADS_SYSTEM_PROMPT_V3, prompt3, 2000, (chunk) => {
+      send('chunk', { step: 3, text: chunk });
+    });
+    const raw3 = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, prompt3, 2000, true);
+    const step3 = safeParseJSON(raw3);
+    send('step_done', { step: 3, data: step3 });
+
+    // Hoàn thành
+    send('done', { success: true });
+  } catch (err) {
+    console.error('[Budget Stream Error]', err.message);
+    send('error', { message: err.message });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
+// ─── POST /api/ai/analyze-budget/overview ────────────────────────────────────
+// Bước 1: Tổng quan + KPI + Điểm mạnh/yếu + Tài chính
+router.post('/analyze-budget/overview', async (req, res) => {
   try {
     const { metrics, industry, objective, currency, yourBusiness } = req.body;
     if (!metrics) return res.status(400).json({ error: 'Thiếu dữ liệu metrics' });
 
-    const userPrompt = `Hãy phân tích toàn diện chiến dịch quảng cáo Facebook sau như một chuyên gia marketing hàng đầu:
+    const ctx = buildCampaignContext(metrics, industry, objective, currency, yourBusiness);
+    const userPrompt = `Phân tích tổng quan chiến dịch Facebook Ads (BƯỚC 1/3):
 
-═══ THÔNG TIN CHIẾN DỊCH ═══
-Ngành nghề: ${industry || 'Chưa xác định'}
-Mục tiêu chiến dịch: ${objective || 'Chưa xác định'}
-Đơn vị tiền tệ: ${currency || 'VNĐ'}
-${yourBusiness ? `Thông tin doanh nghiệp: ${yourBusiness}` : ''}
+${ctx}
 
-═══ DỮ LIỆU THỰC TẾ (1 THÁNG) ═══
-${JSON.stringify(metrics, null, 2)}
+Trả về JSON với các trường sau (KHÔNG bao gồm forecast và recommendations):
+{
+  "overview": { "status": "Tốt|Trung bình|Yếu kém", "score": <0-100>, "headline": "<1 câu với số liệu>", "summary": "<3-4 câu cụ thể>" },
+  "industry_context": { "industry": "<Tên ngành>", "note": "<2-3 câu đặc thù ngành>", "seasonality_warning": "<cảnh báo hoặc null>" },
+  "financial_analysis": { "break_even_roas": "<tính toán>", "profit_margin": "<%>", "cac": "<số>", "is_profitable": true, "profitability_comment": "<nhận xét>" },
+  "funnel_analysis": { "bottleneck": "<Creative|Targeting|Landing Page|Offer|Audience Fatigue>", "bottleneck_evidence": "<số liệu>", "bottleneck_solution": "<giải pháp>" },
+  "kpi_analysis": [ { "kpi": "<tên>", "value": "<giá trị>", "benchmark_industry": "<benchmark ngành>", "benchmark_vn": "<benchmark VN>", "status": "Xuất sắc|Tốt|Trung bình|Cần cải thiện|Yếu kém", "gap": "<khoảng cách>", "comment": "<2-3 câu cụ thể>", "root_cause": "<nguyên nhân nếu yếu>" } ],
+  "strengths": [ { "point": "<điểm mạnh>", "evidence": "<số liệu>", "leverage": "<cách khai thác>" } ],
+  "weaknesses": [ { "point": "<điểm yếu>", "evidence": "<số liệu>", "urgency": "Cao|Trung bình|Thấp", "fix": "<cách khắc phục>" } ]
+}
+QUAN TRỌNG: Phân tích THỰC TẾ, THẲNG THẮN, có số liệu cụ thể. So sánh với benchmark ngành ${industry}.`;
 
-═══ YÊU CẦU PHÂN TÍCH ═══
-1. Phân tích bối cảnh ngành "${industry}" - đặc thù, mùa vụ, hành vi khách hàng
-2. Xác định điểm nghẽn (bottleneck) chính trong funnel marketing với bằng chứng số liệu
-3. So sánh TỪNG KPI với benchmark ngành "${industry}" cụ thể tại Việt Nam
-4. Tính toán Break-even ROAS và đánh giá chiến dịch có thực sự có lãi không
-5. Phân tích tài chính: lợi nhuận thực, tỷ suất lợi nhuận, CAC
-6. Đề xuất 4-6 hành động SMART cụ thể, có thể thực hiện ngay trong Facebook Ads Manager, mỗi đề xuất phải có bước thực hiện cụ thể và KPI theo dõi
-7. Dự báo 3 tháng tới với số liệu CỤ THỂ (KHÔNG để giá trị 0), tính toán dựa trên công thức đã cho
-8. Xác định rủi ro và yếu tố không chắc chắn trong dự báo
-
-QUAN TRỌNG: Phân tích phải THỰC TẾ, THẲNG THẮN, KHÔNG CHUNG CHUNG. Nếu chiến dịch đang lỗ, hãy nói thẳng. Mỗi nhận xét phải có số liệu chứng minh.`;
-
-    const raw = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, userPrompt, 3000, true);
-    let analysis;
-    try {
-      analysis = JSON.parse(raw);
-    } catch {
-      try {
-        const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        analysis = JSON.parse(cleaned);
-      } catch {
-        analysis = { raw };
-      }
-    }
-    res.json({ success: true, analysis });
+    const raw = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, userPrompt, 1800, true);
+    res.json({ success: true, step: 'overview', analysis: safeParseJSON(raw) });
   } catch (e) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    console.error('[AI Error]', e.message);
-    res.status(500).json({ error: e.message });
+    console.error('[Budget Overview Error]', e.message);
+    res.status(500).json({ error: e.message, step: 'overview' });
   }
+});
+
+// ─── POST /api/ai/analyze-budget/recommendations ─────────────────────────────
+// Bước 2: Đề xuất SMART
+router.post('/analyze-budget/recommendations', async (req, res) => {
+  try {
+    const { metrics, industry, objective, currency, yourBusiness, overviewSummary } = req.body;
+    if (!metrics) return res.status(400).json({ error: 'Thiếu dữ liệu metrics' });
+
+    const ctx = buildCampaignContext(metrics, industry, objective, currency, yourBusiness);
+    const userPrompt = `Đề xuất chiến lược tối ưu Facebook Ads (BƯỚC 2/3):
+
+${ctx}
+${overviewSummary ? `\nTÓM TẮT PHÂN TÍCH BƯỚC 1: ${overviewSummary}` : ''}
+
+Trả về JSON với các trường sau:
+{
+  "recommendations": [
+    {
+      "priority": "Cao|Trung bình|Thấp",
+      "category": "Quick Win|Big Bet|Fill-in",
+      "title": "<Tiêu đề bắt đầu bằng động từ>",
+      "problem": "<Vấn đề đang giải quyết>",
+      "action": "<Mô tả chi tiết TỪNG BƯỚC: Bước 1... Bước 2... Bước 3...>",
+      "tools": "<Công cụ/tính năng Facebook>",
+      "expected_impact": "<Tác động cụ thể với số liệu>",
+      "timeline": "<Thời gian thực hiện>",
+      "kpi_to_track": "<KPI cần theo dõi>"
+    }
+  ]
+}
+Đề xuất 4-6 hành động SMART, có thể thực hiện ngay trong Facebook Ads Manager. Ưu tiên Quick Wins trước.`;
+
+    const raw = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, userPrompt, 1500, true);
+    res.json({ success: true, step: 'recommendations', analysis: safeParseJSON(raw) });
+  } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.error('[Budget Recommendations Error]', e.message);
+    res.status(500).json({ error: e.message, step: 'recommendations' });
+  }
+});
+
+// ─── POST /api/ai/analyze-budget/forecast ────────────────────────────────────
+// Bước 3: Dự báo 3 tháng
+router.post('/analyze-budget/forecast', async (req, res) => {
+  try {
+    const { metrics, industry, objective, currency, yourBusiness, overviewSummary } = req.body;
+    if (!metrics) return res.status(400).json({ error: 'Thiếu dữ liệu metrics' });
+
+    const ctx = buildCampaignContext(metrics, industry, objective, currency, yourBusiness);
+    const userPrompt = `Dự báo 3 tháng tới cho chiến dịch Facebook Ads (BƯỚC 3/3):
+
+${ctx}
+${overviewSummary ? `\nTÓM TẮT PHÂN TÍCH: ${overviewSummary}` : ''}
+
+Tính toán dự báo theo công thức:
+- Kịch bản TỐI ƯU: CTR×1.07/tháng, CVR×1.10/tháng, CPM×0.97/tháng
+- Kịch bản GIỮ NGUYÊN: CTR×0.95/tháng (audience fatigue), CPM×1.05/tháng
+
+Trả về JSON:
+{
+  "forecast": {
+    "executive_summary": "<3-4 câu so sánh 2 kịch bản với số liệu cụ thể>",
+    "methodology": "<Giải thích cách tính>",
+    "scenario_optimized": {
+      "label": "Kịch bản Tối ưu",
+      "description": "<2-3 câu>",
+      "monthly": [
+        { "month": "Tháng 1 (Thực tế)", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Thực tế" },
+        { "month": "Tháng 2", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "actions_this_month": "<hành động>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 3", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "actions_this_month": "<hành động>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 4", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "actions_this_month": "<hành động>", "expected_change": "<thay đổi>" }
+      ],
+      "total_3month_revenue": <số>, "total_3month_profit": <số>, "total_3month_spend": <số>, "avg_roas": <số>,
+      "key_assumptions": ["<giả định 1>", "<giả định 2>", "<giả định 3>"]
+    },
+    "scenario_baseline": {
+      "label": "Kịch bản Giữ Nguyên",
+      "description": "<2-3 câu>",
+      "monthly": [
+        { "month": "Tháng 1 (Thực tế)", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Thực tế" },
+        { "month": "Tháng 2", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "decay_reason": "<lý do>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 3", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "decay_reason": "<lý do>", "expected_change": "<thay đổi>" },
+        { "month": "Tháng 4", "budget": <số>, "revenue": <số>, "profit": <số>, "roas": <số>, "cpa": <số>, "cvr": "<%>", "ctr": "<%>", "conversions": <số>, "label": "Dự báo", "decay_reason": "<lý do>", "expected_change": "<thay đổi>" }
+      ],
+      "total_3month_revenue": <số>, "total_3month_profit": <số>, "total_3month_spend": <số>, "avg_roas": <số>,
+      "warning": "<cảnh báo nếu không thay đổi>"
+    },
+    "comparison": {
+      "revenue_difference": <số>, "profit_difference": <số>, "roas_difference": <số>,
+      "verdict": "<Kết luận 2-3 câu với số liệu cụ thể>"
+    },
+    "risk_factors": ["<Rủi ro 1>", "<Rủi ro 2>", "<Rủi ro 3>"]
+  }
+}
+QUAN TRỌNG: Tính toán số liệu CỤ THỂ từ dữ liệu thực tế, KHÔNG để giá trị 0 hay placeholder.`;
+
+    const raw = await callOpenAI(FB_ADS_SYSTEM_PROMPT_V3, userPrompt, 2000, true);
+    res.json({ success: true, step: 'forecast', analysis: safeParseJSON(raw) });
+  } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.error('[Budget Forecast Error]', e.message);
+    res.status(500).json({ error: e.message, step: 'forecast' });
+  }
+});
+
+// ─── POST /api/ai/analyze-budget (legacy - giữ lại để tương thích) ────────────
+router.post('/analyze-budget', async (req, res) => {
+  res.status(301).json({
+    error: 'Endpoint này đã được tách thành 3 bước để tránh timeout.',
+    hint: 'Dùng /analyze-budget/overview → /analyze-budget/recommendations → /analyze-budget/forecast',
+    steps: [
+      'POST /api/ai/analyze-budget/overview',
+      'POST /api/ai/analyze-budget/recommendations',
+      'POST /api/ai/analyze-budget/forecast'
+    ]
+  });
 });
 
 // ─── POST /api/ai/analyze-competitor ─────────────────────────────────────────
