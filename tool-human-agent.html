@@ -644,13 +644,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load pages
   await loadPages();
 
-  // Auto-refresh conversations
+  // Auto-refresh conversations (only when no server — use direct FB API)
   convRefreshInterval = setInterval(() => {
     if (document.getElementById('panel-conversations').classList.contains('active')) {
-      loadConversations(false);
+      loadConversationsDirect();
     }
-    loadStats();
-  }, 15000);
+    loadStatsLocal();
+  }, 30000);
 });
 
 // ═══════════════════════════════════════════════════════
@@ -745,7 +745,7 @@ async function loadPages() {
     allPages = data.pages || [];
     renderPageGrid();
     renderConfigPageList();
-    loadStats();
+    loadStatsLocal();
     updateConvPageFilter();
   } catch (err) {
     if (SERVER_URL) console.warn('Load pages:', err.message);
@@ -836,7 +836,7 @@ async function togglePage(pageId, enabled) {
     const card = document.getElementById(`pageCard_${pageId}`);
     if (card) card.classList.toggle('enabled', enabled);
     showToast(enabled ? 'Đã bật AI cho Page này' : 'Đã tắt AI cho Page này', 'info');
-    loadStats();
+    loadStatsLocal();
   } catch (err) {
     showToast('Lỗi: ' + err.message, 'error');
   }
@@ -855,16 +855,38 @@ async function subscribeWebhook(pageId) {
 // STATS
 // ═══════════════════════════════════════════════════════
 async function loadStats() {
-  try {
-    const data = await api('GET', '/api/human-agent/stats');
-    document.getElementById('stat-total-pages').textContent = data.totalPages || 0;
-    document.getElementById('stat-enabled-pages').textContent = data.enabledPages || 0;
-    document.getElementById('stat-conversations').textContent = data.totalConversations || 0;
-    document.getElementById('stat-pending').textContent = data.pendingHuman || 0;
-    const pending = data.pendingHuman || 0;
-    document.getElementById('badge-conversations').textContent = pending;
-    document.getElementById('badge-conversations').style.display = pending > 0 ? 'inline-block' : 'none';
-  } catch {}
+  // Try server first, fallback to local
+  if (SERVER_URL) {
+    try {
+      const data = await api('GET', '/api/human-agent/stats');
+      document.getElementById('stat-total-pages').textContent = data.totalPages || 0;
+      document.getElementById('stat-enabled-pages').textContent = data.enabledPages || 0;
+      document.getElementById('stat-conversations').textContent = data.totalConversations || 0;
+      document.getElementById('stat-pending').textContent = data.pendingHuman || 0;
+      const pending = data.pendingHuman || 0;
+      document.getElementById('badge-conversations').textContent = pending;
+      document.getElementById('badge-conversations').style.display = pending > 0 ? 'inline-block' : 'none';
+      return;
+    } catch {}
+  }
+  loadStatsLocal();
+}
+
+function loadStatsLocal() {
+  // Calculate stats from local data (no server needed)
+  const totalPages = allPages.length;
+  const enabledPages = allPages.filter(p => p.enabled).length;
+  const totalConvs = allConversations.length;
+  const pending = allConversations.filter(c => c.unread > 0 || c.unreadCount > 0).length;
+  const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  el('stat-total-pages', totalPages);
+  el('stat-enabled-pages', enabledPages);
+  el('stat-conversations', totalConvs);
+  el('stat-pending', pending);
+  el('stat-convs', totalConvs);
+  el('stat-waiting', pending);
+  const badge = document.getElementById('badge-conversations');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-block' : 'none'; }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1521,7 +1543,7 @@ async function loadPagesDirect() {
     }));
     renderPageList();
     renderConfigPageList();
-    loadStats();
+    loadStatsLocal();
     showToast(`Đã tải ${allPages.length} Pages`, 'success');
   } catch(e) {
     showToast('Lỗi tải Pages: ' + e.message, 'error');
@@ -1571,7 +1593,7 @@ syncPages = async function() {
           allPages = data.pages || [];
           renderPageList();
           renderConfigPageList();
-          loadStats();
+          loadStatsLocal();
           showToast(`Đã đồng bộ ${allPages.length} Pages`, 'success');
           return;
         }
@@ -1732,13 +1754,43 @@ async function openConversationDirect(pageId, userId, userName) {
   const container = document.getElementById('chatMessages');
   if (container) container.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
 
-  // Load messages from Facebook API
+  // Load messages from Facebook API (try multiple endpoints)
   try {
-    const url = `https://graph.facebook.com/v19.0/${convId}?fields=messages{id,message,from,created_time}&access_token=${page.accessToken}`;
-    const r = await fetch(url);
-    const d = await r.json();
-    if (d.error) throw new Error(d.error.message);
-    const msgs = (d.messages?.data || []).reverse();
+    let msgs = [];
+    let lastErr = '';
+    // Strategy 1: GET /{convId}?fields=messages (works with page token)
+    const url1 = `https://graph.facebook.com/v19.0/${convId}?fields=messages{id,message,from,created_time}&access_token=${page.accessToken}`;
+    const r1 = await fetch(url1);
+    const d1 = await r1.json();
+    if (!d1.error && d1.messages?.data) {
+      msgs = (d1.messages.data || []).reverse();
+    } else {
+      lastErr = d1.error?.message || 'Unknown error';
+      // Strategy 2: GET /{convId}/messages (some page tokens support this)
+      const url2 = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time&limit=25&access_token=${page.accessToken}`;
+      const r2 = await fetch(url2);
+      const d2 = await r2.json();
+      if (!d2.error && d2.data) {
+        msgs = (d2.data || []).reverse();
+        lastErr = '';
+      } else {
+        lastErr = d2.error?.message || lastErr;
+        // Strategy 3: Try with user token
+        const userToken = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN');
+        if (userToken && userToken !== page.accessToken) {
+          const url3 = `https://graph.facebook.com/v19.0/${convId}?fields=messages{id,message,from,created_time}&access_token=${userToken}`;
+          const r3 = await fetch(url3);
+          const d3 = await r3.json();
+          if (!d3.error && d3.messages?.data) {
+            msgs = (d3.messages.data || []).reverse();
+            lastErr = '';
+          } else {
+            lastErr = d3.error?.message || lastErr;
+          }
+        }
+      }
+    }
+    if (lastErr) throw new Error(lastErr);
     if (!container) return;
     if (!msgs.length) {
       container.innerHTML = '<div class="empty-state"><i class="bi bi-chat"></i><p>Chưa có tin nhắn</p></div>';
