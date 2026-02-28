@@ -403,8 +403,20 @@ router.post('/generate', authMiddleware, async (req, res) => {
 
 // ─── Helper: parse JSON an toàn ─────────────────────────────────────────────
 function safeParseJSON(raw) {
+  if (!raw) return { raw: '' };
+  // 1. Direct parse
   try { return JSON.parse(raw); } catch {}
-  try { return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()); } catch {}
+  // 2. Strip markdown code fences
+  const stripped = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  try { return JSON.parse(stripped); } catch {}
+  // 3. Extract first JSON object from text
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (jsonMatch) { try { return JSON.parse(jsonMatch[0]); } catch {} }
+  // 4. Try to find JSON array
+  const arrMatch = raw.match(/\[[\s\S]*\]/);
+  if (arrMatch) { try { return JSON.parse(arrMatch[0]); } catch {} }
+  // 5. Fallback
+  console.error('[safeParseJSON] Failed to parse:', raw.substring(0, 200));
   return { raw };
 }
 

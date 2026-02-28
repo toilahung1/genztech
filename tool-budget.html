@@ -854,7 +854,16 @@ async function runAnalysis() {
 
 // ─── Build HTML từng phần (dùng trong SSE streaming) ───────────────────────────
 function buildOverviewHTML(a, kpis) {
-  if (!a||a.raw) return `<pre style="font-size:12px;color:rgba(255,255,255,.6);white-space:pre-wrap;padding:20px">${a?.raw||''}</pre>`;
+  if (!a || (!a.overview && !a.kpi_analysis && !a.strengths && !a.weaknesses)) {
+    // Cố gắng parse lại nếu có raw
+    if (a?.raw) {
+      try {
+        const rp = JSON.parse(a.raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+        if (rp.overview || rp.kpi_analysis) a = rp;
+      } catch {}
+    }
+    if (!a || (!a.overview && !a.kpi_analysis)) return `<pre style="font-size:12px;color:rgba(255,255,255,.6);white-space:pre-wrap;padding:20px">${a?.raw||''}</pre>`;
+  }
   const scoreClass=(a.overview?.score>=70)?'score-good':(a.overview?.score>=40)?'score-avg':'score-bad';
   const statusColor=a.overview?.status==='Tốt'?'#22c55e':a.overview?.status==='Trung bình'?'#f59e0b':'#ef4444';
   let kpiHtml='';
@@ -894,9 +903,19 @@ function buildRecommendationsHTML(recs) {
 
 // ─── Render AI Result ─────────────────────────────────────────────────────────
 function renderAIResult(a, kpis) {
-  if (!a || a.raw) {
-    document.getElementById('aiResult').innerHTML = `<pre style="font-size:12px;color:rgba(255,255,255,.6);white-space:pre-wrap;padding:20px">${a?.raw || 'Không có dữ liệu'}</pre>`;
-    return;
+  // Chỉ fallback raw nếu hoàn toàn không có dữ liệu cấu trúc
+  if (!a || (!a.overview && !a.kpi_analysis && !a.recommendations && !a.strengths && !a.weaknesses)) {
+    if (a?.raw) {
+      // Cố gắng parse lại lần nữa
+      try {
+        const reparsed = JSON.parse(a.raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+        if (reparsed.overview || reparsed.kpi_analysis) { a = reparsed; }
+      } catch {}
+    }
+    if (!a || (!a.overview && !a.kpi_analysis)) {
+      document.getElementById('aiResult').innerHTML = `<pre style="font-size:12px;color:rgba(255,255,255,.6);white-space:pre-wrap;padding:20px">${a?.raw || 'Không có dữ liệu'}</pre>`;
+      return;
+    }
   }
 
   const scoreClass = (a.overview?.score >= 70) ? 'score-good' : (a.overview?.score >= 40) ? 'score-avg' : 'score-bad';
