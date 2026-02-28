@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Auto-refresh conversations (only when no server — use direct FB API)
   convRefreshInterval = setInterval(() => {
     if (document.getElementById('panel-conversations').classList.contains('active')) {
-      loadConversationsDirect();
+      loadConversationsDirect(false); // false = không hiển thị spinner khi auto-refresh
     }
     loadStatsLocal();
   }, 30000);
@@ -1639,13 +1639,19 @@ loadConversations = async function(showLoading = true) {
   await loadConversationsDirect(showLoading);
 };
 
+let _isLoadingConvs = false;
 async function loadConversationsDirect(showLoading = true) {
+  // Tránh chạy song song
+  if (_isLoadingConvs) return;
+  _isLoadingConvs = true;
   const el = document.getElementById('convList');
-  if (showLoading && el) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
+  // Chỉ hiển thị spinner nếu chưa có data và showLoading=true
+  if (showLoading && el && allConversations.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
 
   const userToken = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL');
   if (!userToken || !allPages.length) {
     if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chưa có token hoặc Pages</p></div>';
+    _isLoadingConvs = false;
     return;
   }
 
@@ -1755,6 +1761,8 @@ async function loadConversationsDirect(showLoading = true) {
     }
   } catch(e) {
     if (el) el.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
+  } finally {
+    _isLoadingConvs = false; // Cho phép gọi lại sau khi hoàn thành
   }
 }
 
