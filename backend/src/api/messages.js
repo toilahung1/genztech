@@ -1,257 +1,181 @@
 /**
- * GenzTech — Messages API
+ * GenzTech — Messages API (Proxy + Cache)
  *
- * POST /api/messages/fetch          — Trigger fetch tin nhắn từ FB cho user hiện tại
- * GET  /api/messages/conversations  — Lấy danh sách conversations
- * GET  /api/messages/conversations/:id/messages — Lấy messages trong 1 conversation
- * GET  /api/messages/stats          — Thống kê tổng số tin nhắn
+ * Kiến trúc:
+ *  - Frontend gọi backend (không gọi Facebook trực tiếp)
+ *  - Backend trả cache từ DB ngay lập tức
+ *  - Backend fetch incremental từ Facebook (chỉ tin mới hơn cursor)
+ *  - Lưu kết quả vào DB để lần sau không fetch lại
+ *
+ * Endpoints:
+ *  GET  /api/messages/pages/:pageId/conversations          — Danh sách conversations (cache + sync)
+ *  GET  /api/messages/conversations/:convId/messages       — Messages trong conv (cache + sync)
+ *  POST /api/messages/conversations/:convId/reply          — Gửi tin nhắn qua backend
+ *  GET  /api/messages/stats                                — Thống kê
  */
+
 const express = require('express');
 const axios   = require('axios');
 const { PrismaClient } = require('@prisma/client');
 const { authMiddleware } = require('../middleware/auth');
 
-const router = express.Router();
-const prisma = new PrismaClient();
+const router  = express.Router();
+const prisma  = new PrismaClient();
 const FB_GRAPH = 'https://graph.facebook.com/v19.0';
 
-// ── Helper ────────────────────────────────────────────────────
+// ── Thời gian cache hợp lệ: 2 phút ──────────────────────────
+const CACHE_TTL_MS = 2 * 60 * 1000;
+
+// ── Helper: gọi Facebook Graph API ───────────────────────────
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function fbGet(path, params = {}, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await axios.get(`${FB_GRAPH}${path}`, { params, timeout: 30000 });
+      const res = await axios.get(`${FB_GRAPH}${path}`, { params, timeout: 20000 });
       return res.data;
     } catch (err) {
       const fbErr = err.response?.data?.error;
       if (fbErr?.code === 190) throw new Error('Facebook Token hết hạn hoặc không hợp lệ');
-      if (i === retries - 1) throw err;
-      await sleep(1500 * (i + 1));
+      if (fbErr?.code === 10 || fbErr?.code === 200) throw new Error(`Không có quyền: ${fbErr?.message}`);
+      if (i === retries - 1) throw new Error(fbErr?.message || err.message);
+      await sleep(1000 * (i + 1));
     }
   }
 }
 
-async function fetchAllPages(path, params = {}, maxPages = 30) {
-  const results = [];
-  let nextUrl = null;
-  let page = 0;
-
-  const firstData = await fbGet(path, params);
-  if (firstData.data) results.push(...firstData.data);
-  nextUrl = firstData.paging?.next || null;
-  page++;
-
-  while (nextUrl && page < maxPages) {
-    // next URL đã có đầy đủ params, dùng trực tiếp
-    const parsed = new URL(nextUrl);
-    const nextPath = parsed.pathname;
-    const nextParams = Object.fromEntries(parsed.searchParams);
-    const data = await fbGet(nextPath, nextParams);
-    if (data.data) results.push(...data.data);
-    nextUrl = data.paging?.next || null;
-    page++;
-    await sleep(300);
-  }
-  return results;
-}
-
-// ── Hàm fetch chính (dùng chung cho script và API) ───────────
-async function fetchAndSaveMessages(user, options = {}) {
-  const { daysBack = 90, onlyPageId = null, onProgress = null } = options;
-  const sinceDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
-
+// ── Helper: lấy page token của user ──────────────────────────
+function getPageToken(user, pageId) {
   let pages = [];
   try { pages = JSON.parse(user.fbPages || '[]'); } catch {}
-
-  if (!pages.length) {
-    const pagesData = await fbGet('/me/accounts', {
-      fields: 'id,name,access_token,category',
-      limit: 200,
-      access_token: user.fbToken,
-    });
-    pages = pagesData.data || [];
-  }
-
-  if (onlyPageId) pages = pages.filter(p => p.id === onlyPageId);
-
-  const stats = { pages: 0, conversations: 0, messages: 0, errors: [] };
-
-  for (const page of pages) {
-    if (!page.access_token) continue;
-    stats.pages++;
-
-    if (onProgress) onProgress({ type: 'page', name: page.name, id: page.id });
-
-    // Lấy conversations
-    let conversations = [];
-    try {
-      conversations = await fetchAllPages(`/${page.id}/conversations`, {
-        fields: 'id,snippet,updated_time,unread_count,can_reply,participants',
-        limit: 100,
-        access_token: page.access_token,
-      }, 20);
-    } catch (err) {
-      stats.errors.push(`Page ${page.name}: ${err.message}`);
-      continue;
-    }
-
-    stats.conversations += conversations.length;
-
-    for (const conv of conversations) {
-      const convUpdated = new Date(conv.updated_time);
-      if (convUpdated < sinceDate) continue;
-
-      const participants = conv.participants?.data || [];
-      const participant  = participants.find(p => p.id !== page.id) || participants[0];
-
-      // Upsert conversation
-      await prisma.conversation.upsert({
-        where: { id: conv.id },
-        create: {
-          id:              conv.id,
-          pageId:          page.id,
-          pageName:        page.name,
-          participantId:   participant?.id || null,
-          participantName: participant?.name || null,
-          snippet:         conv.snippet || null,
-          unreadCount:     conv.unread_count || 0,
-          updatedTime:     convUpdated,
-          canReply:        conv.can_reply !== false,
-          ownerId:         user.id,
-        },
-        update: {
-          snippet:     conv.snippet || null,
-          unreadCount: conv.unread_count || 0,
-          updatedTime: convUpdated,
-          canReply:    conv.can_reply !== false,
-          fetchedAt:   new Date(),
-        },
-      });
-
-      // Lấy messages
-      let messages = [];
-      try {
-        messages = await fetchAllPages(`/${conv.id}/messages`, {
-          fields: 'id,from,to,message,attachments,created_time',
-          limit: 100,
-          access_token: page.access_token,
-        }, 30);
-      } catch (err) {
-        stats.errors.push(`Conv ${conv.id}: ${err.message}`);
-        continue;
-      }
-
-      stats.messages += messages.length;
-
-      // Upsert messages theo batch
-      for (const msg of messages) {
-        const fromId     = msg.from?.id || null;
-        const fromName   = msg.from?.name || null;
-        const toEntry    = msg.to?.data?.[0] || null;
-        const attachments = msg.attachments?.data
-          ? JSON.stringify(msg.attachments.data)
-          : '[]';
-
-        await prisma.message.upsert({
-          where: { id: msg.id },
-          create: {
-            id:             msg.id,
-            conversationId: conv.id,
-            pageId:         page.id,
-            fromId,
-            fromName,
-            toId:           toEntry?.id || null,
-            toName:         toEntry?.name || null,
-            message:        msg.message || null,
-            attachments,
-            isFromPage:     fromId === page.id,
-            createdTime:    msg.created_time ? new Date(msg.created_time) : null,
-          },
-          update: {
-            message:    msg.message || null,
-            attachments,
-            fetchedAt:  new Date(),
-          },
-        });
-      }
-
-      await sleep(200);
-    }
-
-    await sleep(500);
-  }
-
-  return stats;
+  const page = pages.find(p => p.id === pageId);
+  return page?.access_token || null;
 }
 
-// ── POST /api/messages/fetch ──────────────────────────────────
-// Trigger fetch tin nhắn cho user đang đăng nhập
-router.post('/fetch', authMiddleware, async (req, res) => {
-  const { days = 90, page_id = null } = req.body;
+// ── Helper: Sync conversations của 1 page từ FB → DB ─────────
+async function syncConversations(user, pageId, pageToken) {
+  const data = await fbGet(`/${pageId}/conversations`, {
+    fields: 'id,snippet,updated_time,unread_count,can_reply,participants',
+    limit: 100,
+    access_token: pageToken,
+  });
+
+  const conversations = data?.data || [];
+
+  for (const conv of conversations) {
+    const participants = conv.participants?.data || [];
+    const participant  = participants.find(p => p.id !== pageId) || participants[0];
+
+    await prisma.conversation.upsert({
+      where: { id: conv.id },
+      create: {
+        id:              conv.id,
+        pageId,
+        pageName:        null,
+        participantId:   participant?.id || null,
+        participantName: participant?.name || null,
+        snippet:         conv.snippet || null,
+        unreadCount:     conv.unread_count || 0,
+        updatedTime:     conv.updated_time ? new Date(conv.updated_time) : new Date(),
+        canReply:        conv.can_reply !== false,
+        ownerId:         user.id,
+        fetchedAt:       new Date(),
+      },
+      update: {
+        participantId:   participant?.id || null,
+        participantName: participant?.name || null,
+        snippet:         conv.snippet || null,
+        unreadCount:     conv.unread_count || 0,
+        updatedTime:     conv.updated_time ? new Date(conv.updated_time) : new Date(),
+        canReply:        conv.can_reply !== false,
+        fetchedAt:       new Date(),
+      },
+    });
+  }
+
+  return conversations.length;
+}
+
+// ── Helper: Sync messages mới nhất của 1 conversation ────────
+// Chỉ lấy tin nhắn mới hơn tin nhắn đã cache (incremental)
+async function syncMessages(convId, pageToken, pageId) {
+  // Tìm tin nhắn mới nhất đã có trong DB (cursor)
+  const latestMsg = await prisma.message.findFirst({
+    where: { conversationId: convId },
+    orderBy: { createdTime: 'desc' },
+    select: { id: true, createdTime: true },
+  });
+
+  // Lấy tin nhắn từ Facebook (chỉ 1 trang = 25 tin mới nhất)
+  const data = await fbGet(`/${convId}/messages`, {
+    fields: 'id,from,to,message,attachments,created_time',
+    limit: 25,
+    access_token: pageToken,
+  });
+
+  const fbMessages = data?.data || [];
+  let newCount = 0;
+
+  for (const msg of fbMessages) {
+    // Bỏ qua nếu tin nhắn đã có trong DB (so sánh theo ID)
+    if (latestMsg && msg.id === latestMsg.id) break;
+
+    const fromId     = msg.from?.id || null;
+    const toEntry    = msg.to?.data?.[0] || null;
+    const attachments = msg.attachments?.data
+      ? JSON.stringify(msg.attachments.data)
+      : '[]';
+
+    try {
+      await prisma.message.upsert({
+        where: { id: msg.id },
+        create: {
+          id:             msg.id,
+          conversationId: convId,
+          pageId,
+          fromId,
+          fromName:       msg.from?.name || null,
+          toId:           toEntry?.id || null,
+          toName:         toEntry?.name || null,
+          message:        msg.message || null,
+          attachments,
+          isFromPage:     fromId === pageId,
+          createdTime:    msg.created_time ? new Date(msg.created_time) : null,
+          fetchedAt:      new Date(),
+        },
+        update: {
+          message:    msg.message || null,
+          fetchedAt:  new Date(),
+        },
+      });
+      newCount++;
+    } catch (e) {
+      // Bỏ qua lỗi duplicate
+    }
+  }
+
+  return { total: fbMessages.length, new: newCount };
+}
+
+// ════════════════════════════════════════════════════════════
+// GET /api/messages/pages/:pageId/conversations
+// Trả về danh sách conversations từ cache, đồng thời sync từ FB
+// ════════════════════════════════════════════════════════════
+router.get('/pages/:pageId/conversations', authMiddleware, async (req, res) => {
+  const { pageId } = req.params;
+  const { limit = 50, offset = 0, search } = req.query;
 
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
-    if (!user.fbToken) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
 
-    // Trả về ngay, chạy background
-    res.json({
-      success: true,
-      message: `Đang fetch tin nhắn trong ${days} ngày qua. Quá trình có thể mất vài phút.`,
-      status: 'running',
-    });
+    const pageToken = getPageToken(user, pageId);
+    if (!pageToken) return res.status(400).json({ error: `Không tìm thấy token cho page ${pageId}` });
 
-    // Chạy background (không await)
-    fetchAndSaveMessages(user, {
-      daysBack: parseInt(days),
-      onlyPageId: page_id,
-    }).then(stats => {
-      console.log(`[Messages/Fetch] User ${user.email}: ${stats.conversations} convs, ${stats.messages} msgs`);
-    }).catch(err => {
-      console.error(`[Messages/Fetch] Error for ${user.email}:`, err.message);
-    });
-
-  } catch (err) {
-    console.error('[Messages/Fetch]', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── POST /api/messages/fetch-sync ────────────────────────────
-// Fetch đồng bộ (chờ kết quả) — dùng cho admin/script
-router.post('/fetch-sync', authMiddleware, async (req, res) => {
-  const { days = 90, page_id = null } = req.body;
-
-  try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
-    if (!user.fbToken) return res.status(400).json({ error: 'Chưa kết nối Facebook' });
-
-    const stats = await fetchAndSaveMessages(user, {
-      daysBack: parseInt(days),
-      onlyPageId: page_id,
-    });
-
-    res.json({
-      success: true,
-      stats,
-      message: `Đã lưu ${stats.messages} tin nhắn từ ${stats.conversations} cuộc hội thoại trên ${stats.pages} Pages`,
-    });
-  } catch (err) {
-    console.error('[Messages/FetchSync]', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── GET /api/messages/conversations ──────────────────────────
-router.get('/conversations', authMiddleware, async (req, res) => {
-  try {
-    const { page_id, limit = 50, offset = 0, search } = req.query;
-
+    // 1. Trả cache từ DB ngay lập tức
     const where = {
-      ownerId: req.user.id,
-      ...(page_id ? { pageId: page_id } : {}),
+      ownerId: user.id,
+      pageId,
       ...(search ? {
         OR: [
           { participantName: { contains: search, mode: 'insensitive' } },
@@ -260,61 +184,240 @@ router.get('/conversations', authMiddleware, async (req, res) => {
       } : {}),
     };
 
-    const [conversations, total] = await Promise.all([
+    const [cachedConvs, total] = await Promise.all([
       prisma.conversation.findMany({
         where,
         orderBy: { updatedTime: 'desc' },
         take: parseInt(limit),
         skip: parseInt(offset),
-        include: {
-          _count: { select: { messages: true } },
-        },
+        include: { _count: { select: { messages: true } } },
       }),
       prisma.conversation.count({ where }),
     ]);
 
+    // Kiểm tra cache có cũ không (so sánh fetchedAt của conv mới nhất)
+    const latestConv = cachedConvs[0];
+    const cacheAge   = latestConv ? Date.now() - new Date(latestConv.fetchedAt).getTime() : Infinity;
+    const needSync   = cacheAge > CACHE_TTL_MS;
+
+    // 2. Gửi cache về client ngay
     res.json({
-      conversations,
+      conversations: cachedConvs,
       total,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
+      fromCache: true,
+      syncing: needSync,
+      cacheAgeMs: Math.round(cacheAge),
     });
+
+    // 3. Nếu cache cũ → sync từ FB ở background
+    if (needSync) {
+      syncConversations(user, pageId, pageToken)
+        .then(count => console.log(`[Messages] Synced ${count} conversations for page ${pageId}`))
+        .catch(err  => console.error(`[Messages] Sync conversations error:`, err.message));
+    }
+
   } catch (err) {
+    console.error('[Messages/Conversations]', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── GET /api/messages/conversations/:id/messages ──────────────
-router.get('/conversations/:id/messages', authMiddleware, async (req, res) => {
+// ════════════════════════════════════════════════════════════
+// GET /api/messages/conversations/:convId/messages
+// Trả về messages từ cache, fetch incremental tin mới từ FB
+// ════════════════════════════════════════════════════════════
+router.get('/conversations/:convId/messages', authMiddleware, async (req, res) => {
+  const { convId } = req.params;
+  const { limit = 50, offset = 0 } = req.query;
+
   try {
-    const { limit = 100, offset = 0 } = req.query;
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
 
     // Kiểm tra conversation thuộc về user
     const conv = await prisma.conversation.findFirst({
-      where: { id: req.params.id, ownerId: req.user.id },
+      where: { id: convId, ownerId: user.id },
     });
-    if (!conv) return res.status(404).json({ error: 'Không tìm thấy conversation' });
 
-    const [messages, total] = await Promise.all([
+    // Nếu chưa có conversation trong DB → tạo mới từ FB
+    let pageId    = conv?.pageId;
+    let pageToken = pageId ? getPageToken(user, pageId) : null;
+
+    if (!conv) {
+      // Thử tìm pageId từ convId (Facebook conv ID có thể chứa pageId)
+      // Hoặc user phải truyền pageId qua query
+      pageId = req.query.page_id;
+      if (!pageId) {
+        return res.status(400).json({
+          error: 'Conversation chưa có trong cache. Vui lòng truyền thêm ?page_id=<PAGE_ID>',
+        });
+      }
+      pageToken = getPageToken(user, pageId);
+      if (!pageToken) return res.status(400).json({ error: `Không tìm thấy token cho page ${pageId}` });
+    }
+
+    // 1. Lấy messages từ cache DB
+    const [cachedMessages, total] = await Promise.all([
       prisma.message.findMany({
-        where: { conversationId: req.params.id },
+        where: { conversationId: convId },
         orderBy: { createdTime: 'asc' },
         take: parseInt(limit),
         skip: parseInt(offset),
       }),
-      prisma.message.count({ where: { conversationId: req.params.id } }),
+      prisma.message.count({ where: { conversationId: convId } }),
     ]);
 
-    res.json({ conversation: conv, messages, total });
+    // Kiểm tra cache có cũ không
+    const latestMsg  = cachedMessages[cachedMessages.length - 1];
+    const cacheAge   = latestMsg ? Date.now() - new Date(latestMsg.fetchedAt || 0).getTime() : Infinity;
+    const needSync   = cacheAge > CACHE_TTL_MS || cachedMessages.length === 0;
+
+    // 2. Gửi cache về client ngay
+    res.json({
+      conversation: conv,
+      messages:     cachedMessages,
+      total,
+      fromCache:    cachedMessages.length > 0,
+      syncing:      needSync,
+      cacheAgeMs:   Math.round(cacheAge),
+    });
+
+    // 3. Fetch incremental từ FB ở background (chỉ lấy tin mới)
+    if (needSync && pageToken && pageId) {
+      syncMessages(convId, pageToken, pageId)
+        .then(r => console.log(`[Messages] Conv ${convId}: +${r.new} new msgs (checked ${r.total})`))
+        .catch(err => console.error(`[Messages] Sync messages error:`, err.message));
+    }
+
   } catch (err) {
+    console.error('[Messages/GetMessages]', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── GET /api/messages/stats ───────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// GET /api/messages/conversations/:convId/messages/refresh
+// Force refresh: đồng bộ ngay từ FB và trả kết quả mới
+// ════════════════════════════════════════════════════════════
+router.get('/conversations/:convId/messages/refresh', authMiddleware, async (req, res) => {
+  const { convId } = req.params;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
+
+    const conv = await prisma.conversation.findFirst({
+      where: { id: convId, ownerId: user.id },
+    });
+
+    const pageId    = conv?.pageId || req.query.page_id;
+    const pageToken = pageId ? getPageToken(user, pageId) : null;
+
+    if (!pageToken) return res.status(400).json({ error: 'Không tìm thấy page token' });
+
+    // Fetch đồng bộ từ FB
+    const syncResult = await syncMessages(convId, pageToken, pageId);
+
+    // Lấy messages mới nhất từ DB
+    const { limit = 50 } = req.query;
+    const [messages, total] = await Promise.all([
+      prisma.message.findMany({
+        where: { conversationId: convId },
+        orderBy: { createdTime: 'asc' },
+        take: parseInt(limit),
+      }),
+      prisma.message.count({ where: { conversationId: convId } }),
+    ]);
+
+    res.json({
+      conversation: conv,
+      messages,
+      total,
+      fromCache: false,
+      newMessages: syncResult.new,
+    });
+
+  } catch (err) {
+    console.error('[Messages/Refresh]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// POST /api/messages/conversations/:convId/reply
+// Gửi tin nhắn qua backend (không cần lộ page token ra frontend)
+// ════════════════════════════════════════════════════════════
+router.post('/conversations/:convId/reply', authMiddleware, async (req, res) => {
+  const { convId } = req.params;
+  const { message, recipient_id } = req.body;
+
+  if (!message || !recipient_id) {
+    return res.status(400).json({ error: 'Thiếu message hoặc recipient_id' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
+
+    const conv = await prisma.conversation.findFirst({
+      where: { id: convId, ownerId: user.id },
+    });
+    if (!conv) return res.status(404).json({ error: 'Không tìm thấy conversation' });
+
+    const pageToken = getPageToken(user, conv.pageId);
+    if (!pageToken) return res.status(400).json({ error: 'Không tìm thấy page token' });
+
+    // Gửi tin nhắn qua Facebook API
+    const fbRes = await axios.post(
+      `${FB_GRAPH}/me/messages?access_token=${pageToken}`,
+      {
+        recipient: { id: recipient_id },
+        message:   { text: message },
+        messaging_type: 'RESPONSE',
+      },
+      { timeout: 15000 }
+    );
+
+    // Lưu tin nhắn vào DB
+    const msgId = fbRes.data?.message_id;
+    if (msgId) {
+      await prisma.message.create({
+        data: {
+          id:             msgId,
+          conversationId: convId,
+          pageId:         conv.pageId,
+          fromId:         conv.pageId,
+          fromName:       conv.pageName || 'Page',
+          toId:           recipient_id,
+          toName:         conv.participantName || null,
+          message,
+          attachments:    '[]',
+          isFromPage:     true,
+          createdTime:    new Date(),
+          fetchedAt:      new Date(),
+        },
+      }).catch(() => {}); // Bỏ qua nếu đã tồn tại
+    }
+
+    res.json({
+      success: true,
+      message_id: msgId,
+      recipient_id,
+    });
+
+  } catch (err) {
+    const fbErr = err.response?.data?.error;
+    console.error('[Messages/Reply]', fbErr?.message || err.message);
+    res.status(500).json({ error: fbErr?.message || err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// GET /api/messages/stats
+// ════════════════════════════════════════════════════════════
 router.get('/stats', authMiddleware, async (req, res) => {
   try {
-    const [totalConvs, totalMsgs, pages] = await Promise.all([
+    const [totalConvs, totalMsgs, byPage] = await Promise.all([
       prisma.conversation.count({ where: { ownerId: req.user.id } }),
       prisma.message.count({
         where: { conversation: { ownerId: req.user.id } },
@@ -323,16 +426,18 @@ router.get('/stats', authMiddleware, async (req, res) => {
         by: ['pageId', 'pageName'],
         where: { ownerId: req.user.id },
         _count: { id: true },
+        _max: { fetchedAt: true },
       }),
     ]);
 
     res.json({
       totalConversations: totalConvs,
       totalMessages: totalMsgs,
-      byPage: pages.map(p => ({
-        pageId: p.pageId,
-        pageName: p.pageName,
+      byPage: byPage.map(p => ({
+        pageId:        p.pageId,
+        pageName:      p.pageName,
         conversations: p._count.id,
+        lastSynced:    p._max.fetchedAt,
       })),
     });
   } catch (err) {
@@ -340,5 +445,31 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
+// ════════════════════════════════════════════════════════════
+// POST /api/messages/pages/:pageId/sync
+// Force sync toàn bộ conversations của 1 page
+// ════════════════════════════════════════════════════════════
+router.post('/pages/:pageId/sync', authMiddleware, async (req, res) => {
+  const { pageId } = req.params;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy user' });
+
+    const pageToken = getPageToken(user, pageId);
+    if (!pageToken) return res.status(400).json({ error: `Không tìm thấy token cho page ${pageId}` });
+
+    const count = await syncConversations(user, pageId, pageToken);
+
+    res.json({
+      success: true,
+      synced: count,
+      message: `Đã đồng bộ ${count} conversations từ Page ${pageId}`,
+    });
+  } catch (err) {
+    console.error('[Messages/Sync]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
-module.exports.fetchAndSaveMessages = fetchAndSaveMessages;
