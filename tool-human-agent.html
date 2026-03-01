@@ -313,19 +313,7 @@
     <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
   </nav>
   <div class="sidebar-footer">
-    <!-- User info -->
-    <div id="userInfoBar" style="display:none;align-items:center;gap:8px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06)">
-      <div id="userAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#6366f1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">
-        <i class="bi bi-person-fill"></i>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div id="userFbName" style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
-        <div id="userEmail" style="font-size:10px;color:rgba(255,255,255,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
-      </div>
-      <button onclick="handleLogout()" title="Đăng xuất" style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;padding:3px;font-size:14px;flex-shrink:0;transition:color .2s" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='rgba(255,255,255,.3)'">
-        <i class="bi bi-box-arrow-right"></i>
-      </button>
-    </div>
+    <div id="gtUserSidebar" style="display:none"></div>
     <div style="font-size:11px;color:rgba(255,255,255,.3)">GenzTech v3.0</div>
     <div id="serverStatus" style="font-size:11px;color:rgba(255,255,255,.3);margin-top:4px;display:flex;align-items:center;gap:4px">
       <span id="serverDot" style="width:6px;height:6px;border-radius:50%;background:#666;display:inline-block"></span>
@@ -343,6 +331,7 @@
       AI Human Agent
     </div>
     <div class="topbar-actions">
+      <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
       <div id="pollingStatus" style="display:none;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.4);margin-right:4px">
         <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
         <span>Live</span>
@@ -730,30 +719,7 @@
   }
 })();
 
-function handleLogout() {
-  if (!confirm('Đăng xuất khỏi GenzTech?')) return;
-  localStorage.removeItem('GT_JWT');
-  localStorage.removeItem('GT_USER');
-  window.location.href = 'login.html';
-}
-
-function loadUserInfoUI() {
-  const userStr = localStorage.getItem('GT_USER');
-  if (!userStr) return;
-  try {
-    const user = JSON.parse(userStr);
-    const bar = document.getElementById('userInfoBar');
-    if (bar) bar.style.display = 'flex';
-    const nameEl = document.getElementById('userFbName');
-    const emailEl = document.getElementById('userEmail');
-    const avatarEl = document.getElementById('userAvatar');
-    if (nameEl) nameEl.textContent = user.fb_user_name || user.email || '—';
-    if (emailEl) emailEl.textContent = user.email || '—';
-    if (avatarEl && user.fb_avatar) {
-      avatarEl.innerHTML = `<img src="${user.fb_avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.innerHTML='<i class=\'bi bi-person-fill\'></i>'">`;
-    }
-  } catch {}
-}
+// handleLogout và loadUserInfoUI được xử lý bởi js/auth-common.js
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
@@ -771,8 +737,6 @@ let convRefreshInterval = null;
 // INIT
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  // Hiển thị user info từ tài khoản đăng nhập
-  loadUserInfoUI();
   // Hiển thị giá trị đã lưu
   if (SERVER_URL) {
     document.getElementById('serverUrl').value = SERVER_URL;
@@ -2887,5 +2851,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
