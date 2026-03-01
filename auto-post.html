@@ -542,6 +542,7 @@
 
       </nav>
       <div class="sidebar-footer">
+      <div id="gtUserSidebar" style="display:none"></div>
         <div class="conn-status" id="connStatus">
           <div class="conn-dot" id="connDot"></div>
           <span id="connLabel">Chưa kết nối</span>
@@ -562,6 +563,7 @@
           </div>
         </div>
         <div class="topbar-right">
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
           <button class="btn-sm btn-outline" onclick="openPreview()">
             <i class="bi bi-eye"></i> Xem Trước
           </button>
@@ -2623,5 +2625,6 @@
   // ============================================================
   init();
   </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
