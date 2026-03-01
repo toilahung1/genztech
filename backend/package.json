@@ -5,7 +5,10 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "axios": "^1.6.7",
@@ -21,10 +24,11 @@
     "node-cron": "^3.0.3",
     "openai": "^4.47.0",
     "pdf-parse": "^1.1.1",
-    "better-sqlite3": "^9.4.3"
+    "@prisma/client": "^5.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "prisma": "^5.10.0"
   },
   "engines": {
     "node": ">=18.0.0"
