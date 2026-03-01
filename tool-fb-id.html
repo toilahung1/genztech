@@ -140,6 +140,7 @@
         <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
       </nav>
       <div class="sidebar-footer">
+      <div id="gtUserSidebar" style="display:none"></div>
         <div class="conn-status" id="connStatus">
           <div class="conn-dot" id="connDot"></div>
           <span id="connText">Chưa kết nối</span>
@@ -155,6 +156,7 @@
         <span>Tìm Facebook ID</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
+        <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
         <button class="btn-icon" onclick="exportHistory()" title="Xuất lịch sử CSV"><i class="bi bi-download"></i></button>
         <button class="btn-icon" onclick="clearHistory()" title="Xóa lịch sử"><i class="bi bi-trash"></i></button>
       </div>
@@ -723,5 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
 })();
 </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
