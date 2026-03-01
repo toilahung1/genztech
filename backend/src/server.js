@@ -118,6 +118,12 @@ app.get('/api/admin/migrate', async (req, res) => {
       results.push('Added lastLogin column');
     } catch(e) { results.push('lastLogin: ' + e.message); }
     
+    // Thêm cột createdAt
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP DEFAULT NOW()`);
+      results.push('Added createdAt column');
+    } catch(e) { results.push('createdAt: ' + e.message); }
+    
     // Tạo unique index cho email
     try {
       await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS users_email_key ON users(email)`);
