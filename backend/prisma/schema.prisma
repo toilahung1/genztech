@@ -8,11 +8,11 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
   lastLogin DateTime?
 
   // Facebook connection
@@ -21,7 +21,7 @@ model User {
   fbAvatar   String?
   fbToken    String?
   fbTokenExp DateTime?
-  fbPages    Json?    @default("[]")
+  fbPages    String?  @default("[]")
 
   posts Post[]
 
@@ -32,23 +32,23 @@ model Post {
   id        String   @id @default(cuid())
   content   String
   mediaUrls String[] @default([])
-  status    String   @default("pending") // pending, posted, failed, cancelled
-  postFbId  String?  // ID của bài post trên Facebook
-  errorMsg  String?  // Lỗi nếu đăng thất bại
+  status    String   @default("pending")
+  postFbId  String?
+  errorMsg  String?
 
   // Scheduling
   scheduledAt DateTime?
   postedAt    DateTime?
-  repeatType  String?   // once, daily, weekly
+  repeatType  String?
 
   // Relations
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId String
+  authorId Int
   pageId   String
   pageName String?
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 
   @@map("posts")
 }
