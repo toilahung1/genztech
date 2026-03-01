@@ -48,6 +48,22 @@ app.use('/api/posts', postsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/human-agent', humanAgentRoutes);
 
+// ── Admin Migration Endpoint (tạm thời) ──
+const { execSync } = require('child_process');
+app.get('/api/admin/migrate', async (req, res) => {
+  if (req.query.secret !== 'GenzMigrate2026') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const output = execSync('npx prisma db push --accept-data-loss', {
+      cwd: process.cwd(),
+      timeout: 90000,
+      env: { ...process.env }
+    }).toString();
+    res.json({ success: true, output });
+  } catch (err) {
+    res.json({ success: false, error: err.message, stdout: err.stdout?.toString(), stderr: err.stderr?.toString() });
+  }
+});
+
 // ── 404 Handler ──
 app.use((req, res) => res.status(404).json({ error: `Route không tồn tại: ${req.method} ${req.path}` }));
 
