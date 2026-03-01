@@ -1,12 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 
-// ── Khởi tạo SQLite DB ──
+// ── Khởi tạo Prisma (PostgreSQL) ──
+const { getPrisma } = require('./db');
 try {
-  require('./db');
-  console.log('✅ SQLite DB initialized');
+  getPrisma();
+  console.log('✅ Prisma (PostgreSQL) initialized');
 } catch (e) {
-  console.warn('⚠️  SQLite not available, using in-memory store:', e.message);
+  console.error('❌ Prisma init error:', e.message);
 }
 const cors = require('cors');
 const helmet = require('helmet');
