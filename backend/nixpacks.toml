@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
 
 [phases.install]
-cmds = ["npm install --legacy-peer-deps"]
+cmds = ["npm install --legacy-peer-deps", "npx prisma generate"]
 
 [start]
-cmd = "node src/server.js"
+cmd = "npx prisma migrate deploy && node src/server.js"
