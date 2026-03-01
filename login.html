@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập — GenzTech AI Human Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #060b1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background animated gradient */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(0,212,255,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(99,102,241,.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: .15;
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .orb1 { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .orb2 { width: 300px; height: 300px; background: #6366f1; bottom: -80px; right: -80px; animation-delay: 3s; }
+    .orb3 { width: 200px; height: 200px; background: #22c55e; top: 50%; left: 50%; animation-delay: 5s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.05); }
+    }
+
+    /* Card */
+    .card {
+      background: rgba(13, 21, 48, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 460px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 25px 60px rgba(0,0,0,.5);
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      justify-content: center;
+    }
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #00d4ff, #6366f1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+    }
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4ff, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: rgba(255,255,255,.04);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,.4);
+      background: none;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab-btn.active {
+      background: rgba(0,212,255,.15);
+      color: #00d4ff;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,.5);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 7px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap i {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,.3);
+      font-size: 15px;
+      pointer-events: none;
+    }
+    .input-wrap .toggle-pw {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,.3);
+      font-size: 15px;
+      cursor: pointer;
+      pointer-events: all;
+      background: none;
+      border: none;
+      padding: 0;
+      transition: color .2s;
+    }
+    .input-wrap .toggle-pw:hover { color: rgba(255,255,255,.7); }
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      padding: 11px 13px 11px 38px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: all .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-input:focus {
+      border-color: rgba(0,212,255,.4);
+      background: rgba(0,212,255,.04);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.08);
+    }
+    .form-input::placeholder { color: rgba(255,255,255,.2); }
+    .form-input.has-toggle { padding-right: 40px; }
+    .form-input.error { border-color: rgba(239,68,68,.5); }
+    .form-input.success { border-color: rgba(34,197,94,.4); }
+
+    /* Token textarea */
+    .token-area {
+      width: 100%;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      padding: 11px 13px;
+      font-size: 12px;
+      color: #fff;
+      outline: none;
+      transition: all .2s;
+      font-family: 'Inter', monospace;
+      resize: vertical;
+      min-height: 70px;
+      line-height: 1.5;
+    }
+    .token-area:focus {
+      border-color: rgba(0,212,255,.4);
+      background: rgba(0,212,255,.04);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.08);
+    }
+    .token-area::placeholder { color: rgba(255,255,255,.2); font-size: 12px; }
+    .token-area.error { border-color: rgba(239,68,68,.5); }
+
+    /* Token hint */
+    .token-hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,.3);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .token-hint a {
+      color: #00d4ff;
+      text-decoration: none;
+    }
+    .token-hint a:hover { text-decoration: underline; }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #00d4ff, #6366f1);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-submit:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,212,255,.25); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Alert */
+    .alert {
+      padding: 11px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .alert.show { display: flex; }
+    .alert.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #fca5a5; }
+    .alert.success { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #86efac; }
+    .alert.info { background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.2); color: #7dd3fc; }
+    .alert i { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Loading spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+    .btn-submit.loading .spinner { display: block; }
+    .btn-submit.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FB user preview */
+    .fb-preview {
+      display: none;
+      background: rgba(34,197,94,.06);
+      border: 1px solid rgba(34,197,94,.2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      align-items: center;
+      gap: 12px;
+    }
+    .fb-preview.show { display: flex; }
+    .fb-preview-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(34,197,94,.4);
+    }
+    .fb-preview-avatar-placeholder {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(34,197,94,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #22c55e;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .fb-preview-info { flex: 1; min-width: 0; }
+    .fb-preview-name { font-size: 13px; font-weight: 600; color: #86efac; }
+    .fb-preview-pages { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 2px; }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: rgba(255,255,255,.2);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,.08);
+    }
+
+    /* Footer link */
+    .footer-link {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,.4);
+      margin-top: 20px;
+    }
+    .footer-link a { color: #00d4ff; text-decoration: none; font-weight: 500; }
+    .footer-link a:hover { text-decoration: underline; }
+
+    /* Step indicator (register only) */
+    .steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 24px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,.3);
+    }
+    .step.active { color: #00d4ff; }
+    .step.done { color: #22c55e; }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .step-line {
+      width: 30px;
+      height: 1px;
+      background: rgba(255,255,255,.1);
+      margin: 0 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="card">
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon"><i class="bi bi-robot"></i></div>
+      <span class="logo-text">GenzTech</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">
+        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+      </button>
+      <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">
+        <i class="bi bi-person-plus"></i> Đăng ký
+      </button>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert" id="alertBox">
+      <i class="bi bi-exclamation-circle" id="alertIcon"></i>
+      <span id="alertMsg"></span>
+    </div>
+
+    <!-- ── LOGIN FORM ── -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <div class="input-wrap">
+          <i class="bi bi-envelope"></i>
+          <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" autocomplete="email" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mật khẩu</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock"></i>
+          <input type="password" class="form-input has-toggle" id="loginPassword" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+          <button type="button" class="toggle-pw" onclick="togglePw('loginPassword', this)">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="loginBtn">
+        <div class="spinner"></div>
+        <span class="btn-text"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập</span>
+      </button>
+    </form>
+
+    <!-- ── REGISTER FORM ── -->
+    <form id="registerForm" style="display:none" onsubmit="handleRegister(event)">
+      <!-- Steps -->
+      <div class="steps" id="regSteps">
+        <div class="step active" id="step1">
+          <div class="step-num">1</div>
+          <span>Tài khoản</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" id="step2">
+          <div class="step-num">2</div>
+          <span>Facebook</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" id="step3">
+          <div class="step-num">3</div>
+          <span>Hoàn tất</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <div class="input-wrap">
+          <i class="bi bi-envelope"></i>
+          <input type="email" class="form-input" id="regEmail" placeholder="your@email.com" autocomplete="email" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mật khẩu</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock"></i>
+          <input type="password" class="form-input has-toggle" id="regPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" required>
+          <button type="button" class="toggle-pw" onclick="togglePw('regPassword', this)">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Xác nhận mật khẩu</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock-fill"></i>
+          <input type="password" class="form-input has-toggle" id="regConfirm" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required>
+          <button type="button" class="toggle-pw" onclick="togglePw('regConfirm', this)">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="divider">Kết nối Facebook</div>
+
+      <div class="form-group">
+        <label class="form-label">Facebook Access Token</label>
+        <textarea class="token-area" id="regFbToken" placeholder="Dán Access Token từ Facebook Graph API Explorer vào đây..." rows="3" required></textarea>
+        <div class="token-hint">
+          <i class="bi bi-info-circle"></i>
+          Lấy token tại
+          <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Facebook Graph API Explorer</a>
+          (cần quyền: pages_manage_metadata, pages_messaging, pages_show_list)
+        </div>
+      </div>
+
+      <!-- FB user preview (hiện sau khi verify token) -->
+      <div class="fb-preview" id="fbPreview">
+        <div class="fb-preview-avatar-placeholder" id="fbAvatarPlaceholder">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <img class="fb-preview-avatar" id="fbAvatar" src="" alt="" style="display:none">
+        <div class="fb-preview-info">
+          <div class="fb-preview-name" id="fbName">—</div>
+          <div class="fb-preview-pages" id="fbPages">Đang tải...</div>
+        </div>
+        <i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:18px;flex-shrink:0"></i>
+      </div>
+
+      <button type="submit" class="btn-submit" id="registerBtn">
+        <div class="spinner"></div>
+        <span class="btn-text"><i class="bi bi-person-plus"></i> Tạo tài khoản</span>
+      </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="footer-link" id="footerLink">
+      Chưa có tài khoản? <a href="#" onclick="switchTab('register');return false">Đăng ký ngay</a>
+    </div>
+  </div>
+
+  <script>
+    // ── Config ────────────────────────────────────────────
+    const SERVER_URL = 'https://genztech-production.up.railway.app';
+    const TOOL_URL   = 'tool-human-agent.html';
+
+    // ── Kiểm tra đã đăng nhập chưa ───────────────────────
+    (function checkAuth() {
+      const token = localStorage.getItem('GT_JWT');
+      if (token) {
+        // Verify token còn hạn
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.exp * 1000 > Date.now()) {
+            window.location.href = TOOL_URL;
+            return;
+          }
+        } catch {}
+        localStorage.removeItem('GT_JWT');
+        localStorage.removeItem('GT_USER');
+      }
+    })();
+
+    // ── Switch Tab ────────────────────────────────────────
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('tabLogin').classList.toggle('active', isLogin);
+      document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+      document.getElementById('loginForm').style.display = isLogin ? '' : 'none';
+      document.getElementById('registerForm').style.display = isLogin ? 'none' : '';
+      document.getElementById('footerLink').innerHTML = isLogin
+        ? 'Chưa có tài khoản? <a href="#" onclick="switchTab(\'register\');return false">Đăng ký ngay</a>'
+        : 'Đã có tài khoản? <a href="#" onclick="switchTab(\'login\');return false">Đăng nhập</a>';
+      hideAlert();
+    }
+
+    // ── Toggle Password ───────────────────────────────────
+    function togglePw(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+      }
+    }
+
+    // ── Alert ─────────────────────────────────────────────
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alertBox');
+      const icon = document.getElementById('alertIcon');
+      const msgEl = document.getElementById('alertMsg');
+      box.className = `alert show ${type}`;
+      icon.className = type === 'error' ? 'bi bi-exclamation-circle'
+                     : type === 'success' ? 'bi bi-check-circle'
+                     : 'bi bi-info-circle';
+      msgEl.textContent = msg;
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function hideAlert() {
+      document.getElementById('alertBox').classList.remove('show');
+    }
+
+    // ── Set loading state ─────────────────────────────────
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.classList.toggle('loading', loading);
+    }
+
+    // ── Verify FB token (debounced) ───────────────────────
+    let verifyTimer = null;
+    document.getElementById('regFbToken').addEventListener('input', function() {
+      clearTimeout(verifyTimer);
+      const token = this.value.trim();
+      if (token.length < 50) {
+        document.getElementById('fbPreview').classList.remove('show');
+        return;
+      }
+      verifyTimer = setTimeout(() => verifyFbToken(token), 800);
+    });
+
+    async function verifyFbToken(token) {
+      try {
+        const res = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name,picture.type(large)&access_token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('fbPreview').classList.remove('show');
+          document.getElementById('regFbToken').classList.add('error');
+          return;
+        }
+        document.getElementById('regFbToken').classList.remove('error');
+        document.getElementById('regFbToken').classList.add('success');
+
+        // Hiển thị preview
+        document.getElementById('fbName').textContent = data.name || 'Unknown';
+        if (data.picture?.data?.url) {
+          document.getElementById('fbAvatar').src = data.picture.data.url;
+          document.getElementById('fbAvatar').style.display = '';
+          document.getElementById('fbAvatarPlaceholder').style.display = 'none';
+        }
+        document.getElementById('fbPages').textContent = 'Đang tải danh sách Pages...';
+        document.getElementById('fbPreview').classList.add('show');
+
+        // Lấy số pages
+        const pagesRes = await fetch(`https://graph.facebook.com/v19.0/me/accounts?limit=200&access_token=${encodeURIComponent(token)}`);
+        const pagesData = await pagesRes.json();
+        const count = pagesData.data?.length || 0;
+        document.getElementById('fbPages').textContent = `${count} Pages được kết nối`;
+      } catch (e) {
+        document.getElementById('fbPreview').classList.remove('show');
+      }
+    }
+
+    // ── Handle Login ──────────────────────────────────────
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideAlert();
+      const email    = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      setLoading('loginBtn', true);
+      try {
+        const res = await fetch(`${SERVER_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showAlert(data.error || 'Đăng nhập thất bại', 'error');
+          return;
+        }
+        // Lưu token và user info
+        localStorage.setItem('GT_JWT', data.token);
+        localStorage.setItem('GT_USER', JSON.stringify(data.user));
+        // Lưu FB token để tool dùng ngay
+        if (data.user?.fb_token) {
+          localStorage.setItem('HA_FB_TOKEN', data.user.fb_token);
+          localStorage.setItem('FB_TOKEN_MANUAL', data.user.fb_token);
+        }
+        showAlert(`Chào mừng trở lại, ${data.user?.fb_user_name || data.user?.email}! Đang chuyển hướng...`, 'success');
+        setTimeout(() => { window.location.href = TOOL_URL; }, 1200);
+      } catch (err) {
+        showAlert('Không thể kết nối server. Vui lòng thử lại.', 'error');
+      } finally {
+        setLoading('loginBtn', false);
+      }
+    }
+
+    // ── Handle Register ───────────────────────────────────
+    async function handleRegister(e) {
+      e.preventDefault();
+      hideAlert();
+
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+      const fbToken  = document.getElementById('regFbToken').value.trim();
+
+      // Validate
+      if (password !== confirm) {
+        showAlert('Mật khẩu xác nhận không khớp', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        showAlert('Mật khẩu tối thiểu 6 ký tự', 'error');
+        return;
+      }
+      if (!fbToken) {
+        showAlert('Vui lòng nhập Facebook Access Token', 'error');
+        return;
+      }
+
+      // Update step indicator
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step1').classList.add('done');
+      document.getElementById('step1').querySelector('.step-num').innerHTML = '<i class="bi bi-check" style="font-size:11px"></i>';
+      document.getElementById('step2').classList.add('active');
+
+      setLoading('registerBtn', true);
+      showAlert('Đang xác thực Facebook và tạo tài khoản...', 'info');
+
+      try {
+        const res = await fetch(`${SERVER_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, fb_token: fbToken }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          // Reset steps
+          document.getElementById('step1').classList.remove('done');
+          document.getElementById('step1').classList.add('active');
+          document.getElementById('step1').querySelector('.step-num').textContent = '1';
+          document.getElementById('step2').classList.remove('active');
+          showAlert(data.error || 'Đăng ký thất bại', 'error');
+          return;
+        }
+
+        // Step 2 → 3
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step2').classList.add('done');
+        document.getElementById('step2').querySelector('.step-num').innerHTML = '<i class="bi bi-check" style="font-size:11px"></i>';
+        document.getElementById('step3').classList.add('active');
+
+        // Lưu token và user info
+        localStorage.setItem('GT_JWT', data.token);
+        localStorage.setItem('GT_USER', JSON.stringify(data.user));
+        if (data.user?.fb_token) {
+          localStorage.setItem('HA_FB_TOKEN', data.user.fb_token);
+          localStorage.setItem('FB_TOKEN_MANUAL', data.user.fb_token);
+        }
+
+        showAlert(
+          `🎉 Đăng ký thành công! Xin chào ${data.user?.fb_user_name || email}. Tìm thấy ${data.user?.pages_count || 0} Pages. Đang chuyển hướng...`,
+          'success'
+        );
+        setTimeout(() => { window.location.href = TOOL_URL; }, 2000);
+      } catch (err) {
+        showAlert('Không thể kết nối server. Vui lòng thử lại.', 'error');
+        // Reset steps
+        document.getElementById('step1').classList.remove('done');
+        document.getElementById('step1').classList.add('active');
+        document.getElementById('step1').querySelector('.step-num').textContent = '1';
+        document.getElementById('step2').classList.remove('active', 'done');
+      } finally {
+        setLoading('registerBtn', false);
+      }
+    }
+  </script>
+</body>
+</html>
