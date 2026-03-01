@@ -108,7 +108,10 @@
     .page-chip.active .page-chip-avatar{border-color:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.3)}
     .page-chip-name{font-size:8px;color:rgba(255,255,255,.35);text-align:center;line-height:1.2;max-width:56px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
     .page-chip.active .page-chip-name{color:rgba(0,212,255,.8)}
-    .page-chip-badge{position:absolute;top:6px;right:6px;background:#f97316;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:8px;min-width:14px;text-align:center;line-height:1.4}
+    .page-chip-badge{position:absolute;top:4px;right:4px;background:#6b7280;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:8px;min-width:14px;text-align:center;line-height:1.4;transition:background .2s}
+    .page-chip.active .page-chip-badge{background:#22c55e}
+    .page-chip-unread{position:absolute;bottom:4px;right:4px;background:#ef4444;color:#fff;font-size:7px;font-weight:700;padding:1px 3px;border-radius:6px;min-width:12px;text-align:center;line-height:1.4}
+    .page-chip.active::after{content:'\2713';position:absolute;top:2px;left:4px;font-size:8px;color:#22c55e;font-weight:900;line-height:1}
     .page-chip-all{display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;transition:all .2s;border-bottom:1px solid rgba(255,255,255,.06);gap:4px}
     .page-chip-all:hover{background:rgba(255,255,255,.05)}
     .page-chip-all.active{background:rgba(0,212,255,.08);border-right:2px solid #00d4ff}
@@ -430,7 +433,7 @@
             <div class="page-selector-label">Pages</div>
           </div>
           <!-- "Tất cả" chip -->
-          <div class="page-chip-all active" id="pageChipAll" onclick="selectPageFilter('')">
+          <div class="page-chip-all active" id="pageChipAll" onclick="selectedPageIds.clear();renderPageChips();filterConversations()">
             <div class="page-chip-all-icon"><i class="bi bi-grid-3x3-gap"></i></div>
             <div class="page-chip-all-label">Tất cả</div>
           </div>
@@ -963,36 +966,51 @@ function updateConvPageFilter() {
   renderPageChips();
 }
 
+// Multi-select page filter state
+let selectedPageIds = new Set(); // empty = all pages
+
 function renderPageChips() {
   const container = document.getElementById('pageChipList');
   if (!container) return;
-  const currentFilter = document.getElementById('convPageFilter')?.value || '';
   container.innerHTML = allPages.map(p => {
     const color = getAvatarColor(p.pageId);
     const initials = (p.pageName || p.pageId).split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const convCount = allConversations.filter(c => c.pageId === p.pageId).length;
     const unreadCount = allConversations.filter(c => c.pageId === p.pageId && (c.unread||c.unreadCount) > 0).length;
+    const isActive = selectedPageIds.has(p.pageId);
     return `
-    <div class="page-chip ${currentFilter === p.pageId ? 'active' : ''}" onclick="selectPageFilter('${p.pageId}')" title="${escHtml(p.pageName)}">
+    <div class="page-chip ${isActive ? 'active' : ''}" onclick="togglePageFilter('${p.pageId}')" title="${escHtml(p.pageName)}">
       <div class="page-chip-avatar" style="background:${color}">${initials}</div>
       <div class="page-chip-name">${escHtml((p.pageName||'').split(' ').slice(0,3).join(' '))}</div>
-      ${unreadCount > 0 ? `<span class="page-chip-badge">${unreadCount}</span>` : ''}
+      ${convCount > 0 ? `<span class="page-chip-badge" style="background:${isActive?'#22c55e':'#6b7280'}">${convCount}</span>` : ''}
+      ${unreadCount > 0 ? `<span class="page-chip-unread">${unreadCount}</span>` : ''}
     </div>
     `;
   }).join('');
+  // Update "Tất cả" chip
+  const allChip = document.getElementById('pageChipAll');
+  if (allChip) allChip.classList.toggle('active', selectedPageIds.size === 0);
+}
+
+function togglePageFilter(pageId) {
+  if (selectedPageIds.has(pageId)) {
+    selectedPageIds.delete(pageId);
+  } else {
+    selectedPageIds.add(pageId);
+  }
+  renderPageChips();
+  filterConversations();
 }
 
 function selectPageFilter(pageId) {
-  // Update hidden select
-  const sel = document.getElementById('convPageFilter');
-  if (sel) sel.value = pageId;
-  // Update "Tất cả" chip
-  const allChip = document.getElementById('pageChipAll');
-  if (allChip) allChip.classList.toggle('active', !pageId);
-  // Update page chips
-  document.querySelectorAll('.page-chip').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('onclick') === `selectPageFilter('${pageId}')`);
-  });
-  // Filter conversations
+  // Legacy: single select (kept for backward compat)
+  if (!pageId) {
+    selectedPageIds.clear();
+  } else {
+    selectedPageIds.clear();
+    selectedPageIds.add(pageId);
+  }
+  renderPageChips();
   filterConversations();
 }
 
@@ -1068,10 +1086,9 @@ function renderConvList(convs) {
 
 function filterConversations() {
   const q = document.getElementById('convSearch').value.toLowerCase();
-  const pageFilter = document.getElementById('convPageFilter')?.value;
   const filtered = allConversations.filter(c => {
-    // Filter by page
-    if (pageFilter && c.pageId !== pageFilter) return false;
+    // Multi-select page filter: if no pages selected, show all
+    if (selectedPageIds.size > 0 && !selectedPageIds.has(c.pageId)) return false;
     // Filter by search text
     if (q) {
       return (c.userName || '').toLowerCase().includes(q) ||
