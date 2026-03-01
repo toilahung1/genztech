@@ -197,6 +197,7 @@ textarea.form-control{resize:vertical;min-height:70px}
         <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
       </nav>
       <div class="sidebar-footer">
+      <div id="gtUserSidebar" style="display:none"></div>
         <div class="conn-status" id="connStatus">
           <div class="conn-dot" id="connDot"></div>
           <span id="connText">Chưa kết nối</span>
@@ -215,6 +216,7 @@ textarea.form-control{resize:vertical;min-height:70px}
       </div>
     </div>
     <div class="topbar-right">
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
       <button class="btn-icon" onclick="resetForm()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
     </div>
   </div>
@@ -1352,5 +1354,6 @@ checkConn();
   window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
 })();
 </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
