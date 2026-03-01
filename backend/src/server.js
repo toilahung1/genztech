@@ -19,6 +19,7 @@ const proxyRoutes = require('./api/proxy');
 const postsRoutes = require('./api/posts');
 const aiRoutes = require('./api/ai');
 const humanAgentRoutes = require('./api/human-agent');
+const messagesRoutes   = require('./api/messages');
 const { startScheduler } = require('./services/scheduler');
 
 const app = express();
@@ -47,6 +48,7 @@ app.use('/api/proxy', proxyRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/human-agent', humanAgentRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // ── Admin Migration Endpoint (tạm thời) ──
 const { execSync } = require('child_process');
