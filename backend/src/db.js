@@ -1,72 +1,111 @@
 /**
- * GenzTech — SQLite Database Module
- * Lưu trữ bền vững: users, fb_tokens, pages
+ * GenzTech — Database Module (Prisma + PostgreSQL)
+ * Thay thế SQLite bằng Prisma để dữ liệu bền vững trên Railway
  */
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const { PrismaClient } = require('@prisma/client');
 
-// Đảm bảo thư mục data tồn tại
-const DATA_DIR = path.join(__dirname, '../../data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+let prisma;
 
-const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'genztech.db');
-const db = new Database(DB_PATH);
+function getPrisma() {
+  if (!prisma) {
+    prisma = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    });
+  }
+  return prisma;
+}
 
-// Bật WAL mode để hiệu năng tốt hơn
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+// ── Chuyển đổi Prisma format sang format tương thích với auth.js ──
+function _toCompat(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    password: user.password,
+    fb_user_id: user.fbUserId || null,
+    fb_user_name: user.fbUserName || null,
+    fb_avatar: user.fbAvatar || null,
+    fb_token: user.fbToken || null,
+    fb_token_exp: user.fbTokenExp ? user.fbTokenExp.toISOString() : null,
+    fb_pages: user.fbPages ? JSON.stringify(user.fbPages) : '[]',
+    created_at: user.createdAt ? user.createdAt.toISOString() : null,
+    last_login: user.lastLogin ? user.lastLogin.toISOString() : null,
+  };
+}
 
-// ── Tạo bảng users ──────────────────────────────────────
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    email       TEXT    UNIQUE NOT NULL,
-    password    TEXT    NOT NULL,
-    -- Facebook info (lấy tự động khi đăng ký)
-    fb_user_id   TEXT,
-    fb_user_name TEXT,
-    fb_avatar    TEXT,
-    fb_token     TEXT,
-    fb_token_exp TEXT,
-    fb_pages     TEXT DEFAULT '[]',   -- JSON array of pages
-    -- Meta
-    created_at  TEXT DEFAULT (datetime('now')),
-    updated_at  TEXT DEFAULT (datetime('now')),
-    last_login  TEXT
-  );
-`);
-
-// ── Prepared Statements ──────────────────────────────────
+// ── userStmt: API tương thích với code auth.js hiện tại ──
 const userStmt = {
-  create: db.prepare(`
-    INSERT INTO users (email, password, fb_user_id, fb_user_name, fb_avatar, fb_token, fb_token_exp, fb_pages)
-    VALUES (@email, @password, @fb_user_id, @fb_user_name, @fb_avatar, @fb_token, @fb_token_exp, @fb_pages)
-  `),
+  create: {
+    run: async (data) => {
+      const db = getPrisma();
+      const created = await db.user.create({
+        data: {
+          email: data.email,
+          password: data.password,
+          fbUserId: data.fb_user_id || null,
+          fbUserName: data.fb_user_name || null,
+          fbAvatar: data.fb_avatar || null,
+          fbToken: data.fb_token || null,
+          fbTokenExp: data.fb_token_exp ? new Date(data.fb_token_exp) : null,
+          fbPages: data.fb_pages ? JSON.parse(data.fb_pages) : [],
+        },
+      });
+      return { lastInsertRowid: created.id };
+    },
+  },
 
-  findByEmail: db.prepare(`SELECT * FROM users WHERE email = ? LIMIT 1`),
+  findByEmail: {
+    get: async (email) => {
+      const db = getPrisma();
+      const user = await db.user.findUnique({ where: { email } });
+      return _toCompat(user);
+    },
+  },
 
-  findById: db.prepare(`SELECT * FROM users WHERE id = ? LIMIT 1`),
+  findById: {
+    get: async (id) => {
+      const db = getPrisma();
+      const user = await db.user.findUnique({ where: { id: String(id) } });
+      return _toCompat(user);
+    },
+  },
 
-  updateFbInfo: db.prepare(`
-    UPDATE users
-    SET fb_user_id = @fb_user_id,
-        fb_user_name = @fb_user_name,
-        fb_avatar = @fb_avatar,
-        fb_token = @fb_token,
-        fb_token_exp = @fb_token_exp,
-        fb_pages = @fb_pages,
-        updated_at = datetime('now')
-    WHERE id = @id
-  `),
+  updateFbInfo: {
+    run: async (data) => {
+      const db = getPrisma();
+      return db.user.update({
+        where: { id: String(data.id) },
+        data: {
+          fbUserId: data.fb_user_id || null,
+          fbUserName: data.fb_user_name || null,
+          fbAvatar: data.fb_avatar || null,
+          fbToken: data.fb_token || null,
+          fbTokenExp: data.fb_token_exp ? new Date(data.fb_token_exp) : null,
+          fbPages: data.fb_pages ? JSON.parse(data.fb_pages) : [],
+        },
+      });
+    },
+  },
 
-  updateLastLogin: db.prepare(`
-    UPDATE users SET last_login = datetime('now') WHERE id = ?
-  `),
+  updateLastLogin: {
+    run: async (id) => {
+      const db = getPrisma();
+      return db.user.update({
+        where: { id: String(id) },
+        data: { lastLogin: new Date() },
+      });
+    },
+  },
 
-  updatePassword: db.prepare(`
-    UPDATE users SET password = ?, updated_at = datetime('now') WHERE id = ?
-  `),
+  updatePassword: {
+    run: async (password, id) => {
+      const db = getPrisma();
+      return db.user.update({
+        where: { id: String(id) },
+        data: { password },
+      });
+    },
+  },
 };
 
-module.exports = { db, userStmt };
+module.exports = { getPrisma, userStmt };
