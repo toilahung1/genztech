@@ -9,17 +9,19 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  username  String   @unique
-  email     String?  @unique
+  email     String   @unique
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  lastLogin DateTime?
 
   // Facebook connection
-  fbUserId   String?  @unique
+  fbUserId   String?
+  fbUserName String?
+  fbAvatar   String?
   fbToken    String?
   fbTokenExp DateTime?
-  fbPages    Json?    // Array of pages user has access to
+  fbPages    Json?    @default("[]")
 
   posts Post[]
 
