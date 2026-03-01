@@ -151,6 +151,73 @@ app.get('/api/admin/migrate', async (req, res) => {
   }
 });
 
+// ── Admin: Tạo bảng conversations và messages ──
+app.get('/api/admin/migrate-tables', async (req, res) => {
+  if (req.query.secret !== 'GenzMigrate2026') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const results = [];
+
+    // Tạo bảng conversations
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS conversations (
+          id               TEXT PRIMARY KEY,
+          "pageId"         TEXT NOT NULL,
+          "pageName"       TEXT,
+          "participantId"  TEXT,
+          "participantName" TEXT,
+          "participantAvatar" TEXT,
+          snippet          TEXT,
+          "unreadCount"    INTEGER DEFAULT 0,
+          "updatedTime"    TIMESTAMP,
+          "canReply"       BOOLEAN DEFAULT true,
+          "ownerId"        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          "fetchedAt"      TIMESTAMP DEFAULT NOW(),
+          "createdAt"      TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      results.push('Created conversations table');
+    } catch(e) { results.push('conversations: ' + e.message); }
+
+    // Index cho conversations
+    try { await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS conv_page_idx ON conversations("pageId")`); results.push('idx: conv_pageId'); } catch(e) {}
+    try { await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS conv_owner_idx ON conversations("ownerId")`); results.push('idx: conv_ownerId'); } catch(e) {}
+
+    // Tạo bảng messages
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id               TEXT PRIMARY KEY,
+          "conversationId" TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+          "pageId"         TEXT NOT NULL,
+          "fromId"         TEXT,
+          "fromName"       TEXT,
+          "toId"           TEXT,
+          "toName"         TEXT,
+          message          TEXT,
+          attachments      TEXT DEFAULT '[]',
+          "isFromPage"     BOOLEAN DEFAULT false,
+          "createdTime"    TIMESTAMP,
+          "fetchedAt"      TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      results.push('Created messages table');
+    } catch(e) { results.push('messages: ' + e.message); }
+
+    // Index cho messages
+    try { await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS msg_conv_idx ON messages("conversationId")`); results.push('idx: msg_conversationId'); } catch(e) {}
+    try { await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS msg_page_idx ON messages("pageId")`); results.push('idx: msg_pageId'); } catch(e) {}
+    try { await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS msg_time_idx ON messages("createdTime")`); results.push('idx: msg_createdTime'); } catch(e) {}
+
+    await prisma.$disconnect();
+    res.json({ success: true, results });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 // ── 404 Handler ──
 app.use((req, res) => res.status(404).json({ error: `Route không tồn tại: ${req.method} ${req.path}` }));
 
