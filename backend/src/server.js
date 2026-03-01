@@ -58,6 +58,18 @@ app.get('/api/admin/migrate', async (req, res) => {
     const prisma = new PrismaClient();
     const results = [];
     
+    // Bỏ NOT NULL trên cột username (cột cũ không cần nữa)
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ALTER COLUMN username DROP NOT NULL`);
+      results.push('Dropped NOT NULL on username');
+    } catch(e) { results.push('username nullable: ' + e.message); }
+    
+    // Set default cho username
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ALTER COLUMN username SET DEFAULT ''`);
+      results.push('Set default empty string for username');
+    } catch(e) { results.push('username default: ' + e.message); }
+    
     // Thêm cột email nếu chưa có
     try {
       await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`);
