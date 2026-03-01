@@ -1099,12 +1099,25 @@
   const API_BASE = 'https://genztech-production.up.railway.app';
 
   // ============================================================
-  //  STATE
+  //  STATE — Đọc token từ GT_USER (server) qua GenzAuth
   // ============================================================
+  (function _syncFromGenzAuth() {
+    // GenzAuth đã đồng bộ FB token vào gz_* keys trước khi trang này chạy
+    // Nếu chưa có gz_jwt nhưng có GT_JWT → dùng GT_JWT làm jwt cho API
+    const gtJwt = localStorage.getItem('GT_JWT');
+    if (gtJwt && !localStorage.getItem('gz_jwt')) {
+      localStorage.setItem('gz_jwt', gtJwt);
+      const gtUser = JSON.parse(localStorage.getItem('GT_USER') || 'null');
+      if (gtUser) {
+        localStorage.setItem('gz_username', gtUser.fb_user_name || gtUser.email || '');
+      }
+    }
+  })();
+
   const S = {
-    jwtToken:  localStorage.getItem('gz_jwt') || '',
-    username:  localStorage.getItem('gz_username') || '',
-    loggedIn:  !!localStorage.getItem('gz_jwt'),
+    jwtToken:  localStorage.getItem('GT_JWT') || localStorage.getItem('gz_jwt') || '',
+    username:  (function(){ const u=JSON.parse(localStorage.getItem('GT_USER')||'null'); return u ? (u.fb_user_name||u.email||'') : (localStorage.getItem('gz_username')||''); })(),
+    loggedIn:  !!localStorage.getItem('GT_JWT'),
     connected: !!localStorage.getItem('gz_connected'),
     fbUser:    JSON.parse(localStorage.getItem('gz_fb_user') || 'null'),
     pages:     JSON.parse(localStorage.getItem('gz_pages') || '[]'),
@@ -1171,21 +1184,8 @@
 
      // Auto-scheduler check every 30s
     setInterval(checkScheduler, 30000);
-    // Nếu chưa đăng nhập thì tự động mở modal đăng nhập
-    if (!S.loggedIn) {
-      setTimeout(function() { openModal('connectModal'); }, 300);
-    }
-    // Nếu đã đăng nhập nhưng chưa kết nối Facebook, hiển thị gợi ý
-    if (S.loggedIn && !S.connected) {
-      // Hiển thị badge nhắc nhở kết nối Facebook
-      const connectBtn = document.getElementById('connectBtn');
-      if (connectBtn) {
-        connectBtn.style.animation = 'pulse 2s infinite';
-        setTimeout(function() {
-          if (connectBtn) connectBtn.style.animation = '';
-        }, 6000);
-      }
-    }
+    // Đã đăng nhập qua GenzAuth — không cần mở modal đăng nhập nữa
+    // connectBtn đã được ẩn bởi auth-common.js (hideConnectButtons)
     // Auto-check Facebook status nếu đã đăng nhập
     if (S.loggedIn && S.jwtToken) {
       setTimeout(async function() {
@@ -1428,22 +1428,19 @@
     const btn = document.getElementById('connectBtn');
     const btnLabel = document.getElementById('connectBtnLabel');
 
+    // Ẩn nút kết nối khi đã đăng nhập qua GenzAuth (token đã có từ server)
+    if (btn && S.loggedIn) btn.style.display = 'none';
+
     if (S.connected && S.fbUser) {
-      dot.classList.add('online');
-      label.textContent = S.fbUser.name || S.username;
-      btnLabel.textContent = 'Đã Kết Nối';
-      btn.className = 'btn-sm btn-success';
+      if (dot) dot.classList.add('online');
+      if (label) label.textContent = S.fbUser.name || S.username;
       updateTokenStatusUI(S.tokenDaysLeft);
     } else if (S.loggedIn) {
-      dot.classList.add('online');
-      label.textContent = S.username;
-      btnLabel.textContent = 'Kết Nối FB';
-      btn.className = 'btn-sm btn-outline';
+      if (dot) dot.classList.add('online');
+      if (label) label.textContent = S.username;
     } else {
-      dot.classList.remove('online');
-      label.textContent = 'Chưa kết nối';
-      btnLabel.textContent = 'Kết Nối';
-      btn.className = 'btn-sm btn-outline';
+      if (dot) dot.classList.remove('online');
+      if (label) label.textContent = 'Chưa kết nối';
     }
   }
   // Cập nhật UI hiển thị số ngày còn lại của token
