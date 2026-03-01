@@ -23,7 +23,8 @@ model User {
   fbTokenExp DateTime?
   fbPages    String?  @default("[]")
 
-  posts Post[]
+  posts         Post[]
+  conversations Conversation[]
 
   @@map("users")
 }
@@ -36,12 +37,10 @@ model Post {
   postFbId  String?
   errorMsg  String?
 
-  // Scheduling
   scheduledAt DateTime?
   postedAt    DateTime?
   repeatType  String?
 
-  // Relations
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId Int
   pageId   String
@@ -51,4 +50,54 @@ model Post {
   updatedAt DateTime @default(now())
 
   @@map("posts")
+}
+
+// ── Conversation: 1 cuộc hội thoại trên 1 Page ──────────────
+model Conversation {
+  id             String   @id                    // Facebook conversation ID
+  pageId         String                           // Page ID chứa conversation
+  pageName       String?                          // Tên Page
+  participantId  String?                          // Facebook ID của người dùng
+  participantName String?                         // Tên người dùng
+  participantAvatar String?                       // Avatar người dùng
+  snippet        String?                          // Tin nhắn mới nhất (preview)
+  unreadCount    Int      @default(0)
+  updatedTime    DateTime?                        // Thời gian cập nhật từ FB
+  canReply       Boolean  @default(true)
+
+  // Relation
+  owner    User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId  Int
+  messages Message[]
+
+  fetchedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([pageId])
+  @@index([ownerId])
+  @@map("conversations")
+}
+
+// ── Message: 1 tin nhắn trong conversation ──────────────────
+model Message {
+  id             String   @id                    // Facebook message ID
+  conversationId String                           // FK -> conversations.id
+  pageId         String                           // Page ID (để query nhanh)
+  fromId         String?                          // ID người gửi
+  fromName       String?                          // Tên người gửi
+  toId           String?                          // ID người nhận
+  toName         String?                          // Tên người nhận
+  message        String?  @db.Text               // Nội dung tin nhắn
+  attachments    String?  @default("[]")          // JSON array attachments
+  isFromPage     Boolean  @default(false)         // true = Page gửi, false = user gửi
+  createdTime    DateTime?                        // Thời gian gửi từ FB
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  fetchedAt DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([pageId])
+  @@index([createdTime])
+  @@map("messages")
 }
