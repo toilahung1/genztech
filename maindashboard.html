@@ -126,6 +126,7 @@
         <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
       </nav>
       <div class="sidebar-footer">
+      <div id="gtUserSidebar" style="display:none"></div>
         <div class="conn-status">
           <div class="conn-dot" id="connDot"></div>
           <span id="connText">Chưa kết nối</span>
@@ -142,11 +143,7 @@
           </span>
         </div>
         <div class="topbar-right">
-          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px">
-            <img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,212,255,.3)" src="" alt="">
-            <span id="userName" style="color:rgba(255,255,255,.7)"></span>
-          </div>
-          <button class="btn-icon" onclick="handleFBLogin()" title="Kết nối Facebook"><i class="bi bi-facebook" style="color:#1877f2"></i></button>
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
         </div>
       </div>
 
@@ -394,5 +391,6 @@
   window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
 })();
 </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
