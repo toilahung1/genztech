@@ -1790,81 +1790,92 @@ async function loadConversationsDirect(showLoading = true) {
   // Chỉ hiển thị spinner nếu chưa có data và showLoading=true
   if (showLoading && el && allConversations.length === 0) el.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
 
-  const userToken = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN') || localStorage.getItem('FB_TOKEN_MANUAL');
-  if (!userToken || !allPages.length) {
-    if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chưa có token hoặc Pages</p></div>';
+  const jwt = localStorage.getItem('GT_JWT');
+  if (!jwt || !allPages.length) {
+    if (el) el.innerHTML = '<div class="empty-state"><i class="bi bi-chat-dots"></i><p>Chưa đăng nhập hoặc chưa có Pages</p></div>';
     _isLoadingConvs = false;
     return;
   }
 
   try {
     allConversations = [];
-    // Load song song từ TẤT CẢ pages với Promise.all để đảm bảo đủ 46 pages
-    const pagesToLoad = allPages.filter(p => p.accessToken);
-    
-    // Cập nhật UI để người dùng thấy tiến trình
-    if (el && showLoading) el.innerHTML = `<div style="text-align:center;padding:20px"><span class="loading-spinner"></span><p style="font-size:12px;color:#9ca3af;margin-top:8px">Đang tải ${pagesToLoad.length} pages...</p></div>`;
-    
-    // Load tất cả pages song song với Promise.allSettled (không dừng nếu 1 page lỗi)
+    const pagesToLoad = allPages.filter(p => p.pageId);
+
+    if (el && showLoading)
+      el.innerHTML = `<div style="text-align:center;padding:20px"><span class="loading-spinner"></span><p style="font-size:12px;color:#9ca3af;margin-top:8px">Đang tải từ server (${pagesToLoad.length} pages)...</p></div>`;
+
+    // Gọi backend song song cho tất cả pages
     const results = await Promise.allSettled(pagesToLoad.map(async page => {
-      const pageUrl = `https://graph.facebook.com/v19.0/${page.pageId}/conversations?fields=id,snippet,updated_time,unread_count,participants&limit=30&access_token=${page.accessToken}`;
-      const pr = await fetch(pageUrl);
-      const pd = await pr.json();
-      if (pd.error || !pd.data) return [];
-      return (pd.data || []).map(c => {
-        const customer = (c.participants?.data || []).find(p => p.id !== page.pageId) || {};
-        return {
-          convId: c.id, userId: customer.id || c.id, userName: customer.name || '',
-          lastMessage: c.snippet || '', updatedAt: c.updated_time,
-          lastTimestamp: c.updated_time ? new Date(c.updated_time).getTime() : Date.now(),
-          unread: c.unread_count || 0, unreadCount: c.unread_count || 0,
-          pageId: page.pageId, pageName: page.pageName,
-          fbConvId: c.id, accessToken: page.accessToken, isPending: false
-        };
+      const res = await fetch(`${SERVER_URL}/api/messages/pages/${page.pageId}/conversations?limit=50`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
       });
+      const data = await res.json();
+      if (!res.ok || data.error) return [];
+      return (data.conversations || []).map(c => ({
+        convId:        c.id,
+        userId:        c.participantId || c.id,
+        userName:      c.participantName || '',
+        lastMessage:   c.snippet || '',
+        updatedAt:     c.updatedTime,
+        lastTimestamp: c.updatedTime ? new Date(c.updatedTime).getTime() : Date.now(),
+        unread:        c.unreadCount || 0,
+        unreadCount:   c.unreadCount || 0,
+        pageId:        c.pageId,
+        pageName:      page.pageName,
+        fbConvId:      c.id,
+        accessToken:   page.accessToken,
+        isPending:     false,
+      }));
     }));
-    
-    // Gộp tất cả kết quả
+
     for (const result of results) {
-      if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+      if (result.status === 'fulfilled' && Array.isArray(result.value))
         allConversations.push(...result.value);
-      }
     }
-    
-    // Deduplicate by convId
+
+    // Deduplicate
     const seen = new Set();
     allConversations = allConversations.filter(c => {
       if (seen.has(c.convId)) return false;
-      seen.add(c.convId);
-      return true;
+      seen.add(c.convId); return true;
     });
-    // Sort by latest
     allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    
-    // Apply page filter if selected
+
     const pageFilterVal = document.getElementById('convPageFilter')?.value;
-    const toRender = pageFilterVal 
+    const toRender = pageFilterVal
       ? allConversations.filter(c => c.pageId === pageFilterVal)
       : allConversations;
     renderConvList(toRender);
-    
-    // Update stats
+
     const unread = allConversations.filter(c => c.unreadCount > 0).length;
-    const statConvs = document.getElementById('stat-convs');
+    const statConvs  = document.getElementById('stat-convs');
     const statWaiting = document.getElementById('stat-waiting');
-    if (statConvs) statConvs.textContent = allConversations.length;
+    if (statConvs)  statConvs.textContent  = allConversations.length;
     if (statWaiting) statWaiting.textContent = unread;
-    // Re-render page chips to update badges
     renderPageChips();
     const badge = document.getElementById('tab-conversations')?.querySelector('.tab-badge');
     if (badge) {
       badge.textContent = allConversations.length;
       badge.style.display = allConversations.length > 0 ? 'inline-block' : 'none';
     }
+
+    // Nếu cache rỗng (lần đầu) → trigger sync cho từng page ở background rồi tải lại
+    if (allConversations.length === 0) {
+      if (el) el.innerHTML = `<div style="text-align:center;padding:20px"><span class="loading-spinner"></span><p style="font-size:12px;color:#9ca3af;margin-top:8px">Đang đồng bộ từ Facebook...</p></div>`;
+      await Promise.allSettled(pagesToLoad.map(page =>
+        fetch(`${SERVER_URL}/api/messages/pages/${page.pageId}/sync`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' }
+        }).catch(() => {})
+      ));
+      // Tải lại sau khi sync xong
+      _isLoadingConvs = false;
+      return loadConversationsDirect(false);
+    }
   } catch(e) {
     if (el) el.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Lỗi: ${escHtml(e.message)}</p></div>`;
   } finally {
-    _isLoadingConvs = false; // Cho phép gọi lại sau khi hoàn thành
+    _isLoadingConvs = false;
   }
 }
 
@@ -1937,70 +1948,66 @@ async function openConversationDirect(pageId, userId, userName) {
   const container = document.getElementById('chatMessages');
   if (container) container.innerHTML = '<div style="text-align:center;padding:20px"><span class="loading-spinner"></span></div>';
 
-  // Load messages from Facebook API (try multiple endpoints)
+  // Load messages từ backend (cache + incremental sync từ FB)
   try {
-    let msgs = [];
-    let lastErr = '';
-    // Strategy 1: GET /{convId}/messages (page token, limit 50)
-    const url1 = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time,sticker,attachments&limit=50&access_token=${page.accessToken}`;
-    const r1 = await fetch(url1);
-    const d1 = await r1.json();
-    let nextPageUrl = null;
-    if (!d1.error && d1.data) {
-      msgs = (d1.data || []).reverse();
-      nextPageUrl = d1.paging?.previous || null; // 'previous' = older messages
-      lastErr = '';
-    } else {
-      lastErr = d1.error?.message || 'Unknown error';
-      // Strategy 2: GET /{convId}?fields=messages (fallback)
-      const url2 = `https://graph.facebook.com/v19.0/${convId}?fields=messages.limit(50){id,message,from,created_time}&access_token=${page.accessToken}`;
-      const r2 = await fetch(url2);
-      const d2 = await r2.json();
-      if (!d2.error && d2.messages?.data) {
-        msgs = (d2.messages.data || []).reverse();
-        lastErr = '';
-      } else {
-        lastErr = d2.error?.message || lastErr;
-        // Strategy 3: Try with user token
-        const userToken = FB_TOKEN || localStorage.getItem('HA_FB_TOKEN');
-        if (userToken && userToken !== page.accessToken) {
-          const url3 = `https://graph.facebook.com/v19.0/${convId}/messages?fields=id,message,from,created_time&limit=50&access_token=${userToken}`;
-          const r3 = await fetch(url3);
-          const d3 = await r3.json();
-          if (!d3.error && d3.data) {
-            msgs = (d3.data || []).reverse();
-            nextPageUrl = d3.paging?.previous || null;
-            lastErr = '';
-          } else {
-            lastErr = d3.error?.message || lastErr;
-          }
-        }
-      }
-    }
-    if (lastErr) throw new Error(lastErr);
+    const jwt = localStorage.getItem('GT_JWT');
+    const msgRes = await fetch(
+      `${SERVER_URL}/api/messages/conversations/${convId}/messages?limit=50&page_id=${pageId}`,
+      { headers: { 'Authorization': `Bearer ${jwt}` } }
+    );
+    const msgData = await msgRes.json();
+    if (!msgRes.ok || msgData.error) throw new Error(msgData.error || 'Lỗi tải tin nhắn');
+
+    let msgs = (msgData.messages || []);
+    const nextPageUrl = null; // Backend quản lý pagination
+
     if (!container) return;
     if (!msgs.length) {
       container.innerHTML = '<div class="empty-state"><i class="bi bi-chat"></i><p>Chưa có tin nhắn</p></div>';
+      // Nếu đang sync → thử lại sau 2s
+      if (msgData.syncing) {
+        setTimeout(() => openConversationDirect(pageId, userId, userName), 2000);
+      }
       return;
+    }
+
+    // Nếu backend đang sync tin mới → tự động refresh sau 3s
+    if (msgData.syncing) {
+      setTimeout(async () => {
+        const r = await fetch(
+          `${SERVER_URL}/api/messages/conversations/${convId}/messages/refresh?limit=50&page_id=${pageId}`,
+          { headers: { 'Authorization': `Bearer ${jwt}` } }
+        ).catch(() => null);
+        if (!r?.ok) return;
+        const d = await r.json();
+        if (d.newMessages > 0) openConversationDirect(pageId, userId, userName);
+      }, 3000);
     }
     // Render tin nhắn với fix: so sánh string, xử lý attachment/sticker
     const customerUserId = String(conv?.userId || userId || '');
     function renderMsgHtml(m) {
-      const fromId = String(m.from?.id || '');
+      // Hỗ trợ cả 2 cấu trúc: backend (fromId, createdTime) và FB API (from.id, created_time)
+      const fromId = String(m.fromId || m.from?.id || '');
       const pid = String(pageId);
-      // isPage: nếu from.id là pageId, HOẶC nếu from.id không phải userId của khách (bot/automation)
-      const isPage = fromId === pid || (fromId !== '' && fromId !== customerUserId);
-      const time = formatTime(m.created_time);
-      // Nội dung tin nhắn
+      const isPage = m.isFromPage !== undefined
+        ? m.isFromPage
+        : (fromId === pid || (fromId !== '' && fromId !== customerUserId));
+      const time = formatTime(m.createdTime || m.created_time);
       let content = '';
       if (m.message) content = escHtml(m.message);
-      else if (m.sticker) content = `<img src="${m.sticker}" style="max-width:80px" alt="sticker">`;
-      else if (m.attachments?.data?.length) {
-        content = m.attachments.data.map(att => {
-          if (att.image_data?.url) return `<img src="${att.image_data.url}" style="max-width:200px;border-radius:8px" alt="ảnh">`;
-          if (att.video_data?.url) return `<video src="${att.video_data.url}" controls style="max-width:200px"></video>`;
-          return `<span style="opacity:0.6">[${att.type || 'file'}]</span>`;
-        }).join('');
+      else if (m.attachments) {
+        // Backend lưu attachments dưới dạng JSON string
+        try {
+          const atts = typeof m.attachments === 'string' ? JSON.parse(m.attachments) : m.attachments;
+          if (Array.isArray(atts) && atts.length) {
+            content = atts.map(att => {
+              if (att.image_data?.url) return `<img src="${att.image_data.url}" style="max-width:200px;border-radius:8px" alt="ảnh">`;
+              if (att.video_data?.url) return `<video src="${att.video_data.url}" controls style="max-width:200px"></video>`;
+              if (att.type === 'sticker' && att.image_data?.url) return `<img src="${att.image_data.url}" style="max-width:80px" alt="sticker">`;
+              return `<span style="opacity:0.6">[${att.type || 'file'}]</span>`;
+            }).join('');
+          }
+        } catch(e) { content = '<span style="opacity:0.5">[File]</span>'; }
       } else content = '<span style="opacity:0.5">[Sticker / File]</span>';
       return `<div class="msg-row ${isPage ? 'assistant' : 'user'}">
         ${!isPage ? `<div class="msg-avatar">${initials}</div>` : ''}
