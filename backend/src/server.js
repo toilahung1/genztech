@@ -1,5 +1,13 @@
 require('dotenv').config();
 const express = require('express');
+
+// ── Khởi tạo SQLite DB ──
+try {
+  require('./db');
+  console.log('✅ SQLite DB initialized');
+} catch (e) {
+  console.warn('⚠️  SQLite not available, using in-memory store:', e.message);
+}
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
