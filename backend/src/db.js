@@ -1,6 +1,6 @@
 /**
  * GenzTech — Database Module (Prisma + PostgreSQL)
- * Thay thế SQLite bằng Prisma để dữ liệu bền vững trên Railway
+ * id: Int (autoincrement), fbPages: String (JSON text)
  */
 const { PrismaClient } = require('@prisma/client');
 
@@ -19,7 +19,7 @@ function getPrisma() {
 function _toCompat(user) {
   if (!user) return null;
   return {
-    id: user.id,
+    id: user.id,                          // Int
     email: user.email,
     password: user.password,
     fb_user_id: user.fbUserId || null,
@@ -27,7 +27,7 @@ function _toCompat(user) {
     fb_avatar: user.fbAvatar || null,
     fb_token: user.fbToken || null,
     fb_token_exp: user.fbTokenExp ? user.fbTokenExp.toISOString() : null,
-    fb_pages: user.fbPages ? JSON.stringify(user.fbPages) : '[]',
+    fb_pages: user.fbPages || '[]',       // String
     created_at: user.createdAt ? user.createdAt.toISOString() : null,
     last_login: user.lastLogin ? user.lastLogin.toISOString() : null,
   };
@@ -47,7 +47,7 @@ const userStmt = {
           fbAvatar: data.fb_avatar || null,
           fbToken: data.fb_token || null,
           fbTokenExp: data.fb_token_exp ? new Date(data.fb_token_exp) : null,
-          fbPages: data.fb_pages ? JSON.parse(data.fb_pages) : [],
+          fbPages: data.fb_pages || '[]',   // String
         },
       });
       return { lastInsertRowid: created.id };
@@ -65,7 +65,7 @@ const userStmt = {
   findById: {
     get: async (id) => {
       const db = getPrisma();
-      const user = await db.user.findUnique({ where: { id: String(id) } });
+      const user = await db.user.findUnique({ where: { id: Number(id) } });  // Int
       return _toCompat(user);
     },
   },
@@ -74,14 +74,14 @@ const userStmt = {
     run: async (data) => {
       const db = getPrisma();
       return db.user.update({
-        where: { id: String(data.id) },
+        where: { id: Number(data.id) },  // Int
         data: {
           fbUserId: data.fb_user_id || null,
           fbUserName: data.fb_user_name || null,
           fbAvatar: data.fb_avatar || null,
           fbToken: data.fb_token || null,
           fbTokenExp: data.fb_token_exp ? new Date(data.fb_token_exp) : null,
-          fbPages: data.fb_pages ? JSON.parse(data.fb_pages) : [],
+          fbPages: data.fb_pages || '[]',  // String
         },
       });
     },
@@ -91,7 +91,7 @@ const userStmt = {
     run: async (id) => {
       const db = getPrisma();
       return db.user.update({
-        where: { id: String(id) },
+        where: { id: Number(id) },  // Int
         data: { lastLogin: new Date() },
       });
     },
@@ -101,7 +101,7 @@ const userStmt = {
     run: async (password, id) => {
       const db = getPrisma();
       return db.user.update({
-        where: { id: String(id) },
+        where: { id: Number(id) },  // Int
         data: { password },
       });
     },
