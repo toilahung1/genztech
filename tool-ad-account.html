@@ -1581,6 +1581,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = getToken();
   if (token) {
     loadAccounts();
+    // Ẩn nút key khi đã có token từ server (GenzAuth)
+    const keyBtn = document.querySelector('[onclick="openTokenModal()"][title="Cài đặt token"]');
+    if (keyBtn) keyBtn.style.display = 'none';
   } else {
     setTableMsg('accounts', '🔑 Chưa có token — nhấn nút <strong style="color:#fbbf24"><i class="bi bi-key"></i> Token</strong> ở góc trên phải để nhập Facebook Access Token');
   }
