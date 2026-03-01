@@ -132,6 +132,7 @@
         <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
       </nav>
       <div class="sidebar-footer">
+      <div id="gtUserSidebar" style="display:none"></div>
         <div class="conn-status" id="connStatus">
           <div class="conn-dot" id="connDot"></div>
           <span id="connText">Chưa kết nối</span>
@@ -146,7 +147,8 @@
           <a href="ads-assistant.html" style="color:rgba(255,255,255,.4);text-decoration:none">Trợ Lý QC</a>
           <i class="bi bi-chevron-right" style="font-size:10px"></i><span>Quản Lý Cookie</span>
         </div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
           <button class="btn-sm btn-outline" onclick="exportAllCookies()"><i class="bi bi-download"></i> Xuất JSON</button>
           <label class="btn-sm btn-primary" style="cursor:pointer"><i class="bi bi-upload"></i> Nhập JSON <input type="file" accept=".json" style="display:none" onchange="importCookies(this)"></label>
         </div>
@@ -580,5 +582,6 @@
   window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
 })();
 </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
