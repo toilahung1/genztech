@@ -198,6 +198,7 @@
         <a href="#" class="nav-item" onclick="openSettings()"><i class="bi bi-gear"></i> Cài Đặt</a>
       </nav>
       <div class="sidebar-footer">
+      <div id="gtUserSidebar" style="display:none"></div>
         <div class="conn-status" id="connStatus">
           <div class="conn-dot" id="connDot"></div>
           <span id="connText">Chưa kết nối</span>
@@ -219,10 +220,7 @@
           <button class="btn-icon" onclick="refreshData()" title="Làm mới"><i class="bi bi-arrow-clockwise"></i></button>
           <button class="btn-icon" onclick="openTokenModal()" title="Cài đặt token"><i class="bi bi-key"></i> <span id="tokenIndicator" style="font-size:11px;display:none;color:#4ade80">●</span></button>
 
-          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px">
-            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1877f2,#00d4ff);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px" id="userAvatar">?</div>
-            <span id="userName" style="color:rgba(255,255,255,.8)"></span>
-          </div>
+          <div id="userBadge" style="display:none;align-items:center;gap:8px;font-size:12.5px"></div>
         </div>
       </div>
 
@@ -1694,5 +1692,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize',()=>{ resizeS(); resizeP(); });
 })();
 </script>
+  <script src="js/auth-common.js"></script>
 </body>
 </html>
