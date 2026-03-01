@@ -1064,7 +1064,7 @@ function renderConvList(convs) {
     const pageShort = (c.pageName || '').split(' ').slice(0,3).join(' ');
     return `
     <div class="conv-item ${c.isPending ? 'pending' : ''} ${selectedConvUserId === c.userId ? 'active' : ''}"
-      onclick="openConversation('${c.pageId}', '${c.userId}', '${escHtml(c.pageName)}')">
+      onclick="openConversationDirect('${c.pageId}', '${c.userId}', '${escHtml(c.userName || c.pageName)}')">
       <div class="conv-avatar" style="background:${color}">${initials}</div>
       <div class="conv-info">
         <div class="conv-name-row">
@@ -1976,10 +1976,12 @@ async function openConversationDirect(pageId, userId, userName) {
       return;
     }
     // Render tin nhắn với fix: so sánh string, xử lý attachment/sticker
+    const customerUserId = String(conv?.userId || userId || '');
     function renderMsgHtml(m) {
       const fromId = String(m.from?.id || '');
       const pid = String(pageId);
-      const isPage = fromId === pid;
+      // isPage: nếu from.id là pageId, HOẶC nếu from.id không phải userId của khách (bot/automation)
+      const isPage = fromId === pid || (fromId !== '' && fromId !== customerUserId);
       const time = formatTime(m.created_time);
       // Nội dung tin nhắn
       let content = '';
