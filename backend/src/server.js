@@ -53,14 +53,81 @@ const { execSync } = require('child_process');
 app.get('/api/admin/migrate', async (req, res) => {
   if (req.query.secret !== 'GenzMigrate2026') return res.status(403).json({ error: 'Forbidden' });
   try {
-    const output = execSync('npx prisma db push --accept-data-loss', {
-      cwd: process.cwd(),
-      timeout: 90000,
-      env: { ...process.env }
-    }).toString();
-    res.json({ success: true, output });
+    // Bước 1: Chạy raw SQL để thêm cột mới vào bảng hiện tại
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const results = [];
+    
+    // Thêm cột email nếu chưa có
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`);
+      results.push('Added email column');
+    } catch(e) { results.push('email: ' + e.message); }
+    
+    // Cập nhật email từ username cho các dòng cũ
+    try {
+      await prisma.$executeRawUnsafe(`UPDATE users SET email = username || '@legacy.local' WHERE email IS NULL OR email = ''`);
+      results.push('Updated legacy emails');
+    } catch(e) { results.push('update email: ' + e.message); }
+    
+    // Thêm cột fb_user_id
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fbUserId" TEXT`);
+      results.push('Added fbUserId column');
+    } catch(e) { results.push('fbUserId: ' + e.message); }
+    
+    // Thêm cột fb_user_name
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fbUserName" TEXT`);
+      results.push('Added fbUserName column');
+    } catch(e) { results.push('fbUserName: ' + e.message); }
+    
+    // Thêm cột fb_avatar
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fbAvatar" TEXT`);
+      results.push('Added fbAvatar column');
+    } catch(e) { results.push('fbAvatar: ' + e.message); }
+    
+    // Thêm cột fb_token
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fbToken" TEXT`);
+      results.push('Added fbToken column');
+    } catch(e) { results.push('fbToken: ' + e.message); }
+    
+    // Thêm cột fb_token_exp
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fbTokenExp" TIMESTAMP`);
+      results.push('Added fbTokenExp column');
+    } catch(e) { results.push('fbTokenExp: ' + e.message); }
+    
+    // Thêm cột fb_pages
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "fbPages" TEXT DEFAULT '[]'`);
+      results.push('Added fbPages column');
+    } catch(e) { results.push('fbPages: ' + e.message); }
+    
+    // Thêm cột updatedAt
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP DEFAULT NOW()`);
+      results.push('Added updatedAt column');
+    } catch(e) { results.push('updatedAt: ' + e.message); }
+    
+    // Thêm cột lastLogin
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS "lastLogin" TIMESTAMP`);
+      results.push('Added lastLogin column');
+    } catch(e) { results.push('lastLogin: ' + e.message); }
+    
+    // Tạo unique index cho email
+    try {
+      await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS users_email_key ON users(email)`);
+      results.push('Created email unique index');
+    } catch(e) { results.push('email index: ' + e.message); }
+    
+    await prisma.$disconnect();
+    res.json({ success: true, results });
   } catch (err) {
-    res.json({ success: false, error: err.message, stdout: err.stdout?.toString(), stderr: err.stderr?.toString() });
+    res.json({ success: false, error: err.message });
   }
 });
 
