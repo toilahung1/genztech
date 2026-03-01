@@ -336,7 +336,7 @@
         <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
         <span>Live</span>
       </div>
-      <button class="btn secondary" onclick="openSetupModal()" style="font-size:12px">
+      <button class="btn secondary" onclick="openSetupModal()" style="font-size:12px;display:none" id="btnNhapToken">
         <i class="bi bi-key"></i> Nhập Token
       </button>
       <button class="btn primary" onclick="syncPages()" id="syncBtn" style="font-size:12px">
@@ -684,40 +684,9 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-// AUTH CHECK — Kiểm tra đăng nhập
+// AUTH CHECK — Xử lý bởi auth-common.js (tải trước)
 // ═══════════════════════════════════════════════════════
-(function checkAuth() {
-  const jwtToken = localStorage.getItem('GT_JWT');
-  if (!jwtToken) {
-    window.location.href = 'login.html';
-    return;
-  }
-  try {
-    const payload = JSON.parse(atob(jwtToken.split('.')[1]));
-    if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem('GT_JWT');
-      localStorage.removeItem('GT_USER');
-      window.location.href = 'login.html';
-      return;
-    }
-  } catch {
-    localStorage.removeItem('GT_JWT');
-    window.location.href = 'login.html';
-    return;
-  }
-  // Load user info from stored data
-  const userStr = localStorage.getItem('GT_USER');
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      // Tự động set FB_TOKEN từ account
-      if (user.fb_token) {
-        localStorage.setItem('HA_FB_TOKEN', user.fb_token);
-        localStorage.setItem('FB_TOKEN_MANUAL', user.fb_token);
-      }
-    } catch {}
-  }
-})();
+// auth-common.js đã kiểm tra JWT, đồng bộ FB token và redirect nếu chưa đăng nhập
 
 // handleLogout và loadUserInfoUI được xử lý bởi js/auth-common.js
 // ═══════════════════════════════════════════════════════
