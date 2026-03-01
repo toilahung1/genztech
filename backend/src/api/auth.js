@@ -1,5 +1,5 @@
 /**
- * GenzTech — Auth API
+ * GenzTech — Auth API (Prisma + PostgreSQL)
  * POST /api/auth/register  — Đăng ký: email + password + fb_token
  * POST /api/auth/login     — Đăng nhập: email + password
  * GET  /api/auth/me        — Lấy thông tin user hiện tại
@@ -9,27 +9,10 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 const { authMiddleware, signToken } = require('../middleware/auth');
+const { userStmt } = require('../db');
 
 const router = express.Router();
 const FB_GRAPH = 'https://graph.facebook.com/v19.0';
-
-// ── Lazy-load DB (tránh lỗi nếu better-sqlite3 chưa cài) ─
-let userStmt = null;
-function getDb() {
-  if (!userStmt) {
-    try {
-      const db = require('../db');
-      userStmt = db.userStmt;
-    } catch (e) {
-      console.warn('[Auth] DB not available, using in-memory store:', e.message);
-    }
-  }
-  return userStmt;
-}
-
-// ── In-memory fallback (backward compat) ─────────────────
-const users = new Map();
-let userIdCounter = 1;
 
 // ── Helper: Lấy thông tin Facebook từ token ──────────────
 async function fetchFbInfo(fbToken) {
@@ -88,16 +71,11 @@ router.post('/register', async (req, res) => {
     }
 
     const normalEmail = email.toLowerCase().trim();
-    const stmt = getDb();
 
     // Kiểm tra email đã tồn tại
-    if (stmt) {
-      const existing = stmt.findByEmail.get(normalEmail);
-      if (existing) return res.status(409).json({ error: 'Email này đã được đăng ký. Vui lòng đăng nhập.' });
-    } else {
-      for (const u of users.values()) {
-        if (u.email === normalEmail) return res.status(409).json({ error: 'Email này đã được đăng ký.' });
-      }
+    const existing = await userStmt.findByEmail.get(normalEmail);
+    if (existing) {
+      return res.status(409).json({ error: 'Email này đã được đăng ký. Vui lòng đăng nhập.' });
     }
 
     // Lấy thông tin Facebook
@@ -110,30 +88,21 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    let userId;
-    if (stmt) {
-      // Lưu vào SQLite
-      const result = stmt.create.run({
-        email: normalEmail,
-        password: hashedPassword,
-        fb_user_id: fbInfo.fb_user_id,
-        fb_user_name: fbInfo.fb_user_name,
-        fb_avatar: fbInfo.fb_avatar,
-        fb_token: fbInfo.fb_token,
-        fb_token_exp: fbInfo.fb_token_exp,
-        fb_pages: fbInfo.fb_pages,
-      });
-      userId = result.lastInsertRowid;
-    } else {
-      // Fallback: in-memory
-      userId = String(userIdCounter++);
-      users.set(normalEmail, {
-        id: userId, email: normalEmail, password: hashedPassword,
-        ...fbInfo, createdAt: new Date().toISOString()
-      });
-    }
+    // Lưu vào PostgreSQL qua Prisma
+    const result = await userStmt.create.run({
+      email: normalEmail,
+      password: hashedPassword,
+      fb_user_id: fbInfo.fb_user_id,
+      fb_user_name: fbInfo.fb_user_name,
+      fb_avatar: fbInfo.fb_avatar,
+      fb_token: fbInfo.fb_token,
+      fb_token_exp: fbInfo.fb_token_exp,
+      fb_pages: fbInfo.fb_pages,
+    });
 
+    const userId = result.lastInsertRowid;
     const token = signToken({ id: userId, email: normalEmail });
+
     console.log(`[Auth/Register] New user: ${normalEmail} | FB: ${fbInfo.fb_user_name} | Pages: ${fbInfo.pages.length}`);
 
     res.status(201).json({
@@ -153,6 +122,10 @@ router.post('/register', async (req, res) => {
     });
   } catch (err) {
     console.error('[Auth/Register]', err.message);
+    // Xử lý lỗi unique constraint từ Prisma
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Email này đã được đăng ký.' });
+    }
     res.status(500).json({ error: 'Lỗi đăng ký: ' + err.message });
   }
 });
@@ -161,27 +134,23 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ error: 'Email và mật khẩu là bắt buộc' });
     }
-
     const normalEmail = email.toLowerCase().trim();
-    const stmt = getDb();
 
-    let user;
-    if (stmt) {
-      user = stmt.findByEmail.get(normalEmail);
-    } else {
-      user = users.get(normalEmail);
+    const user = await userStmt.findByEmail.get(normalEmail);
+    if (!user) {
+      return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
     }
 
-    if (!user) return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
-
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
+    if (!valid) {
+      return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
+    }
 
-    if (stmt) stmt.updateLastLogin.run(user.id);
+    // Cập nhật last login
+    await userStmt.updateLastLogin.run(user.id);
 
     const token = signToken({ id: user.id, email: user.email });
 
@@ -214,17 +183,9 @@ router.post('/login', async (req, res) => {
 });
 
 // ── GET /api/auth/me ─────────────────────────────────────
-router.get('/me', authMiddleware, (req, res) => {
+router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const stmt = getDb();
-    let user;
-    if (stmt) {
-      user = stmt.findById.get(req.user.id);
-    } else {
-      for (const u of users.values()) {
-        if (String(u.id) === String(req.user.id)) { user = u; break; }
-      }
-    }
+    const user = await userStmt.findById.get(req.user.id);
     if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản' });
 
     let pages = [];
@@ -261,18 +222,15 @@ router.post('/update-token', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: fbErr.message });
     }
 
-    const stmt = getDb();
-    if (stmt) {
-      stmt.updateFbInfo.run({
-        id: req.user.id,
-        fb_user_id: fbInfo.fb_user_id,
-        fb_user_name: fbInfo.fb_user_name,
-        fb_avatar: fbInfo.fb_avatar,
-        fb_token: fbInfo.fb_token,
-        fb_token_exp: fbInfo.fb_token_exp,
-        fb_pages: fbInfo.fb_pages,
-      });
-    }
+    await userStmt.updateFbInfo.run({
+      id: req.user.id,
+      fb_user_id: fbInfo.fb_user_id,
+      fb_user_name: fbInfo.fb_user_name,
+      fb_avatar: fbInfo.fb_avatar,
+      fb_token: fbInfo.fb_token,
+      fb_token_exp: fbInfo.fb_token_exp,
+      fb_pages: fbInfo.fb_pages,
+    });
 
     res.json({
       success: true,
@@ -289,4 +247,3 @@ router.post('/update-token', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-module.exports.users = users; // backward compat
